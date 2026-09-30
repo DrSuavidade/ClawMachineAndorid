@@ -75,9 +75,7 @@ namespace ClawMachine.Gameplay
 
             if (catalog == null)
             {
-#if UNITY_EDITOR
-                catalog = UnityEditor.AssetDatabase.LoadAssetAtPath<MachineCatalog>("Assets/Data/MachineCatalog.asset");
-#endif
+                Debug.LogWarning("[CollectionManager] MachineCatalog not assigned! Please assign it in inspector.");
             }
 
             if (currentMachine == null && catalog != null && catalog.Count > 0)
@@ -86,9 +84,7 @@ namespace ClawMachine.Gameplay
             }
             else if (currentMachine == null)
             {
-#if UNITY_EDITOR
-                currentMachine = UnityEditor.AssetDatabase.LoadAssetAtPath<MachineDefinition>("Assets/Data/Machine_ToyBox.asset");
-#endif
+                Debug.LogWarning("[CollectionManager] No currentMachine and no catalog assigned! Please assign MachineCatalog in inspector.");
             }
 
             LoadData();
@@ -374,15 +370,10 @@ namespace ClawMachine.Gameplay
         public int GetUpgradeCost(UpgradeType type)
         {
             int lvl = GetUpgradeLevel(type);
-            if (lvl >= 5) return -1; // Max level
-            return lvl switch
-            {
-                1 => 45,
-                2 => 85,
-                3 => 150,
-                4 => 250,
-                _ => -1
-            };
+            int[] defaultCosts = { 45, 85, 150, 250 };
+            int idx = lvl - 1; // level 1 = index 0 (cost for lvl 1 -> 2)
+            if (idx < 0 || idx >= defaultCosts.Length) return -1; // Max level reached
+            return defaultCosts[idx];
         }
 
         public bool TryPurchaseUpgrade(UpgradeType type)

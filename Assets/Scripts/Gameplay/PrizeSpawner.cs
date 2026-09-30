@@ -63,14 +63,7 @@ namespace ClawMachine.Gameplay
                 }
                 else
                 {
-#if UNITY_EDITOR
-                    var loadedMachine = UnityEditor.AssetDatabase.LoadAssetAtPath<MachineDefinition>("Assets/Data/Machine_ToyBox.asset");
-                    if (loadedMachine != null && loadedMachine.prizes != null)
-                    {
-                        prizePool = loadedMachine.prizes;
-                        machineDefinition = loadedMachine;
-                    }
-#endif
+                    Debug.LogWarning("[PrizeSpawner] No prize pool available. Please assign MachineDefinition or configure current machine in inspector.");
                 }
             }
         }
@@ -118,10 +111,11 @@ namespace ClawMachine.Gameplay
         {
             PrizeDefinition def = GetRandomDefinition();
 
+            Prize prize = null;
             if (def != null && def.prefab != null)
             {
                 GameObject go = Instantiate(def.prefab, position, rotation, transform);
-                if (!go.TryGetComponent<Prize>(out var prize))
+                if (!go.TryGetComponent<Prize>(out prize))
                 {
                     prize = go.AddComponent<Prize>();
                 }
@@ -132,8 +126,21 @@ namespace ClawMachine.Gameplay
             {
                 // Fallback runtime primitive toy
                 GameObject fallback = CreateFallbackPrimitive(position, rotation, def);
-                Prize prize = fallback.GetComponent<Prize>();
+                prize = fallback.GetComponent<Prize>();
                 activePrizes.Add(prize);
+            }
+
+            if (prize != null)
+            {
+                int prizeLayer = LayerMask.NameToLayer("Prize");
+                if (prizeLayer >= 0)
+                {
+                    prize.gameObject.layer = prizeLayer;
+                    foreach (Transform child in prize.transform)
+                    {
+                        child.gameObject.layer = prizeLayer;
+                    }
+                }
             }
         }
 

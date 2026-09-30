@@ -53,5 +53,9 @@ namespace ClawMachine.Data
         public float descentMinY = 0.88f;
         [Tooltip("Maximum hoist Y during descent")]
         public float descentMaxY = 2.2f;
+
+        [Header("Upgrade Economy")]
+        [Tooltip("Cost to upgrade from level N to N+1. Index = current level - 1.")]
+        public int[] upgradeCosts = { 45, 85, 150, 250 };
     }
 }

@@ -80,23 +80,7 @@ namespace ClawMachine.UI
             }
             else if (availableMachines == null || availableMachines.Length == 0)
             {
-                var list = new List<MachineDefinition>();
-#if UNITY_EDITOR
-                var loadedCatalog = UnityEditor.AssetDatabase.LoadAssetAtPath<MachineCatalog>("Assets/Data/MachineCatalog.asset");
-                if (loadedCatalog != null && loadedCatalog.Machines != null)
-                {
-                    catalog = loadedCatalog;
-                    availableMachines = loadedCatalog.Machines;
-                }
-                else
-                {
-                    var toyBox = UnityEditor.AssetDatabase.LoadAssetAtPath<MachineDefinition>("Assets/Data/Machine_ToyBox.asset");
-                    if (toyBox != null) list.Add(toyBox);
-                    var retro = UnityEditor.AssetDatabase.LoadAssetAtPath<MachineDefinition>("Assets/Data/Machine_RetroArcade.asset");
-                    if (retro != null) list.Add(retro);
-                    availableMachines = list.ToArray();
-                }
-#endif
+                Debug.LogWarning("[ArcadeConsoleUI] No machines available. Please assign MachineCatalog in inspector.");
             }
 
             // Sync index with current machine

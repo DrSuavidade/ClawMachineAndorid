@@ -18,13 +18,6 @@ namespace ClawMachine.Gameplay
             }
         }
 
-        private void OnTriggerStay(Collider other)
-        {
-            if (other.TryGetComponent<Prize>(out var prize))
-            {
-                candidates.Add(prize);
-            }
-        }
 
         private void OnTriggerExit(Collider other)
         {
