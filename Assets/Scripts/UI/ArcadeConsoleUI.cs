@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using ClawMachine.Data;
 using ClawMachine.Gameplay;
+using ClawMachine.Core.Services;
 
 namespace ClawMachine.UI
 {
@@ -69,6 +70,12 @@ namespace ClawMachine.UI
 
         private void Start()
         {
+            ICollectionService collService = null;
+            if (!ServiceLocator.TryGet(out collService))
+            {
+                collService = CollectionManager.Instance;
+            }
+
             if (catalog == null && CollectionManager.Instance != null && CollectionManager.Instance.Catalog != null)
             {
                 catalog = CollectionManager.Instance.Catalog;
@@ -84,11 +91,11 @@ namespace ClawMachine.UI
             }
 
             // Sync index with current machine
-            if (CollectionManager.Instance != null && CollectionManager.Instance.CurrentMachine != null)
+            if (collService != null && collService.CurrentMachine != null)
             {
                 for (int i = 0; i < availableMachines.Length; i++)
                 {
-                    if (availableMachines[i] != null && availableMachines[i].machineId == CollectionManager.Instance.CurrentMachine.machineId)
+                    if (availableMachines[i] != null && availableMachines[i].machineId == collService.CurrentMachine.machineId)
                     {
                         currentMachineIndex = i;
                         break;
@@ -147,7 +154,13 @@ namespace ClawMachine.UI
             MachineDefinition target = availableMachines[targetIndex];
             if (target == null) return;
 
-            bool isUnlocked = CollectionManager.Instance == null || CollectionManager.Instance.IsMachineUnlocked(target.machineId);
+            ICollectionService collService = null;
+            if (!ServiceLocator.TryGet(out collService))
+            {
+                collService = CollectionManager.Instance;
+            }
+
+            bool isUnlocked = collService == null || collService.IsMachineUnlocked(target.machineId);
 
             if (isUnlocked)
             {
@@ -168,6 +181,10 @@ namespace ClawMachine.UI
             {
                 machineController.ApplyMachine(target);
             }
+            else if (ServiceLocator.TryGet<ICollectionService>(out var coll))
+            {
+                coll.SetCurrentMachine(target);
+            }
             else if (CollectionManager.Instance != null)
             {
                 CollectionManager.Instance.SetCurrentMachine(target);
@@ -183,6 +200,12 @@ namespace ClawMachine.UI
             MachineDefinition cur = availableMachines[currentMachineIndex];
             if (cur == null) return;
 
+            ICollectionService collService = null;
+            if (!ServiceLocator.TryGet(out collService))
+            {
+                collService = CollectionManager.Instance;
+            }
+
             if (machineNameText != null)
             {
                 machineNameText.text = cur.displayName.ToUpper();
@@ -190,12 +213,12 @@ namespace ClawMachine.UI
 
             if (machineStatusText != null)
             {
-                if (CollectionManager.Instance != null && CollectionManager.Instance.IsMachineOwned(cur.machineId))
+                if (collService != null && collService.IsMachineOwned(cur.machineId))
                 {
                     machineStatusText.text = "★ OWNED (FREE PLAYS)";
                     machineStatusText.color = new Color(0.3f, 0.95f, 0.45f);
                 }
-                else if (CollectionManager.Instance != null && !CollectionManager.Instance.IsMachineUnlocked(cur.machineId))
+                else if (collService != null && !collService.IsMachineUnlocked(cur.machineId))
                 {
                     machineStatusText.text = $"🔒 LOCKED (UNLOCK: {cur.unlockCost} 🪙)";
                     machineStatusText.color = new Color(1f, 0.45f, 0.45f);
@@ -213,7 +236,16 @@ namespace ClawMachine.UI
             pendingUnlockMachine = machine;
             if (unlockModal == null) return;
 
-            int currentCoins = CollectionManager.Instance != null ? CollectionManager.Instance.Coins : 0;
+            int currentCoins = 0;
+            if (ServiceLocator.TryGet<IEconomyService>(out var econ))
+            {
+                currentCoins = econ.Coins;
+            }
+            else if (CollectionManager.Instance != null)
+            {
+                currentCoins = CollectionManager.Instance.Coins;
+            }
+
             bool canAfford = currentCoins >= machine.unlockCost;
 
             if (unlockTitleText != null)
@@ -243,9 +275,18 @@ namespace ClawMachine.UI
 
         private void OnConfirmUnlockClicked()
         {
-            if (pendingUnlockMachine == null || CollectionManager.Instance == null) return;
+            if (pendingUnlockMachine == null) return;
 
-            bool success = CollectionManager.Instance.TryUnlockMachine(pendingUnlockMachine);
+            bool success = false;
+            if (ServiceLocator.TryGet<ICollectionService>(out var coll))
+            {
+                success = coll.TryUnlockMachine(pendingUnlockMachine);
+            }
+            else if (CollectionManager.Instance != null)
+            {
+                success = CollectionManager.Instance.TryUnlockMachine(pendingUnlockMachine);
+            }
+
             if (success)
             {
                 CloseUnlockModal();

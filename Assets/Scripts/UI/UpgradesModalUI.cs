@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using ClawMachine.Gameplay;
+using ClawMachine.Core.Services;
 
 namespace ClawMachine.UI
 {
@@ -10,8 +11,6 @@ namespace ClawMachine.UI
         [SerializeField] private GameObject modalPanel;
         [SerializeField] private Button toggleButton;
         [SerializeField] private Button closeButton;
-
-        [Header("Header Info")]
         [SerializeField] private Text coinsText;
         [SerializeField] private Text setBonusText;
 
@@ -44,20 +43,46 @@ namespace ClawMachine.UI
 
         private void OnEnable()
         {
-            if (CollectionManager.Instance != null)
+            if (ServiceLocator.TryGet<IEconomyService>(out var econ))
+            {
+                econ.OnCoinsChanged += HandleCoinsChanged;
+                econ.OnUpgradePurchased += HandleUpgradePurchased;
+            }
+            else if (CollectionManager.Instance != null)
             {
                 CollectionManager.Instance.OnCoinsChanged += HandleCoinsChanged;
                 CollectionManager.Instance.OnUpgradePurchased += HandleUpgradePurchased;
+            }
+
+            if (ServiceLocator.TryGet<ICollectionService>(out var coll))
+            {
+                coll.OnMachineCompleted += HandleMachineCompleted;
+            }
+            else if (CollectionManager.Instance != null)
+            {
                 CollectionManager.Instance.OnMachineCompleted += HandleMachineCompleted;
             }
         }
 
         private void OnDisable()
         {
-            if (CollectionManager.Instance != null)
+            if (ServiceLocator.TryGet<IEconomyService>(out var econ))
+            {
+                econ.OnCoinsChanged -= HandleCoinsChanged;
+                econ.OnUpgradePurchased -= HandleUpgradePurchased;
+            }
+            else if (CollectionManager.Instance != null)
             {
                 CollectionManager.Instance.OnCoinsChanged -= HandleCoinsChanged;
                 CollectionManager.Instance.OnUpgradePurchased -= HandleUpgradePurchased;
+            }
+
+            if (ServiceLocator.TryGet<ICollectionService>(out var coll))
+            {
+                coll.OnMachineCompleted -= HandleMachineCompleted;
+            }
+            else if (CollectionManager.Instance != null)
+            {
                 CollectionManager.Instance.OnMachineCompleted -= HandleMachineCompleted;
             }
         }
@@ -75,11 +100,26 @@ namespace ClawMachine.UI
 
         private void OnBuyClicked(UpgradeType type)
         {
-            if (CollectionManager.Instance == null) return;
-            bool success = CollectionManager.Instance.TryPurchaseUpgrade(type);
+            bool success = false;
+            if (ServiceLocator.TryGet<IEconomyService>(out var econ))
+            {
+                success = econ.TryPurchaseUpgrade(type);
+            }
+            else if (CollectionManager.Instance != null)
+            {
+                success = CollectionManager.Instance.TryPurchaseUpgrade(type);
+            }
+
             if (success)
             {
-                ClawAudio.Instance?.PlayGrab();
+                if (ServiceLocator.TryGet<IAudioService>(out var audio))
+                {
+                    audio.PlayGrabSuccess();
+                }
+                else
+                {
+                    ClawAudio.Instance?.PlayGrab();
+                }
                 RefreshUI();
             }
         }
@@ -104,15 +144,27 @@ namespace ClawMachine.UI
 
         private void RefreshUI()
         {
-            if (CollectionManager.Instance == null) return;
+            IEconomyService econ = null;
+            if (!ServiceLocator.TryGet(out econ))
+            {
+                econ = CollectionManager.Instance;
+            }
+            if (econ == null) return;
 
-            int coins = CollectionManager.Instance.Coins;
+            ICollectionService coll = null;
+            if (!ServiceLocator.TryGet(out coll))
+            {
+                coll = CollectionManager.Instance;
+            }
+
+            int coins = econ.Coins;
             if (coinsText != null) coinsText.text = $"{coins} 🪙";
 
             // Set Bonus status
             if (setBonusText != null)
             {
-                if (CollectionManager.Instance.HasGoldenClawUnlocked)
+                bool hasGoldenClaw = coll != null ? coll.HasGoldenClawUnlocked : (CollectionManager.Instance != null && CollectionManager.Instance.HasGoldenClawUnlocked);
+                if (hasGoldenClaw)
                 {
                     setBonusText.text = "★ SET BONUS ACTIVE: +50% PASSIVE COINS & GOLD CLAW ★";
                     setBonusText.color = new Color(1f, 0.88f, 0.25f);
@@ -125,19 +177,19 @@ namespace ClawMachine.UI
             }
 
             // Trolley Row
-            UpdateRow(UpgradeType.TrolleySpeed, trolleyLevelText, trolleyCostText, trolleyBuyBtn, coins);
+            UpdateRow(UpgradeType.TrolleySpeed, trolleyLevelText, trolleyCostText, trolleyBuyBtn, coins, econ);
 
             // Grip Row
-            UpdateRow(UpgradeType.GripPower, gripLevelText, gripCostText, gripBuyBtn, coins);
+            UpdateRow(UpgradeType.GripPower, gripLevelText, gripCostText, gripBuyBtn, coins, econ);
 
             // Drop Row
-            UpdateRow(UpgradeType.DropPrecision, dropLevelText, dropCostText, dropBuyBtn, coins);
+            UpdateRow(UpgradeType.DropPrecision, dropLevelText, dropCostText, dropBuyBtn, coins, econ);
         }
 
-        private void UpdateRow(UpgradeType type, Text lvlText, Text costText, Button buyBtn, int currentCoins)
+        private void UpdateRow(UpgradeType type, Text lvlText, Text costText, Button buyBtn, int currentCoins, IEconomyService econ)
         {
-            int lvl = CollectionManager.Instance.GetUpgradeLevel(type);
-            int cost = CollectionManager.Instance.GetUpgradeCost(type);
+            int lvl = econ.GetUpgradeLevel(type);
+            int cost = econ.GetUpgradeCost(type);
 
             if (lvlText != null)
             {

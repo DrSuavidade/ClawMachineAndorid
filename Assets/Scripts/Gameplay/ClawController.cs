@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using ClawMachine.Data;
+using ClawMachine.Core.Services;
 
 namespace ClawMachine.Gameplay
 {
@@ -122,7 +123,7 @@ namespace ClawMachine.Gameplay
             if (CurrentState != ClawState.Aiming && CurrentState != ClawState.Carrying) return;
             if (config == null || trolley == null) return;
 
-            float speedMult = CollectionManager.Instance != null ? CollectionManager.Instance.GetTrolleySpeedMultiplier() : 1f;
+            float speedMult = GetTrolleySpeedMultiplier();
 
             // X = Left/Right, Y = Forward/Back (mapped to 3D Z)
             targetTrolleyPos.x += inputDelta.x * config.moveSpeed * speedMult * Time.deltaTime;
@@ -181,7 +182,7 @@ namespace ClawMachine.Gameplay
                 // NOTE: GripAssist (spring-damper) and GripEvaluator (static) exist but are
                 // not wired into this flow. They're reserved for future physics-based grip.
                 case ClawState.EvaluatingGrip:
-                    float gripMult = CollectionManager.Instance != null ? CollectionManager.Instance.GetGripPowerMultiplier() : 1f;
+                    float gripMult = GetGripPowerMultiplier();
                     if (gripAnchor != null && targetedPrize != null)
                     {
                         GripEvaluation eval = new GripEvaluation
@@ -194,7 +195,7 @@ namespace ClawMachine.Gameplay
                         };
                         if (gripAnchor.TryAcquire(eval))
                         {
-                            ClawAudio.Instance?.PlayGrab();
+                            PlayAudioGrab();
                         }
                     }
                     SetState(ClawState.Lifting);
@@ -322,7 +323,7 @@ namespace ClawMachine.Gameplay
                 case ClawState.Closing:
                     closingTimer = 0f;
                     targetArmAngle = config != null ? config.closedAngle : -52f;
-                    ClawAudio.Instance?.PlayClamp();
+                    PlayAudioClamp();
                     break;
 
                 case ClawState.EvaluatingGrip:
@@ -341,7 +342,7 @@ namespace ClawMachine.Gameplay
                     releasingTimer = 0f;
                     if (gripAnchor != null) gripAnchor.Release();
                     targetArmAngle = config != null ? config.openAngle : 38f;
-                    ClawAudio.Instance?.PlayDrop();
+                    PlayAudioDrop();
                     break;
 
                 case ClawState.Resolving:
@@ -351,7 +352,7 @@ namespace ClawMachine.Gameplay
 
             if (newState != ClawState.Aiming && newState != ClawState.Carrying)
             {
-                ClawAudio.Instance?.SetMotorMoving(false);
+                SetAudioMotor(false);
             }
 
             OnStateChanged?.Invoke(newState);
@@ -363,14 +364,14 @@ namespace ClawMachine.Gameplay
             Vector3 prev = trolley.position;
             trolley.position = Vector3.Lerp(trolley.position, targetTrolleyPos, Time.deltaTime * config.moveDamping);
             bool moving = (trolley.position - prev).sqrMagnitude > 0.00002f;
-            ClawAudio.Instance?.SetMotorMoving(moving);
+            SetAudioMotor(moving);
         }
 
         private void DescendHoist()
         {
             if (hoist == null) return;
 
-            float dropMult = CollectionManager.Instance != null ? CollectionManager.Instance.GetDropSpeedMultiplier() : 1f;
+            float dropMult = GetDropSpeedMultiplier();
             float speed = (config != null ? config.dropSpeed : 1.8f) * dropMult;
             Vector3 pos = hoist.position;
             pos.y -= speed * Time.deltaTime;
@@ -379,7 +380,7 @@ namespace ClawMachine.Gameplay
             {
                 pos.y = targetDropY;
                 hoist.position = pos;
-                ClawAudio.Instance?.PlayDrop();
+                PlayAudioDrop();
                 ClawJuiceEffects.Instance?.PlayDustPuff(hoist.position);
                 SetState(ClawState.Closing);
             }
@@ -407,7 +408,7 @@ namespace ClawMachine.Gameplay
         {
             if (hoist == null || config == null) return;
 
-            float liftMult = CollectionManager.Instance != null ? CollectionManager.Instance.GetDropSpeedMultiplier() : 1f;
+            float liftMult = GetDropSpeedMultiplier();
             Vector3 pos = hoist.position;
             pos.y += (config.liftSpeed * liftMult) * Time.deltaTime;
 
@@ -541,6 +542,48 @@ namespace ClawMachine.Gameplay
                     }
                 }
             }
+        }
+
+        private float GetTrolleySpeedMultiplier()
+        {
+            if (ServiceLocator.TryGet<IEconomyService>(out var econ)) return econ.GetTrolleySpeedMultiplier();
+            return CollectionManager.Instance != null ? CollectionManager.Instance.GetTrolleySpeedMultiplier() : 1f;
+        }
+
+        private float GetGripPowerMultiplier()
+        {
+            if (ServiceLocator.TryGet<IEconomyService>(out var econ)) return econ.GetGripPowerMultiplier();
+            return CollectionManager.Instance != null ? CollectionManager.Instance.GetGripPowerMultiplier() : 1f;
+        }
+
+        private float GetDropSpeedMultiplier()
+        {
+            if (ServiceLocator.TryGet<IEconomyService>(out var econ)) return econ.GetDropSpeedMultiplier();
+            return CollectionManager.Instance != null ? CollectionManager.Instance.GetDropSpeedMultiplier() : 1f;
+        }
+
+        private void PlayAudioGrab()
+        {
+            if (ServiceLocator.TryGet<IAudioService>(out var audio)) audio.PlayGrabSuccess();
+            else ClawAudio.Instance?.PlayGrab();
+        }
+
+        private void PlayAudioClamp()
+        {
+            if (ServiceLocator.TryGet<IAudioService>(out var audio)) audio.PlayClamp();
+            else ClawAudio.Instance?.PlayClamp();
+        }
+
+        private void PlayAudioDrop()
+        {
+            if (ServiceLocator.TryGet<IAudioService>(out var audio)) audio.PlayDropFloor();
+            else ClawAudio.Instance?.PlayDrop();
+        }
+
+        private void SetAudioMotor(bool moving)
+        {
+            if (ServiceLocator.TryGet<IAudioService>(out var audio)) audio.SetMotorMoving(moving);
+            else ClawAudio.Instance?.SetMotorMoving(moving);
         }
     }
 }

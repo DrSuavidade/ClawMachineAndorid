@@ -22,7 +22,7 @@ namespace ClawMachine.Editor
             // 2. Locate scene objects
             GameObject cabinet = GameObject.Find("Cabinet");
             GameObject clawRig = GameObject.Find("ClawRig");
-            GameObject canvas = GameObject.Find("Canvas_ArcadeConsole");
+            GameObject canvas = GameObject.Find("UI Canvas") ?? GameObject.Find("Canvas_ArcadeConsole");
 
             if (cabinet != null)
             {

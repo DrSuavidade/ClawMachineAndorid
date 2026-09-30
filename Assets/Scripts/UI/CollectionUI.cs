@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using ClawMachine.Data;
 using ClawMachine.Gameplay;
+using ClawMachine.Core.Services;
 
 namespace ClawMachine.UI
 {
@@ -60,21 +61,59 @@ namespace ClawMachine.UI
 
         private void SubscribeToManager()
         {
-            if (isSubscribed || CollectionManager.Instance == null) return;
-            CollectionManager.Instance.OnCoinsChanged += HandleCoinsChanged;
-            CollectionManager.Instance.OnPrizeRegistered += HandlePrizeRegistered;
-            CollectionManager.Instance.OnMachineCompleted += HandleMachineCompleted;
-            CollectionManager.Instance.OnCurrentMachineChanged += HandleCurrentMachineChanged;
+            if (isSubscribed) return;
+
+            if (ServiceLocator.TryGet<IEconomyService>(out var econ))
+            {
+                econ.OnCoinsChanged += HandleCoinsChanged;
+            }
+            else if (CollectionManager.Instance != null)
+            {
+                CollectionManager.Instance.OnCoinsChanged += HandleCoinsChanged;
+            }
+
+            if (ServiceLocator.TryGet<ICollectionService>(out var coll))
+            {
+                coll.OnPrizeRegistered += HandlePrizeRegistered;
+                coll.OnMachineCompleted += HandleMachineCompleted;
+                coll.OnCurrentMachineChanged += HandleCurrentMachineChanged;
+            }
+            else if (CollectionManager.Instance != null)
+            {
+                CollectionManager.Instance.OnPrizeRegistered += HandlePrizeRegistered;
+                CollectionManager.Instance.OnMachineCompleted += HandleMachineCompleted;
+                CollectionManager.Instance.OnCurrentMachineChanged += HandleCurrentMachineChanged;
+            }
+
             isSubscribed = true;
         }
 
         private void UnsubscribeFromManager()
         {
-            if (!isSubscribed || CollectionManager.Instance == null) return;
-            CollectionManager.Instance.OnCoinsChanged -= HandleCoinsChanged;
-            CollectionManager.Instance.OnPrizeRegistered -= HandlePrizeRegistered;
-            CollectionManager.Instance.OnMachineCompleted -= HandleMachineCompleted;
-            CollectionManager.Instance.OnCurrentMachineChanged -= HandleCurrentMachineChanged;
+            if (!isSubscribed) return;
+
+            if (ServiceLocator.TryGet<IEconomyService>(out var econ))
+            {
+                econ.OnCoinsChanged -= HandleCoinsChanged;
+            }
+            else if (CollectionManager.Instance != null)
+            {
+                CollectionManager.Instance.OnCoinsChanged -= HandleCoinsChanged;
+            }
+
+            if (ServiceLocator.TryGet<ICollectionService>(out var coll))
+            {
+                coll.OnPrizeRegistered -= HandlePrizeRegistered;
+                coll.OnMachineCompleted -= HandleMachineCompleted;
+                coll.OnCurrentMachineChanged -= HandleCurrentMachineChanged;
+            }
+            else if (CollectionManager.Instance != null)
+            {
+                CollectionManager.Instance.OnPrizeRegistered -= HandlePrizeRegistered;
+                CollectionManager.Instance.OnMachineCompleted -= HandleMachineCompleted;
+                CollectionManager.Instance.OnCurrentMachineChanged -= HandleCurrentMachineChanged;
+            }
+
             isSubscribed = false;
         }
 
@@ -135,21 +174,33 @@ namespace ClawMachine.UI
 
         private void UpdateCoinsUI()
         {
-            if (coinsText != null && CollectionManager.Instance != null)
+            if (coinsText == null) return;
+            int coins = 0;
+            if (ServiceLocator.TryGet<IEconomyService>(out var econ))
             {
-                coinsText.text = $"{CollectionManager.Instance.Coins} 🪙";
+                coins = econ.Coins;
             }
+            else if (CollectionManager.Instance != null)
+            {
+                coins = CollectionManager.Instance.Coins;
+            }
+            coinsText.text = $"{coins} 🪙";
         }
 
         public void RefreshCollectionGrid()
         {
-            if (CollectionManager.Instance == null) return;
+            ICollectionService collService = null;
+            if (!ServiceLocator.TryGet(out collService))
+            {
+                collService = CollectionManager.Instance;
+            }
+            if (collService == null) return;
 
-            MachineDefinition machine = CollectionManager.Instance.CurrentMachine;
+            MachineDefinition machine = collService.CurrentMachine;
             if (machine == null) return;
 
-            int discovered = CollectionManager.Instance.GetDiscoveredCount(machine);
-            bool isOwned = CollectionManager.Instance.IsMachineOwned(machine.machineId);
+            int discovered = collService.GetDiscoveredCount(machine);
+            bool isOwned = collService.IsMachineOwned(machine.machineId);
 
             if (titleText != null)
             {
@@ -178,7 +229,7 @@ namespace ClawMachine.UI
                 Transform cardTr = gridContainer.childCount > i ? gridContainer.GetChild(i) : null;
                 if (cardTr == null) continue;
 
-                bool hasFound = CollectionManager.Instance.IsPrizeDiscovered(def.id);
+                bool hasFound = collService.IsPrizeDiscovered(def.id);
                 UpdateCard(cardTr.gameObject, def, hasFound);
             }
         }

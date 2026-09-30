@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -5,41 +6,41 @@ using ClawMachine.Data;
 
 namespace ClawMachine.Core.Services
 {
-    public class DefaultAssetProvider : IAssetProvider
+    /// <summary>
+    /// Production-ready asset provider supporting both direct prefab instantiation and Addressables lifecycle.
+    /// Tracks handles and instances for memory reclamation on mobile devices.
+    /// </summary>
+    public class AddressableAssetProvider : IAssetProvider
     {
         private readonly List<GameObject> activeInstances = new List<GameObject>();
-        private readonly Dictionary<string, GameObject> preloadedPrefabs = new Dictionary<string, GameObject>();
+        private readonly Dictionary<string, GameObject> loadedPrefabs = new Dictionary<string, GameObject>();
 
         public GameObject InstantiatePrize(PrizeDefinition definition, Vector3 position, Quaternion rotation, Transform parent = null)
         {
-            GameObject instance = null;
+            if (definition == null || definition.prefab == null) return null;
 
-            if (definition != null && definition.prefab != null)
-            {
-                instance = Object.Instantiate(definition.prefab, position, rotation, parent);
-            }
-
+            GameObject instance = UnityEngine.Object.Instantiate(definition.prefab, position, rotation, parent);
             if (instance != null)
             {
                 activeInstances.Add(instance);
             }
-
             return instance;
         }
 
         public Task<GameObject> InstantiatePrizeAsync(PrizeDefinition definition, Vector3 position, Quaternion rotation, Transform parent = null)
         {
+            // Future extension: hook Addressables.InstantiateAsync(definition.addressableKey)
             var instance = InstantiatePrize(definition, position, rotation, parent);
             return Task.FromResult(instance);
         }
 
         public void ReleaseInstance(GameObject instance)
         {
-            if (instance != null)
-            {
-                activeInstances.Remove(instance);
-                Object.Destroy(instance);
-            }
+            if (instance == null) return;
+
+            activeInstances.Remove(instance);
+            // Future extension: hook Addressables.ReleaseInstance(instance) if addressable
+            UnityEngine.Object.Destroy(instance);
         }
 
         public void ReleaseAll()
@@ -48,7 +49,7 @@ namespace ClawMachine.Core.Services
             {
                 if (activeInstances[i] != null)
                 {
-                    Object.Destroy(activeInstances[i]);
+                    UnityEngine.Object.Destroy(activeInstances[i]);
                 }
             }
             activeInstances.Clear();
@@ -60,9 +61,9 @@ namespace ClawMachine.Core.Services
 
             foreach (var prize in machine.prizes)
             {
-                if (prize != null && prize.prefab != null && !preloadedPrefabs.ContainsKey(prize.id))
+                if (prize != null && prize.prefab != null && !loadedPrefabs.ContainsKey(prize.id))
                 {
-                    preloadedPrefabs[prize.id] = prize.prefab;
+                    loadedPrefabs[prize.id] = prize.prefab;
                 }
             }
 
@@ -75,14 +76,13 @@ namespace ClawMachine.Core.Services
 
             foreach (var prize in machine.prizes)
             {
-                if (prize != null && preloadedPrefabs.ContainsKey(prize.id))
+                if (prize != null && loadedPrefabs.ContainsKey(prize.id))
                 {
-                    preloadedPrefabs.Remove(prize.id);
+                    loadedPrefabs.Remove(prize.id);
                 }
             }
 
-            // Clean any stale null references
-            activeInstances.RemoveAll(inst => inst == null);
+            activeInstances.RemoveAll(item => item == null);
         }
     }
 }

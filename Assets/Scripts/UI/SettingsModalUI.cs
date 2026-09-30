@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using ClawMachine.Gameplay;
+using ClawMachine.Core.Services;
 
 namespace ClawMachine.UI
 {
@@ -22,20 +23,10 @@ namespace ClawMachine.UI
         [SerializeField] private Button resetButton;
         [SerializeField] private Text resetText;
 
-        private bool sfxEnabled = true;
-        private bool hapticsEnabled = true;
         private bool confirmReset = false;
-
-        private const string PREF_SFX = "Claw_SFX_Enabled";
-        private const string PREF_HAPTICS = "Claw_Haptics_Enabled";
 
         private void Awake()
         {
-            sfxEnabled = PlayerPrefs.GetInt(PREF_SFX, 1) == 1;
-            hapticsEnabled = PlayerPrefs.GetInt(PREF_HAPTICS, 1) == 1;
-
-            ApplyAudioSettings();
-
             if (toggleButton != null) toggleButton.onClick.AddListener(OpenModal);
             if (closeButton != null) closeButton.onClick.AddListener(CloseModal);
 
@@ -62,24 +53,33 @@ namespace ClawMachine.UI
 
         private void ToggleSFX()
         {
-            sfxEnabled = !sfxEnabled;
-            PlayerPrefs.SetInt(PREF_SFX, sfxEnabled ? 1 : 0);
-            PlayerPrefs.Save();
-            ApplyAudioSettings();
+            if (ServiceLocator.TryGet<IAudioService>(out var audioService))
+            {
+                audioService.IsSFXEnabled = !audioService.IsSFXEnabled;
+            }
+            else
+            {
+                bool current = PlayerPrefs.GetInt("Claw_SFX_Enabled", 1) == 1;
+                PlayerPrefs.SetInt("Claw_SFX_Enabled", current ? 0 : 1);
+                PlayerPrefs.Save();
+                AudioListener.volume = current ? 0f : 1f;
+            }
             UpdateDisplay();
         }
 
         private void ToggleHaptics()
         {
-            hapticsEnabled = !hapticsEnabled;
-            PlayerPrefs.SetInt(PREF_HAPTICS, hapticsEnabled ? 1 : 0);
-            PlayerPrefs.Save();
+            if (ServiceLocator.TryGet<IAudioService>(out var audioService))
+            {
+                audioService.IsHapticsEnabled = !audioService.IsHapticsEnabled;
+            }
+            else
+            {
+                bool current = PlayerPrefs.GetInt("Claw_Haptics_Enabled", 1) == 1;
+                PlayerPrefs.SetInt("Claw_Haptics_Enabled", current ? 0 : 1);
+                PlayerPrefs.Save();
+            }
             UpdateDisplay();
-        }
-
-        private void ApplyAudioSettings()
-        {
-            AudioListener.volume = sfxEnabled ? 1.0f : 0.0f;
         }
 
         private void HandleResetClicked()
@@ -94,10 +94,15 @@ namespace ClawMachine.UI
             else
             {
                 confirmReset = false;
-                if (CollectionManager.Instance != null)
+                if (ServiceLocator.TryGet<ICollectionService>(out var collectionService))
+                {
+                    collectionService.ResetProgress();
+                }
+                else if (CollectionManager.Instance != null)
                 {
                     CollectionManager.Instance.ResetProgress();
                 }
+
                 if (resetText != null) resetText.text = "RESET COMPLETE!";
                 var img = resetButton != null ? resetButton.GetComponent<Image>() : null;
                 if (img != null) img.color = new Color(0.35f, 0.35f, 0.40f);
@@ -106,16 +111,30 @@ namespace ClawMachine.UI
 
         private void UpdateDisplay()
         {
+            bool sfxOn = true;
+            bool hapticsOn = true;
+
+            if (ServiceLocator.TryGet<IAudioService>(out var audioService))
+            {
+                sfxOn = audioService.IsSFXEnabled;
+                hapticsOn = audioService.IsHapticsEnabled;
+            }
+            else
+            {
+                sfxOn = PlayerPrefs.GetInt("Claw_SFX_Enabled", 1) == 1;
+                hapticsOn = PlayerPrefs.GetInt("Claw_Haptics_Enabled", 1) == 1;
+            }
+
             if (sfxStatusText != null)
             {
-                sfxStatusText.text = sfxEnabled ? "SFX: ON" : "SFX: MUTED";
-                sfxStatusText.color = sfxEnabled ? new Color(0.3f, 0.9f, 0.45f) : new Color(0.7f, 0.7f, 0.75f);
+                sfxStatusText.text = sfxOn ? "SFX: ON" : "SFX: MUTED";
+                sfxStatusText.color = sfxOn ? new Color(0.3f, 0.9f, 0.45f) : new Color(0.7f, 0.7f, 0.75f);
             }
 
             if (hapticsStatusText != null)
             {
-                hapticsStatusText.text = hapticsEnabled ? "VIBRATION: ON" : "VIBRATION: OFF";
-                hapticsStatusText.color = hapticsEnabled ? new Color(0.3f, 0.9f, 0.45f) : new Color(0.7f, 0.7f, 0.75f);
+                hapticsStatusText.text = hapticsOn ? "VIBRATION: ON" : "VIBRATION: OFF";
+                hapticsStatusText.color = hapticsOn ? new Color(0.3f, 0.9f, 0.45f) : new Color(0.7f, 0.7f, 0.75f);
             }
         }
     }

@@ -86,6 +86,10 @@ namespace ClawMachine.Gameplay
                 saveService = new JsonFileSaveService();
             }
 
+            ServiceLocator.Register<IEconomyService>(this);
+            ServiceLocator.Register<ICollectionService>(this);
+            ServiceLocator.Register<ISaveService>(saveService);
+
             if (catalog == null)
             {
                 Debug.LogWarning("[CollectionManager] MachineCatalog not assigned! Please assign it in inspector.");
@@ -101,6 +105,17 @@ namespace ClawMachine.Gameplay
             }
 
             LoadData();
+        }
+
+        private void OnDestroy()
+        {
+            if (instance == this)
+            {
+                ServiceLocator.Unregister<IEconomyService>();
+                ServiceLocator.Unregister<ICollectionService>();
+                ServiceLocator.Unregister<ISaveService>();
+                instance = null;
+            }
         }
 
         private void Update()

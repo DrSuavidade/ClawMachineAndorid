@@ -1,8 +1,9 @@
 using UnityEngine;
+using ClawMachine.Core.Services;
 
 namespace ClawMachine.Gameplay
 {
-    public class ClawAudio : MonoBehaviour
+    public class ClawAudio : MonoBehaviour, IAudioService
     {
         private static ClawAudio instance;
         public static ClawAudio Instance => instance;
@@ -21,6 +22,69 @@ namespace ClawMachine.Gameplay
         private float shakeTime;
         private float shakeMag;
 
+        // Structured Audio & Channel Settings
+        private bool isSFXEnabled = true;
+        private bool isHapticsEnabled = true;
+        private float masterVolume = 1.0f;
+        private float sfxVolume = 1.0f;
+        private float motorVolume = 0.22f;
+
+        private const string PREF_SFX = "Claw_SFX_Enabled";
+        private const string PREF_HAPTICS = "Claw_Haptics_Enabled";
+
+        public bool IsSFXEnabled
+        {
+            get => isSFXEnabled;
+            set
+            {
+                isSFXEnabled = value;
+                PlayerPrefs.SetInt(PREF_SFX, isSFXEnabled ? 1 : 0);
+                PlayerPrefs.Save();
+                UpdateChannelVolumes();
+            }
+        }
+
+        public bool IsHapticsEnabled
+        {
+            get => isHapticsEnabled;
+            set
+            {
+                isHapticsEnabled = value;
+                PlayerPrefs.SetInt(PREF_HAPTICS, isHapticsEnabled ? 1 : 0);
+                PlayerPrefs.Save();
+            }
+        }
+
+        public float MasterVolume
+        {
+            get => masterVolume;
+            set
+            {
+                masterVolume = Mathf.Clamp01(value);
+                UpdateChannelVolumes();
+            }
+        }
+
+        public float SFXVolume
+        {
+            get => sfxVolume;
+            set
+            {
+                sfxVolume = Mathf.Clamp01(value);
+                UpdateChannelVolumes();
+            }
+        }
+
+        public float MotorVolume
+        {
+            get => motorVolume;
+            set
+            {
+                motorVolume = Mathf.Clamp01(value);
+                UpdateChannelVolumes();
+            }
+        }
+
         private void Awake()
         {
             if (instance != null && instance != this)
@@ -29,6 +93,10 @@ namespace ClawMachine.Gameplay
                 return;
             }
             instance = this;
+            ServiceLocator.Register<IAudioService>(this);
+
+            isSFXEnabled = PlayerPrefs.GetInt(PREF_SFX, 1) == 1;
+            isHapticsEnabled = PlayerPrefs.GetInt(PREF_HAPTICS, 1) == 1;
 
             sfxSource = gameObject.AddComponent<AudioSource>();
             sfxSource.playOnAwake = false;
@@ -36,17 +104,36 @@ namespace ClawMachine.Gameplay
             motorSource = gameObject.AddComponent<AudioSource>();
             motorSource.playOnAwake = false;
             motorSource.loop = true;
-            motorSource.volume = 0.22f;
+
+            UpdateChannelVolumes();
 
             mainCam = Camera.main;
 
             GenerateClips();
         }
 
+        private void OnDestroy()
+        {
+            if (instance == this)
+            {
+                ServiceLocator.Unregister<IAudioService>();
+                instance = null;
+            }
+        }
+
+        private void UpdateChannelVolumes()
+        {
+            float effectiveSFX = isSFXEnabled ? (masterVolume * sfxVolume) : 0f;
+            float effectiveMotor = isSFXEnabled ? (masterVolume * motorVolume) : 0f;
+
+            if (sfxSource != null) sfxSource.volume = effectiveSFX;
+            if (motorSource != null) motorSource.volume = effectiveMotor;
+        }
+
         private void GenerateClips()
         {
             motorClip = CreateMotorTone(44100, 0.4f, 105f);
-            motorSource.clip = motorClip;
+            if (motorSource != null) motorSource.clip = motorClip;
 
             clampClip = CreateMechanicalClick(44100, 0.12f);
             grabClip = CreateChord(44100, 0.25f, new float[] { 523.25f, 659.25f, 783.99f }); // C Major
@@ -54,9 +141,20 @@ namespace ClawMachine.Gameplay
             winClip = CreateVictoryArpeggio(44100, 0.55f);
         }
 
+        public void PlaySFX(AudioClip clip, float volume = 1f)
+        {
+            if (!isSFXEnabled || sfxSource == null || clip == null) return;
+            sfxSource.PlayOneShot(clip, volume * sfxVolume);
+        }
+
         public void SetMotorMoving(bool moving)
         {
-            if (motorSource == null) return;
+            if (motorSource == null || !isSFXEnabled)
+            {
+                if (motorSource != null && motorSource.isPlaying) motorSource.Stop();
+                return;
+            }
+
             if (moving && !motorSource.isPlaying)
             {
                 motorSource.Play();
@@ -69,52 +167,68 @@ namespace ClawMachine.Gameplay
 
         public void PlayClamp()
         {
-            if (sfxSource != null && clampClip != null)
+            if (isSFXEnabled && sfxSource != null && clampClip != null)
             {
-                sfxSource.PlayOneShot(clampClip, 0.65f);
+                sfxSource.PlayOneShot(clampClip, 0.65f * sfxVolume);
             }
-            TriggerShake(0.08f, 0.03f);
+            TriggerCameraShake(0.08f, 0.03f);
         }
 
         public void PlayGrab()
         {
-            if (sfxSource != null && grabClip != null)
+            if (isSFXEnabled && sfxSource != null && grabClip != null)
             {
-                sfxSource.PlayOneShot(grabClip, 0.8f);
+                sfxSource.PlayOneShot(grabClip, 0.8f * sfxVolume);
             }
-            TriggerShake(0.12f, 0.05f);
-            TryVibrate();
+            TriggerCameraShake(0.12f, 0.05f);
+            TriggerHapticLight();
         }
+
+        public void PlayGrabSuccess() => PlayGrab();
 
         public void PlayDrop()
         {
-            if (sfxSource != null && dropClip != null)
+            if (isSFXEnabled && sfxSource != null && dropClip != null)
             {
-                sfxSource.PlayOneShot(dropClip, 0.7f);
+                sfxSource.PlayOneShot(dropClip, 0.7f * sfxVolume);
             }
-            TriggerShake(0.10f, 0.04f);
+            TriggerCameraShake(0.10f, 0.04f);
         }
+
+        public void PlayDropFloor() => PlayDrop();
 
         public void PlayWin()
         {
-            if (sfxSource != null && winClip != null)
+            if (isSFXEnabled && sfxSource != null && winClip != null)
             {
-                sfxSource.PlayOneShot(winClip, 1.0f);
+                sfxSource.PlayOneShot(winClip, 1.0f * sfxVolume);
             }
-            TriggerShake(0.25f, 0.08f);
-            TryVibrate();
+            TriggerCameraShake(0.25f, 0.08f);
+            TriggerHapticSuccess();
         }
 
-        public void TriggerShake(float duration, float magnitude)
+        public void TriggerCameraShake(float duration = 0.2f, float magnitude = 0.04f)
         {
             shakeTime = duration;
             shakeMag = magnitude;
         }
 
-        private void TryVibrate()
+        public void TriggerShake(float duration, float magnitude) => TriggerCameraShake(duration, magnitude);
+
+        public void TriggerHapticLight()
         {
 #if UNITY_ANDROID || UNITY_IOS
-            if (PlayerPrefs.GetInt("Claw_Haptics_Enabled", 1) == 1)
+            if (isHapticsEnabled)
+            {
+                Handheld.Vibrate();
+            }
+#endif
+        }
+
+        public void TriggerHapticSuccess()
+        {
+#if UNITY_ANDROID || UNITY_IOS
+            if (isHapticsEnabled)
             {
                 Handheld.Vibrate();
             }
@@ -123,7 +237,11 @@ namespace ClawMachine.Gameplay
 
         private void LateUpdate()
         {
-            if (mainCam == null) return;
+            if (mainCam == null)
+            {
+                mainCam = Camera.main;
+                if (mainCam == null) return;
+            }
 
             // Remove last frame's shake offset first
             mainCam.transform.position -= shakeOffset;

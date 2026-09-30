@@ -598,7 +598,18 @@ namespace ClawMachine.Editor
             CanvasScaler scaler = canvasObj.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1080, 1920);
+            scaler.matchWidthOrHeight = 0.5f;
             canvasObj.AddComponent<GraphicRaycaster>();
+
+            // Safe Area Container (Mobile Notches & Navigation Cutout Protection)
+            GameObject safeAreaObj = new GameObject("SafeAreaContainer", typeof(RectTransform));
+            safeAreaObj.transform.SetParent(canvasObj.transform, false);
+            RectTransform saRect = safeAreaObj.GetComponent<RectTransform>();
+            saRect.anchorMin = Vector2.zero;
+            saRect.anchorMax = Vector2.one;
+            saRect.offsetMin = Vector2.zero;
+            saRect.offsetMax = Vector2.zero;
+            safeAreaObj.AddComponent<SafeArea>();
 
             // EventSystem
             GameObject eventSystem = new GameObject("EventSystem");
@@ -622,7 +633,7 @@ namespace ClawMachine.Editor
 
             // 2. Slim Skeuomorphic Arcade Console Deck (Physical Machine Lower Panel - 16% screen height)
             GameObject consoleDeck = new GameObject("ConsoleDeck");
-            consoleDeck.transform.parent = canvasObj.transform;
+            consoleDeck.transform.parent = safeAreaObj.transform;
             RectTransform deckRect = consoleDeck.AddComponent<RectTransform>();
             deckRect.anchorMin = new Vector2(0f, 0f);
             deckRect.anchorMax = new Vector2(1f, 0.16f);
@@ -880,7 +891,7 @@ namespace ClawMachine.Editor
 
             // Status Text (Top)
             GameObject statusObj = new GameObject("StatusText");
-            statusObj.transform.parent = canvasObj.transform;
+            statusObj.transform.parent = safeAreaObj.transform;
             RectTransform statusRect = statusObj.AddComponent<RectTransform>();
             statusRect.anchorMin = new Vector2(0.05f, 0.88f);
             statusRect.anchorMax = new Vector2(0.95f, 0.93f);
@@ -898,7 +909,7 @@ namespace ClawMachine.Editor
 
             // Instructions text
             GameObject hintObj = new GameObject("HintText");
-            hintObj.transform.parent = canvasObj.transform;
+            hintObj.transform.parent = safeAreaObj.transform;
             RectTransform hintRect = hintObj.AddComponent<RectTransform>();
             hintRect.anchorMin = new Vector2(0.05f, 0.84f);
             hintRect.anchorMax = new Vector2(0.95f, 0.88f);
@@ -914,7 +925,7 @@ namespace ClawMachine.Editor
 
             // Wins Text
             GameObject winsObj = new GameObject("WinsText");
-            winsObj.transform.parent = canvasObj.transform;
+            winsObj.transform.parent = safeAreaObj.transform;
             RectTransform winsRect = winsObj.AddComponent<RectTransform>();
             winsRect.anchorMin = new Vector2(0.05f, 0.78f);
             winsRect.anchorMax = new Vector2(0.95f, 0.84f);
@@ -931,7 +942,7 @@ namespace ClawMachine.Editor
 
             // 3. Unlock Modal
             GameObject unlockModalObj = new GameObject("UnlockModal");
-            unlockModalObj.transform.parent = canvasObj.transform;
+            unlockModalObj.transform.parent = safeAreaObj.transform;
             RectTransform umRect = unlockModalObj.AddComponent<RectTransform>();
             umRect.anchorMin = new Vector2(0.08f, 0.32f);
             umRect.anchorMax = new Vector2(0.92f, 0.68f);
@@ -1061,12 +1072,12 @@ namespace ClawMachine.Editor
             SetSerializedProperty(consoleUI, "unlockCancelButton", uclBtn);
 
             // 4. Skeuomorphic Machine Marquee Canopy (Top Header with 3 buttons)
-            BuildMarqueeHeader(canvasObj, out Button collBtn, out Button upgBtn, out Button setBtn, out Text coinsText);
+            BuildMarqueeHeader(safeAreaObj, out Button collBtn, out Button upgBtn, out Button setBtn, out Text coinsText);
 
             // 5. Modals
-            BuildCollectionUI(canvasObj, collBtn, coinsText);
-            BuildUpgradesUI(canvasObj, upgBtn, coinsText);
-            BuildSettingsUI(canvasObj, setBtn);
+            BuildCollectionUI(safeAreaObj, collBtn, coinsText);
+            BuildUpgradesUI(safeAreaObj, upgBtn, coinsText);
+            BuildSettingsUI(safeAreaObj, setBtn);
         }
 
         private static void CreateDeckRivet(Transform parent, Vector2 anchor)

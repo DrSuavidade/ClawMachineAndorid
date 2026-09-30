@@ -30,7 +30,11 @@ namespace ClawMachine.Gameplay
         {
             if (assetProvider == null)
             {
-                assetProvider = new DefaultAssetProvider();
+                if (!ServiceLocator.TryGet<IAssetProvider>(out assetProvider))
+                {
+                    assetProvider = new DefaultAssetProvider();
+                    ServiceLocator.Register<IAssetProvider>(assetProvider);
+                }
             }
             runtimePhysMat = new PhysicsMaterial("RuntimeToyMat")
             {
@@ -67,10 +71,10 @@ namespace ClawMachine.Gameplay
                 {
                     prizePool = machineDefinition.prizes;
                 }
-                else if (CollectionManager.Instance != null && CollectionManager.Instance.CurrentMachine != null && CollectionManager.Instance.CurrentMachine.prizes != null)
+                else if (ServiceLocator.TryGet<ICollectionService>(out var collService) && collService.CurrentMachine != null && collService.CurrentMachine.prizes != null)
                 {
-                    prizePool = CollectionManager.Instance.CurrentMachine.prizes;
-                    machineDefinition = CollectionManager.Instance.CurrentMachine;
+                    prizePool = collService.CurrentMachine.prizes;
+                    machineDefinition = collService.CurrentMachine;
                 }
                 else
                 {

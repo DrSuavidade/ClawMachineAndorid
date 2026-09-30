@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using ClawMachine.Data;
+using ClawMachine.Core.Services;
 
 namespace ClawMachine.Gameplay
 {
@@ -49,7 +50,11 @@ namespace ClawMachine.Gameplay
             }
 
             // Sync with collection manager
-            if (CollectionManager.Instance != null)
+            if (ServiceLocator.TryGet<ICollectionService>(out var collectionService))
+            {
+                collectionService.SetCurrentMachine(machine);
+            }
+            else if (CollectionManager.Instance != null)
             {
                 CollectionManager.Instance.SetCurrentMachine(machine);
             }
@@ -134,7 +139,16 @@ namespace ClawMachine.Gameplay
             if (claw == null) return;
             if (claw.CurrentState == ClawState.Aiming)
             {
-                if (CollectionManager.Instance != null)
+                if (ServiceLocator.TryGet<IEconomyService>(out var econService))
+                {
+                    var currentMach = ServiceLocator.TryGet<ICollectionService>(out var col) ? col.CurrentMachine : (CollectionManager.Instance != null ? CollectionManager.Instance.CurrentMachine : null);
+                    if (!econService.TryDeductPlayCost(currentMach))
+                    {
+                        Debug.Log("[MachineController] Not enough coins to play!");
+                        return;
+                    }
+                }
+                else if (CollectionManager.Instance != null)
                 {
                     if (!CollectionManager.Instance.TryDeductPlayCost(CollectionManager.Instance.CurrentMachine))
                     {
@@ -174,11 +188,23 @@ namespace ClawMachine.Gameplay
             successfulGrabs++;
             OnPrizeWon?.Invoke(prize);
 
-            ClawAudio.Instance?.PlayWin();
+            if (ServiceLocator.TryGet<IAudioService>(out var audioService))
+            {
+                audioService.PlayWin();
+            }
+            else
+            {
+                ClawAudio.Instance?.PlayWin();
+            }
+
             Vector3 winPos = chuteDetector != null ? chuteDetector.transform.position : (prize != null ? prize.transform.position : Vector3.zero);
             ClawJuiceEffects.Instance?.PlayWinCelebration(winPos);
 
-            if (CollectionManager.Instance != null)
+            if (ServiceLocator.TryGet<ICollectionService>(out var colService))
+            {
+                colService.RegisterCollectedPrize(prize);
+            }
+            else if (CollectionManager.Instance != null)
             {
                 CollectionManager.Instance.RegisterCollectedPrize(prize);
             }
