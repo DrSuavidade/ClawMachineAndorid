@@ -87,6 +87,7 @@ namespace ClawMachine.Editor
             MachineController machineController = machineManager.AddComponent<MachineController>();
             PrizeSpawner spawner = machineManager.AddComponent<PrizeSpawner>();
             machineManager.AddComponent<ClawAudio>();
+            machineManager.AddComponent<RetentionService>();
 
             CollectionManager collectionMgr = machineManager.AddComponent<CollectionManager>();
             SetSerializedProperty(collectionMgr, "catalog", catalog);

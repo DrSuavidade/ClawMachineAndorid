@@ -39,6 +39,11 @@ namespace ClawMachine.Gameplay
         public List<string> ownedMachineIds = new List<string>();
         public List<MachineUpgradeData> machineUpgrades = new List<MachineUpgradeData>();
         public List<PrizeInventoryEntry> inventory = new List<PrizeInventoryEntry>();
+        // Phase 5 Retention Data
+        public string lastDailyClaimUtc = "";
+        public int dailyStreak = 0;
+        public string lastQuestDateUtc = "";
+        public List<DailyQuestData> activeQuests = new List<DailyQuestData>();
         // Legacy global fields — kept for v1 migration only
         public int trolleySpeedLevel = 1;
         public int gripPowerLevel = 1;
@@ -60,6 +65,9 @@ namespace ClawMachine.Gameplay
         [SerializeField] private PlayerCollectionData data = new PlayerCollectionData();
         [SerializeField] private MachineCatalog catalog;
         [SerializeField] private MachineDefinition currentMachine;
+
+        public PlayerCollectionData Data => data;
+        public void ForceSave() => Save();
 
         public int Coins => data.coins;
         public MachineCatalog Catalog => catalog;

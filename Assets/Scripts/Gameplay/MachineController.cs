@@ -165,6 +165,10 @@ namespace ClawMachine.Gameplay
                 }
 
                 totalAttempts++;
+                if (ServiceLocator.TryGet<IRetentionService>(out var retService))
+                {
+                    retService.RecordDrop();
+                }
                 if (chuteDetector != null)
                 {
                     chuteDetector.ResetAttempt();
@@ -194,6 +198,11 @@ namespace ClawMachine.Gameplay
         {
             successfulGrabs++;
             OnPrizeWon?.Invoke(prize);
+
+            if (ServiceLocator.TryGet<IRetentionService>(out var retService))
+            {
+                retService.RecordPrizeWon(currentMachine != null ? currentMachine.machineId : "", prize != null ? (int)prize.Rarity : 0);
+            }
 
             if (ServiceLocator.TryGet<IAudioService>(out var audioService))
             {
