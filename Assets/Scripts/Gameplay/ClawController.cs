@@ -25,6 +25,9 @@ namespace ClawMachine.Gameplay
         [SerializeField] private float floorSurfaceY = 0.1f;
         [SerializeField] private float tipFloorClearance = 0.03f; // 3cm above floor
 
+        [Header("Environment")]
+        [SerializeField] private Transform cabinetRoot;
+
         public ClawState CurrentState { get; private set; } = ClawState.Aiming;
         public ClawConfiguration Config => config;
         public ClawGripAnchor GripAnchor => gripAnchor;
@@ -497,10 +500,15 @@ namespace ClawMachine.Gameplay
             Collider[] clawCols = GetComponentsInChildren<Collider>(true);
 
             // Ignore all non-prize colliders in Cabinet (walls, glass, floor, chute dividers)
-            GameObject cabinet = GameObject.Find("Cabinet");
-            if (cabinet != null)
+            if (cabinetRoot == null)
             {
-                Collider[] envCols = cabinet.GetComponentsInChildren<Collider>(true);
+                GameObject cabinet = GameObject.Find("Cabinet");
+                if (cabinet != null) cabinetRoot = cabinet.transform;
+            }
+
+            if (cabinetRoot != null)
+            {
+                Collider[] envCols = cabinetRoot.GetComponentsInChildren<Collider>(true);
                 for (int c = 0; c < clawCols.Length; c++)
                 {
                     for (int e = 0; e < envCols.Length; e++)

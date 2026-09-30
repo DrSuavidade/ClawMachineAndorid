@@ -118,7 +118,10 @@ namespace ClawMachine.Gameplay
         private void TryVibrate()
         {
 #if UNITY_ANDROID || UNITY_IOS
-            Handheld.Vibrate();
+            if (PlayerPrefs.GetInt("Claw_Haptics_Enabled", 1) == 1)
+            {
+                Handheld.Vibrate();
+            }
 #endif
         }
 

@@ -13,12 +13,24 @@ namespace ClawMachine.Gameplay
     }
 
     [Serializable]
+    public class MachineUpgradeData
+    {
+        public string machineId;
+        public int trolleySpeedLevel = 1;
+        public int gripPowerLevel = 1;
+        public int dropPrecisionLevel = 1;
+    }
+
+    [Serializable]
     public class PlayerCollectionData
     {
+        public int saveVersion = 2;
         public int coins = 100;
         public List<string> discoveredPrizeIds = new List<string>();
         public List<string> unlockedMachineIds = new List<string> { "toy_box" };
         public List<string> ownedMachineIds = new List<string>();
+        public List<MachineUpgradeData> machineUpgrades = new List<MachineUpgradeData>();
+        // Legacy global fields — kept for v1 migration only
         public int trolleySpeedLevel = 1;
         public int gripPowerLevel = 1;
         public int dropSpeedLevel = 1;
@@ -28,6 +40,7 @@ namespace ClawMachine.Gameplay
     public class CollectionManager : MonoBehaviour
     {
         private const string SAVE_KEY = "ProjectClaw_SaveData";
+        private const int CURRENT_SAVE_VERSION = 2;
 
         private static CollectionManager instance;
         public static CollectionManager Instance => instance;
@@ -228,7 +241,7 @@ namespace ClawMachine.Gameplay
                 if (currentMachine != null && !IsMachineOwned(currentMachine.machineId))
                 {
                     int totalDiscovered = GetDiscoveredCount(currentMachine);
-                    if (totalDiscovered >= 9)
+                    if (totalDiscovered >= currentMachine.prizes.Length)
                     {
                         data.ownedMachineIds.Add(currentMachine.machineId);
                         Debug.Log($"[CollectionManager] ★ MACHINE OWNED! {currentMachine.displayName} collection complete! ★");
@@ -249,6 +262,7 @@ namespace ClawMachine.Gameplay
 
         public void SaveData()
         {
+            data.saveVersion = CURRENT_SAVE_VERSION;
             data.lastPassiveIncomeTimestamp = DateTime.UtcNow.Ticks;
             string json = JsonUtility.ToJson(data);
             PlayerPrefs.SetString(SAVE_KEY, json);
@@ -295,15 +309,64 @@ namespace ClawMachine.Gameplay
                     Debug.Log($"[CollectionManager] Welcome back! Earned {offlineCoins} coins while offline ({minutes}m).");
                 }
             }
+
+            MigrateSaveData();
         }
+
+        private void MigrateSaveData()
+        {
+            if (data.saveVersion < 2)
+            {
+                // v1 → v2: Migrate global upgrades to first machine (toy_box)
+                if (data.machineUpgrades == null)
+                    data.machineUpgrades = new List<MachineUpgradeData>();
+
+                data.machineUpgrades.Add(new MachineUpgradeData
+                {
+                    machineId = "toy_box",
+                    trolleySpeedLevel = data.trolleySpeedLevel,
+                    gripPowerLevel = data.gripPowerLevel,
+                    dropPrecisionLevel = data.dropSpeedLevel
+                });
+                data.saveVersion = 2;
+                Debug.Log("[CollectionManager] Migrated save data v1 → v2 (per-machine upgrades)");
+            }
+
+            if (data.saveVersion < CURRENT_SAVE_VERSION)
+            {
+                data.saveVersion = CURRENT_SAVE_VERSION;
+                SaveData();
+            }
+        }
+
+        private MachineUpgradeData GetOrCreateMachineUpgrades(string machineId)
+        {
+            if (data.machineUpgrades == null)
+                data.machineUpgrades = new List<MachineUpgradeData>();
+
+            for (int i = 0; i < data.machineUpgrades.Count; i++)
+            {
+                if (data.machineUpgrades[i].machineId == machineId)
+                    return data.machineUpgrades[i];
+            }
+
+            var entry = new MachineUpgradeData { machineId = machineId };
+            data.machineUpgrades.Add(entry);
+            return entry;
+        }
+
+        private MachineUpgradeData CurrentMachineUpgrades =>
+            currentMachine != null ? GetOrCreateMachineUpgrades(currentMachine.machineId) : null;
 
         public int GetUpgradeLevel(UpgradeType type)
         {
+            var upg = CurrentMachineUpgrades;
+            if (upg == null) return 1;
             return type switch
             {
-                UpgradeType.TrolleySpeed => Mathf.Clamp(data.trolleySpeedLevel, 1, 5),
-                UpgradeType.GripPower => Mathf.Clamp(data.gripPowerLevel, 1, 5),
-                UpgradeType.DropPrecision => Mathf.Clamp(data.dropSpeedLevel, 1, 5),
+                UpgradeType.TrolleySpeed => Mathf.Clamp(upg.trolleySpeedLevel, 1, 5),
+                UpgradeType.GripPower => Mathf.Clamp(upg.gripPowerLevel, 1, 5),
+                UpgradeType.DropPrecision => Mathf.Clamp(upg.dropPrecisionLevel, 1, 5),
                 _ => 1
             };
         }
@@ -327,22 +390,25 @@ namespace ClawMachine.Gameplay
             int cost = GetUpgradeCost(type);
             if (cost < 0 || data.coins < cost) return false;
 
+            var upg = CurrentMachineUpgrades;
+            if (upg == null) return false;
+
             data.coins -= cost;
             int newLvl = 1;
 
             switch (type)
             {
                 case UpgradeType.TrolleySpeed:
-                    data.trolleySpeedLevel = Mathf.Min(5, data.trolleySpeedLevel + 1);
-                    newLvl = data.trolleySpeedLevel;
+                    upg.trolleySpeedLevel = Mathf.Min(5, upg.trolleySpeedLevel + 1);
+                    newLvl = upg.trolleySpeedLevel;
                     break;
                 case UpgradeType.GripPower:
-                    data.gripPowerLevel = Mathf.Min(5, data.gripPowerLevel + 1);
-                    newLvl = data.gripPowerLevel;
+                    upg.gripPowerLevel = Mathf.Min(5, upg.gripPowerLevel + 1);
+                    newLvl = upg.gripPowerLevel;
                     break;
                 case UpgradeType.DropPrecision:
-                    data.dropSpeedLevel = Mathf.Min(5, data.dropSpeedLevel + 1);
-                    newLvl = data.dropSpeedLevel;
+                    upg.dropPrecisionLevel = Mathf.Min(5, upg.dropPrecisionLevel + 1);
+                    newLvl = upg.dropPrecisionLevel;
                     break;
             }
 

@@ -157,8 +157,9 @@ namespace ClawMachine.UI
             }
             if (progressText != null)
             {
-                int pct = (int)((discovered / 9f) * 100f);
-                progressText.text = $"COLLECTION: {discovered} / 9 ({pct}%)";
+                int total = machine.prizes != null ? machine.prizes.Length : 9;
+                int pct = total > 0 ? (int)((discovered / (float)total) * 100f) : 0;
+                progressText.text = $"COLLECTION: {discovered} / {total} ({pct}%)";
             }
             if (ownershipText != null)
             {
