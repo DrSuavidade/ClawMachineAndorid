@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b231937ac317fcd428d6cb526a708495, type: 3}
+  m_Name: retro_crt
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.Data.PrizeDefinition
+  id: retro_crt
+  displayName: Retro CRT Monitor
+  rarity: 1
+  prefab: {fileID: 6506871936607304119, guid: e219c1436266bf64aacd6d417cdc443a, type: 3}
+  mass: 0.65
+  bounciness: 0.1
+  dynamicFriction: 0.6
+  staticFriction: 0.7
+  duplicateCoinValue: 80
+  sellMultiplier: 1
+  essenceMultiplier: 1

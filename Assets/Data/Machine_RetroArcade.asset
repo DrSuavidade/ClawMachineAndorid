@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e43e2d75f55b32447924fcd3fe31ac05, type: 3}
+  m_Name: Machine_RetroArcade
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.Data.MachineDefinition
+  machineId: retro_arcade
+  displayName: Retro Arcade
+  description: Step into neon nostalgia with pixel relics, vintage tech, and rare
+    arcade collectibles.
+  unlockCost: 150
+  entryCost: 10
+  passiveIncomePerMinute: 15
+  cabinetFrameColor: {r: 0.78, g: 0.15, b: 0.88, a: 1}
+  cabinetBackdropColor: {r: 0.1, g: 0.12, b: 0.22, a: 1}
+  prizes:
+  - {fileID: 11400000, guid: 12463202d32643d46a0ead8821b0fdb7, type: 2}
+  - {fileID: 11400000, guid: 399798b33c9d3c04584db77dd9524ea8, type: 2}
+  - {fileID: 11400000, guid: a056e037ebc170740a77c95a5f80652a, type: 2}
+  - {fileID: 11400000, guid: 7107b71768176534d8fb9224a3e3b1c9, type: 2}
+  - {fileID: 11400000, guid: d92e5645b7a5de042baf6ad89abbb612, type: 2}
+  - {fileID: 11400000, guid: 79289b5ceb0253a479e9851995392287, type: 2}
+  - {fileID: 11400000, guid: 7ea00d83ea509eb44b5804e53626ef66, type: 2}
+  - {fileID: 11400000, guid: 73da2a3377be07c4084635f7be682a16, type: 2}
+  - {fileID: 11400000, guid: acd1028fdaf607747a338debfe81cce0, type: 2}

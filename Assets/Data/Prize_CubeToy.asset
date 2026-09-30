@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b231937ac317fcd428d6cb526a708495, type: 3}
+  m_Name: Prize_CubeToy
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.Data.PrizeDefinition
+  id: cubetoy
+  displayName: CubeToy
+  rarity: 0
+  prefab: {fileID: 7764765131071070928, guid: 12fa58e0de627514795b66d35098074e, type: 3}
+  mass: 0.5
+  bounciness: 0.1
+  dynamicFriction: 0.6
+  staticFriction: 0.7
+  sellMultiplier: 1
+  essenceMultiplier: 1
