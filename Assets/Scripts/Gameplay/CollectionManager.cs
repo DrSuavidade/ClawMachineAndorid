@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using ClawMachine.Data;
+using ClawMachine.Core.Services;
 
 namespace ClawMachine.Gameplay
 {
@@ -37,13 +38,15 @@ namespace ClawMachine.Gameplay
         public long lastPassiveIncomeTimestamp;
     }
 
-    public class CollectionManager : MonoBehaviour
+    public class CollectionManager : MonoBehaviour, IEconomyService, ICollectionService
     {
         private const string SAVE_KEY = "ProjectClaw_SaveData";
         private const int CURRENT_SAVE_VERSION = 2;
 
         private static CollectionManager instance;
         public static CollectionManager Instance => instance;
+
+        private ISaveService saveService;
 
         [Header("State")]
         [SerializeField] private PlayerCollectionData data = new PlayerCollectionData();
@@ -64,6 +67,11 @@ namespace ClawMachine.Gameplay
 
         private float passiveTimer;
 
+        public void SetSaveService(ISaveService customSaveService)
+        {
+            saveService = customSaveService;
+        }
+
         private void Awake()
         {
             if (instance != null && instance != this)
@@ -72,6 +80,11 @@ namespace ClawMachine.Gameplay
                 return;
             }
             instance = this;
+
+            if (saveService == null)
+            {
+                saveService = new JsonFileSaveService();
+            }
 
             if (catalog == null)
             {
@@ -260,29 +273,14 @@ namespace ClawMachine.Gameplay
         {
             data.saveVersion = CURRENT_SAVE_VERSION;
             data.lastPassiveIncomeTimestamp = DateTime.UtcNow.Ticks;
-            string json = JsonUtility.ToJson(data);
-            PlayerPrefs.SetString(SAVE_KEY, json);
-            PlayerPrefs.Save();
+            if (saveService == null) saveService = new JsonFileSaveService();
+            saveService.Save(SAVE_KEY, data, CURRENT_SAVE_VERSION);
         }
 
         public void LoadData()
         {
-            if (PlayerPrefs.HasKey(SAVE_KEY))
-            {
-                string json = PlayerPrefs.GetString(SAVE_KEY);
-                try
-                {
-                    data = JsonUtility.FromJson<PlayerCollectionData>(json) ?? new PlayerCollectionData();
-                }
-                catch
-                {
-                    data = new PlayerCollectionData();
-                }
-            }
-            else
-            {
-                data = new PlayerCollectionData();
-            }
+            if (saveService == null) saveService = new JsonFileSaveService();
+            data = saveService.Load<PlayerCollectionData>(SAVE_KEY, CURRENT_SAVE_VERSION, MigrateSaveDataPayload) ?? new PlayerCollectionData();
 
             if (data.unlockedMachineIds == null)
             {
@@ -307,6 +305,19 @@ namespace ClawMachine.Gameplay
             }
 
             MigrateSaveData();
+        }
+
+        private PlayerCollectionData MigrateSaveDataPayload(string json, int oldVersion)
+        {
+            try
+            {
+                var loaded = JsonUtility.FromJson<PlayerCollectionData>(json);
+                return loaded ?? new PlayerCollectionData();
+            }
+            catch
+            {
+                return new PlayerCollectionData();
+            }
         }
 
         private void MigrateSaveData()
@@ -416,7 +427,8 @@ namespace ClawMachine.Gameplay
 
         public void ResetProgress()
         {
-            PlayerPrefs.DeleteKey(SAVE_KEY);
+            if (saveService == null) saveService = new JsonFileSaveService();
+            saveService.Delete(SAVE_KEY);
             data = new PlayerCollectionData();
             OnCoinsChanged?.Invoke(data.coins);
         }

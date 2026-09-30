@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using ClawMachine.Data;
+using ClawMachine.Core.Services;
 
 namespace ClawMachine.Gameplay
 {
@@ -18,9 +19,19 @@ namespace ClawMachine.Gameplay
 
         private readonly List<Prize> activePrizes = new List<Prize>();
         private PhysicsMaterial runtimePhysMat;
+        private IAssetProvider assetProvider;
+
+        public void SetAssetProvider(IAssetProvider provider)
+        {
+            assetProvider = provider;
+        }
 
         private void Awake()
         {
+            if (assetProvider == null)
+            {
+                assetProvider = new DefaultAssetProvider();
+            }
             runtimePhysMat = new PhysicsMaterial("RuntimeToyMat")
             {
                 dynamicFriction = 0.65f,
@@ -112,15 +123,18 @@ namespace ClawMachine.Gameplay
             PrizeDefinition def = GetRandomDefinition();
 
             Prize prize = null;
-            if (def != null && def.prefab != null)
+            if (def != null && def.prefab != null && assetProvider != null)
             {
-                GameObject go = Instantiate(def.prefab, position, rotation, transform);
-                if (!go.TryGetComponent<Prize>(out prize))
+                GameObject go = assetProvider.InstantiatePrize(def, position, rotation, transform);
+                if (go != null)
                 {
-                    prize = go.AddComponent<Prize>();
+                    if (!go.TryGetComponent<Prize>(out prize))
+                    {
+                        prize = go.AddComponent<Prize>();
+                    }
+                    prize.Initialize(def);
+                    activePrizes.Add(prize);
                 }
-                prize.Initialize(def);
-                activePrizes.Add(prize);
             }
             else
             {
@@ -417,7 +431,14 @@ namespace ClawMachine.Gameplay
             {
                 if (activePrizes[i] != null)
                 {
-                    Destroy(activePrizes[i].gameObject);
+                    if (assetProvider != null)
+                    {
+                        assetProvider.ReleaseInstance(activePrizes[i].gameObject);
+                    }
+                    else
+                    {
+                        Destroy(activePrizes[i].gameObject);
+                    }
                 }
             }
             activePrizes.Clear();
