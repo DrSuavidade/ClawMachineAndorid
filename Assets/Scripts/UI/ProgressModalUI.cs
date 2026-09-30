@@ -183,25 +183,25 @@ namespace ClawMachine.UI
             int currentCoins = econ.Coins;
 
             // Speed
-            int spdLvl = econ.GetUpgradeLevel(UpgradeType.TrolleySpeed, mach);
-            int spdCost = econ.GetUpgradeCost(UpgradeType.TrolleySpeed, mach);
-            bool spdMax = econ.IsUpgradeMaxed(UpgradeType.TrolleySpeed, mach);
+            int spdLvl = econ.GetUpgradeLevel(UpgradeType.TrolleySpeed);
+            int spdCost = econ.GetUpgradeCost(UpgradeType.TrolleySpeed);
+            bool spdMax = spdCost < 0;
             if (trolleyLevelText != null) trolleyLevelText.text = $"LVL {spdLvl}/5";
             if (trolleyCostText != null) trolleyCostText.text = spdMax ? "MAX" : $"{spdCost} 🪙";
             if (trolleyBuyBtn != null) trolleyBuyBtn.interactable = !spdMax && currentCoins >= spdCost;
 
             // Grip
-            int grpLvl = econ.GetUpgradeLevel(UpgradeType.GripPower, mach);
-            int grpCost = econ.GetUpgradeCost(UpgradeType.GripPower, mach);
-            bool grpMax = econ.IsUpgradeMaxed(UpgradeType.GripPower, mach);
+            int grpLvl = econ.GetUpgradeLevel(UpgradeType.GripPower);
+            int grpCost = econ.GetUpgradeCost(UpgradeType.GripPower);
+            bool grpMax = grpCost < 0;
             if (gripLevelText != null) gripLevelText.text = $"LVL {grpLvl}/5";
             if (gripCostText != null) gripCostText.text = grpMax ? "MAX" : $"{grpCost} 🪙";
             if (gripBuyBtn != null) gripBuyBtn.interactable = !grpMax && currentCoins >= grpCost;
 
             // Precision
-            int prcLvl = econ.GetUpgradeLevel(UpgradeType.DropPrecision, mach);
-            int prcCost = econ.GetUpgradeCost(UpgradeType.DropPrecision, mach);
-            bool prcMax = econ.IsUpgradeMaxed(UpgradeType.DropPrecision, mach);
+            int prcLvl = econ.GetUpgradeLevel(UpgradeType.DropPrecision);
+            int prcCost = econ.GetUpgradeCost(UpgradeType.DropPrecision);
+            bool prcMax = prcCost < 0;
             if (dropLevelText != null) dropLevelText.text = $"LVL {prcLvl}/5";
             if (dropCostText != null) dropCostText.text = prcMax ? "MAX" : $"{prcCost} 🪙";
             if (dropBuyBtn != null) dropBuyBtn.interactable = !prcMax && currentCoins >= prcCost;

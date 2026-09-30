@@ -67,7 +67,8 @@ namespace ClawMachine.Gameplay
         [SerializeField] private MachineDefinition currentMachine;
 
         public PlayerCollectionData Data => data;
-        public void ForceSave() => Save();
+        public void ForceSave() => SaveData();
+        public void AwardCoins(int amount) => AddCoins(amount);
 
         public int Coins => data.coins;
         public MachineCatalog Catalog => catalog;

@@ -201,7 +201,8 @@ namespace ClawMachine.Gameplay
 
             if (ServiceLocator.TryGet<IRetentionService>(out var retService))
             {
-                retService.RecordPrizeWon(currentMachine != null ? currentMachine.machineId : "", prize != null ? (int)prize.Rarity : 0);
+                var curMach = ServiceLocator.TryGet<ICollectionService>(out var col) ? col.CurrentMachine : (CollectionManager.Instance != null ? CollectionManager.Instance.CurrentMachine : null);
+                retService.RecordPrizeWon(curMach != null ? curMach.machineId : "", prize != null ? (int)prize.Rarity : 0);
             }
 
             if (ServiceLocator.TryGet<IAudioService>(out var audioService))
