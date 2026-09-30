@@ -19,6 +19,10 @@ namespace ClawMachine.UI
         [SerializeField] private Text ownershipText;
         [SerializeField] private Transform gridContainer;
 
+        [Header("Duplicate Sales")]
+        [SerializeField] private Button sellDuplicatesButton;
+        [SerializeField] private Text sellDuplicatesText;
+
         [Header("Celebration Modal")]
         [SerializeField] private GameObject completionModal;
         [SerializeField] private Text completionText;
@@ -35,6 +39,10 @@ namespace ClawMachine.UI
             if (closeButton != null)
             {
                 closeButton.onClick.AddListener(CloseModal);
+            }
+            if (sellDuplicatesButton != null)
+            {
+                sellDuplicatesButton.onClick.AddListener(OnSellDuplicatesClicked);
             }
             if (completionCloseButton != null)
             {
@@ -218,6 +226,23 @@ namespace ClawMachine.UI
                 ownershipText.color = isOwned ? new Color(0.3f, 0.9f, 0.4f) : new Color(0.85f, 0.85f, 0.9f);
             }
 
+            // Update Sell Duplicates Button
+            if (sellDuplicatesButton != null)
+            {
+                int dupVal = collService.GetTotalDuplicateValue();
+                sellDuplicatesButton.interactable = dupVal > 0;
+                if (sellDuplicatesText != null)
+                {
+                    sellDuplicatesText.text = dupVal > 0 ? $"SELL EXTRA DUPLICATES (+{dupVal} 🪙)" : "NO DUPLICATES TO SELL";
+                    sellDuplicatesText.color = dupVal > 0 ? Color.white : new Color(0.7f, 0.7f, 0.75f);
+                }
+                var btnImg = sellDuplicatesButton.GetComponent<Image>();
+                if (btnImg != null)
+                {
+                    btnImg.color = dupVal > 0 ? new Color(0.18f, 0.65f, 0.32f) : new Color(0.30f, 0.33f, 0.40f);
+                }
+            }
+
             // Populate cards
             if (gridContainer == null || machine.prizes == null) return;
 
@@ -230,11 +255,38 @@ namespace ClawMachine.UI
                 if (cardTr == null) continue;
 
                 bool hasFound = collService.IsPrizeDiscovered(def.id);
-                UpdateCard(cardTr.gameObject, def, hasFound);
+                int count = collService.GetPrizeCount(def.id);
+                UpdateCard(cardTr.gameObject, def, hasFound, count);
             }
         }
 
-        private void UpdateCard(GameObject card, PrizeDefinition def, bool discovered)
+        private void OnSellDuplicatesClicked()
+        {
+            ICollectionService collService = null;
+            if (!ServiceLocator.TryGet(out collService))
+            {
+                collService = CollectionManager.Instance;
+            }
+            if (collService == null) return;
+
+            int earned = collService.SellAllDuplicates();
+            if (earned > 0)
+            {
+                if (ServiceLocator.TryGet<IAudioService>(out var audio))
+                {
+                    audio.PlayWin();
+                }
+                else
+                {
+                    ClawAudio.Instance?.PlayWin();
+                }
+
+                UpdateCoinsUI();
+                RefreshCollectionGrid();
+            }
+        }
+
+        private void UpdateCard(GameObject card, PrizeDefinition def, bool discovered, int count = 1)
         {
             Image bg = card.GetComponent<Image>();
             Text[] texts = card.GetComponentsInChildren<Text>();
@@ -262,7 +314,8 @@ namespace ClawMachine.UI
 
             if (nameText != null)
             {
-                nameText.text = discovered ? def.displayName : "???";
+                string countSuffix = (discovered && count > 1) ? $" (x{count})" : "";
+                nameText.text = discovered ? $"{def.displayName}{countSuffix}" : "???";
                 nameText.color = discovered ? Color.white : new Color(0.55f, 0.55f, 0.60f);
             }
             if (rarityText != null)

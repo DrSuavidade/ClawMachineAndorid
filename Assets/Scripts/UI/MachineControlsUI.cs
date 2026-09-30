@@ -2,6 +2,8 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using ClawMachine.Gameplay;
+using ClawMachine.Data;
+using ClawMachine.Core.Services;
 
 namespace ClawMachine.UI
 {
@@ -167,11 +169,37 @@ namespace ClawMachine.UI
         private void HandlePrizeWon(Prize prize)
         {
             winsCount++;
-            winBannerTimer = 3.0f;
+            winBannerTimer = 3.5f;
             if (winsText != null)
             {
-                string prizeName = prize.Definition != null ? prize.Definition.displayName : prize.name;
-                winsText.text = $"★ WINNER! {prizeName} (Wins: {winsCount}) ★";
+                PrizeDefinition def = prize != null ? prize.Definition : null;
+                string prizeName = def != null ? def.displayName : (prize != null ? prize.name : "PRIZE");
+
+                int count = 1;
+                int reward = 30;
+                bool isNew = true;
+
+                if (ServiceLocator.TryGet<ICollectionService>(out var coll))
+                {
+                    string id = def != null ? def.id : "";
+                    count = coll.GetPrizeCount(id);
+                    isNew = count <= 1;
+                }
+
+                if (isNew)
+                {
+                    reward = def != null ? (def.rarity switch {
+                        PrizeRarity.Secret => 250,
+                        PrizeRarity.Rare => 75,
+                        _ => 30
+                    }) : 30;
+                    winsText.text = $"★ NEW DISCOVERY! {prizeName.ToUpper()} (+{reward} 🪙) ★";
+                }
+                else
+                {
+                    reward = def != null ? Mathf.Max(10, (int)(def.duplicateCoinValue * def.sellMultiplier)) : 15;
+                    winsText.text = $"★ {prizeName.ToUpper()} x{count}! (+{reward} 🪙) ★";
+                }
             }
         }
     }

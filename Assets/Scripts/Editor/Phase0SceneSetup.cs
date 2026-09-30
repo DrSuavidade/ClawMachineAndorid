@@ -1404,12 +1404,39 @@ namespace ClawMachine.Editor
                 csText.color = new Color(0.5f, 0.5f, 0.5f);
             }
 
+            // Sell Duplicates Button
+            GameObject sellBtnObj = new GameObject("Btn_SellDuplicates");
+            sellBtnObj.transform.parent = modalObj.transform;
+            RectTransform sellRect = sellBtnObj.AddComponent<RectTransform>();
+            sellRect.anchorMin = new Vector2(0.15f, 0.115f);
+            sellRect.anchorMax = new Vector2(0.85f, 0.175f);
+            sellRect.offsetMin = Vector2.zero;
+            sellRect.offsetMax = Vector2.zero;
+            Image sellImg = sellBtnObj.AddComponent<Image>();
+            sellImg.color = new Color(0.18f, 0.65f, 0.32f);
+            Button sellBtn = sellBtnObj.AddComponent<Button>();
+
+            GameObject sellTextObj = new GameObject("Text");
+            sellTextObj.transform.parent = sellBtnObj.transform;
+            RectTransform sltRect = sellTextObj.AddComponent<RectTransform>();
+            sltRect.anchorMin = Vector2.zero;
+            sltRect.anchorMax = Vector2.one;
+            sltRect.offsetMin = Vector2.zero;
+            sltRect.offsetMax = Vector2.zero;
+            Text sltText = sellTextObj.AddComponent<Text>();
+            sltText.text = "SELL EXTRA DUPLICATES (+0 🪙)";
+            sltText.font = font;
+            sltText.fontSize = 32;
+            sltText.fontStyle = FontStyle.Bold;
+            sltText.alignment = TextAnchor.MiddleCenter;
+            sltText.color = Color.white;
+
             // Close Button
             GameObject closeBtnObj = new GameObject("Btn_Close");
             closeBtnObj.transform.parent = modalObj.transform;
             RectTransform closeRect = closeBtnObj.AddComponent<RectTransform>();
-            closeRect.anchorMin = new Vector2(0.25f, 0.05f);
-            closeRect.anchorMax = new Vector2(0.75f, 0.12f);
+            closeRect.anchorMin = new Vector2(0.25f, 0.045f);
+            closeRect.anchorMax = new Vector2(0.75f, 0.105f);
             closeRect.offsetMin = Vector2.zero;
             closeRect.offsetMax = Vector2.zero;
             Image closeImg = closeBtnObj.AddComponent<Image>();
@@ -1488,6 +1515,8 @@ namespace ClawMachine.Editor
             SetSerializedProperty(ui, "modalPanel", modalObj);
             SetSerializedProperty(ui, "toggleButton", collBtn);
             SetSerializedProperty(ui, "closeButton", closeBtn);
+            SetSerializedProperty(ui, "sellDuplicatesButton", sellBtn);
+            SetSerializedProperty(ui, "sellDuplicatesText", sltText);
             SetSerializedProperty(ui, "coinsText", coinsText);
             SetSerializedProperty(ui, "titleText", titleText);
             SetSerializedProperty(ui, "progressText", progText);

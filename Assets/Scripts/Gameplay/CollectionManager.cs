@@ -23,6 +23,13 @@ namespace ClawMachine.Gameplay
     }
 
     [Serializable]
+    public class PrizeInventoryEntry
+    {
+        public string prizeId;
+        public int count = 1;
+    }
+
+    [Serializable]
     public class PlayerCollectionData
     {
         public int saveVersion = 2;
@@ -31,6 +38,7 @@ namespace ClawMachine.Gameplay
         public List<string> unlockedMachineIds = new List<string> { "toy_box" };
         public List<string> ownedMachineIds = new List<string>();
         public List<MachineUpgradeData> machineUpgrades = new List<MachineUpgradeData>();
+        public List<PrizeInventoryEntry> inventory = new List<PrizeInventoryEntry>();
         // Legacy global fields — kept for v1 migration only
         public int trolleySpeedLevel = 1;
         public int gripPowerLevel = 1;
@@ -60,6 +68,8 @@ namespace ClawMachine.Gameplay
 
         public event Action<int> OnCoinsChanged;
         public event Action<PrizeDefinition, bool> OnPrizeRegistered; // (prize, isNew)
+        public event Action<PrizeDefinition, bool, int> OnPrizeAwarded; // (prize, isNew, coinReward)
+        public event Action<int> OnDuplicatesSold; // (totalCoinsEarned)
         public event Action<MachineDefinition> OnMachineCompleted;
         public event Action<MachineDefinition> OnMachineUnlocked;
         public event Action<MachineDefinition> OnCurrentMachineChanged;
@@ -255,12 +265,28 @@ namespace ClawMachine.Gameplay
             string prizeId = def != null ? def.id : prize.name;
             string prizeName = def != null ? def.displayName : prize.name;
 
+            // 1. Track inventory quantity
+            if (data.inventory == null) data.inventory = new List<PrizeInventoryEntry>();
+            var entry = data.inventory.Find(e => e.prizeId == prizeId);
+            if (entry == null)
+            {
+                entry = new PrizeInventoryEntry { prizeId = prizeId, count = 1 };
+                data.inventory.Add(entry);
+            }
+            else
+            {
+                entry.count++;
+            }
+
             bool isNew = !data.discoveredPrizeIds.Contains(prizeId);
+            int reward = 0;
 
             if (isNew)
             {
                 data.discoveredPrizeIds.Add(prizeId);
-                Debug.Log($"[CollectionManager] NEW PRIZE DISCOVERED: {prizeName} (ID: {prizeId})!");
+                reward = GetDiscoveryReward(def);
+                AddCoins(reward);
+                Debug.Log($"[CollectionManager] ★ NEW PRIZE DISCOVERED: {prizeName} (ID: {prizeId})! Awarded +{reward} coins!");
 
                 if (currentMachine != null && !IsMachineOwned(currentMachine.machineId))
                 {
@@ -275,13 +301,119 @@ namespace ClawMachine.Gameplay
             }
             else
             {
-                int reward = def != null ? def.duplicateCoinValue : 15;
+                reward = GetDuplicateSellPrice(def);
                 AddCoins(reward);
-                Debug.Log($"[CollectionManager] Duplicate prize {prizeName}. Awarded +{reward} coins!");
+                Debug.Log($"[CollectionManager] Duplicate prize {prizeName} (Total Owned: {entry.count}). Awarded +{reward} coins!");
             }
 
+            OnPrizeAwarded?.Invoke(def, isNew, reward);
             OnPrizeRegistered?.Invoke(def, isNew);
             SaveData();
+        }
+
+        public int GetPrizeCount(string prizeId)
+        {
+            if (string.IsNullOrEmpty(prizeId) || data.inventory == null) return 0;
+            var entry = data.inventory.Find(e => e.prizeId == prizeId);
+            if (entry != null) return entry.count;
+            return data.discoveredPrizeIds.Contains(prizeId) ? 1 : 0;
+        }
+
+        public int GetDiscoveryReward(PrizeDefinition def)
+        {
+            if (def == null) return 30;
+            return def.rarity switch
+            {
+                PrizeRarity.Secret => 250,
+                PrizeRarity.Rare => 75,
+                _ => 30
+            };
+        }
+
+        public int GetDuplicateSellPrice(PrizeDefinition def)
+        {
+            if (def == null) return 15;
+            return Mathf.Max(10, (int)(def.duplicateCoinValue * def.sellMultiplier));
+        }
+
+        public int GetTotalDuplicateValue()
+        {
+            if (data.inventory == null) return 0;
+            int total = 0;
+            foreach (var item in data.inventory)
+            {
+                if (item.count > 1)
+                {
+                    PrizeDefinition def = FindPrizeDefinition(item.prizeId);
+                    int sellPrice = GetDuplicateSellPrice(def);
+                    total += sellPrice * (item.count - 1);
+                }
+            }
+            return total;
+        }
+
+        public int SellAllDuplicates()
+        {
+            if (data.inventory == null) return 0;
+
+            int totalEarned = 0;
+            int itemsSold = 0;
+
+            foreach (var item in data.inventory)
+            {
+                if (item.count > 1)
+                {
+                    int extras = item.count - 1;
+                    PrizeDefinition def = FindPrizeDefinition(item.prizeId);
+                    int sellPrice = GetDuplicateSellPrice(def);
+                    totalEarned += sellPrice * extras;
+                    itemsSold += extras;
+                    item.count = 1;
+                }
+            }
+
+            if (totalEarned > 0)
+            {
+                AddCoins(totalEarned);
+                OnDuplicatesSold?.Invoke(totalEarned);
+                Debug.Log($"[CollectionManager] Sold {itemsSold} duplicates for +{totalEarned} coins!");
+                SaveData();
+            }
+
+            return totalEarned;
+        }
+
+        public bool TrySellPrize(string prizeId, int count = 1)
+        {
+            if (string.IsNullOrEmpty(prizeId) || data.inventory == null) return false;
+            var entry = data.inventory.Find(e => e.prizeId == prizeId);
+            if (entry == null || entry.count <= count) return false;
+
+            entry.count -= count;
+            PrizeDefinition def = FindPrizeDefinition(prizeId);
+            int earned = GetDuplicateSellPrice(def) * count;
+            AddCoins(earned);
+            OnDuplicatesSold?.Invoke(earned);
+            SaveData();
+            return true;
+        }
+
+        private PrizeDefinition FindPrizeDefinition(string prizeId)
+        {
+            if (catalog != null && catalog.Machines != null)
+            {
+                foreach (var m in catalog.Machines)
+                {
+                    if (m != null && m.prizes != null)
+                    {
+                        foreach (var p in m.prizes)
+                        {
+                            if (p != null && p.id == prizeId) return p;
+                        }
+                    }
+                }
+            }
+            return null;
         }
 
         public void SaveData()

@@ -10,6 +10,8 @@ namespace ClawMachine.Core.Services
         bool HasGoldenClawUnlocked { get; }
 
         event Action<PrizeDefinition, bool> OnPrizeRegistered;
+        event Action<PrizeDefinition, bool, int> OnPrizeAwarded;
+        event Action<int> OnDuplicatesSold;
         event Action<MachineDefinition> OnMachineCompleted;
         event Action<MachineDefinition> OnMachineUnlocked;
         event Action<MachineDefinition> OnCurrentMachineChanged;
@@ -17,6 +19,10 @@ namespace ClawMachine.Core.Services
         void SetCurrentMachine(MachineDefinition machine);
         void RegisterCollectedPrize(Prize prize);
         bool IsPrizeDiscovered(string prizeId);
+        int GetPrizeCount(string prizeId);
+        int GetTotalDuplicateValue();
+        int SellAllDuplicates();
+        bool TrySellPrize(string prizeId, int count = 1);
         bool IsMachineUnlocked(string machineId);
         bool IsMachineOwned(string machineId);
         bool TryUnlockMachine(MachineDefinition machine);
