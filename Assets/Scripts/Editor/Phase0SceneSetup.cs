@@ -89,8 +89,11 @@ namespace ClawMachine.Editor
             SetSerializedProperty(spawner, "machineDefinition", toyBoxDef);
             SetSerializedProperty(spawner, "prizePool", prizeDefs);
             SetSerializedProperty(spawner, "spawnAreaCenter", spawnCenter);
+            SetSerializedProperty(spawner, "spawnAreaExtents", new Vector3(0.70f, 0.45f, 0.70f));
             SetSerializedProperty(spawner, "refillDropPoint", refillPoint);
             SetSerializedProperty(spawner, "initialPileCount", 20);
+            SetSerializedProperty(spawner, "chuteTransform", chuteDetector.transform.parent != null ? chuteDetector.transform.parent : chuteDetector.transform);
+            SetSerializedProperty(spawner, "chuteDetector", chuteDetector);
 
             SetSerializedProperty(machineController, "claw", clawController);
             SetSerializedProperty(machineController, "chuteDetector", chuteDetector);
@@ -393,12 +396,12 @@ namespace ClawMachine.Editor
             // Spawn Center & Refill Point
             GameObject spawnCenterObj = new GameObject("SpawnAreaCenter");
             spawnCenterObj.transform.parent = cabinet.transform;
-            spawnCenterObj.transform.position = new Vector3(0.2f, 0.25f, 0.1f);
+            spawnCenterObj.transform.position = new Vector3(0.25f, 0.25f, 0.20f);
             spawnCenter = spawnCenterObj.transform;
 
             GameObject refillPointObj = new GameObject("RefillPoint");
             refillPointObj.transform.parent = cabinet.transform;
-            refillPointObj.transform.position = new Vector3(0.2f, 3.2f, 0.1f);
+            refillPointObj.transform.position = new Vector3(0.25f, 3.2f, 0.20f);
             refillPoint = refillPointObj.transform;
 
             return cabinet;

@@ -43,6 +43,12 @@ namespace ClawMachine.Gameplay
                 cabinetBackdropRenderer.material.color = machine.cabinetBackdropColor;
             }
 
+            // Suppress chute detection during switch/settling
+            if (chuteDetector != null)
+            {
+                chuteDetector.Suppress(2.5f);
+            }
+
             // Repopulate prize pile
             if (prizeSpawner != null)
             {
