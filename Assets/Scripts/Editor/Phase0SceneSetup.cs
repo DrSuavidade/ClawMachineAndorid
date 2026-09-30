@@ -390,13 +390,38 @@ namespace ClawMachine.Editor
             chuteDividerZ.transform.localScale = new Vector3(0.95f, 0.9f, 0.08f);
             chuteDividerZ.GetComponent<Renderer>().sharedMaterial = chuteMat;
 
-            // Chute Detector Trigger
+            // Smooth slippery chute ramp angled forward (24 deg)
+            PhysicsMaterial rampMat = new PhysicsMaterial("ChuteRampPhysics")
+            {
+                dynamicFriction = 0.08f,
+                staticFriction = 0.10f,
+                bounciness = 0.15f
+            };
+
+            GameObject chuteRamp = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            chuteRamp.name = "ChuteRamp";
+            chuteRamp.transform.parent = chuteObj.transform;
+            chuteRamp.transform.localPosition = new Vector3(0f, 0.22f, -0.05f);
+            chuteRamp.transform.localRotation = Quaternion.Euler(24f, 0f, 0f);
+            chuteRamp.transform.localScale = new Vector3(0.85f, 0.06f, 0.85f);
+            chuteRamp.GetComponent<Renderer>().sharedMaterial = chuteMat;
+            chuteRamp.GetComponent<Collider>().material = rampMat;
+
+            // Front collection tray lip
+            GameObject trayLip = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            trayLip.name = "TrayLip";
+            trayLip.transform.parent = chuteObj.transform;
+            trayLip.transform.localPosition = new Vector3(0f, 0.08f, -0.46f);
+            trayLip.transform.localScale = new Vector3(0.85f, 0.16f, 0.06f);
+            trayLip.GetComponent<Renderer>().sharedMaterial = frameMat;
+
+            // Chute Detector Trigger positioned at the lower delivery tray
             GameObject triggerObj = new GameObject("ChuteSensor");
             triggerObj.transform.parent = chuteObj.transform;
-            triggerObj.transform.localPosition = new Vector3(0f, 0.15f, 0f);
+            triggerObj.transform.localPosition = new Vector3(0f, 0.12f, -0.32f);
             BoxCollider triggerCol = triggerObj.AddComponent<BoxCollider>();
             triggerCol.isTrigger = true;
-            triggerCol.size = new Vector3(0.75f, 0.4f, 0.75f);
+            triggerCol.size = new Vector3(0.75f, 0.35f, 0.40f);
             chuteDetector = triggerObj.AddComponent<ChuteDetector>();
 
             // Chute Drop Point (Where claw carriage aligns to release)

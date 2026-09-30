@@ -34,7 +34,7 @@ namespace ClawMachine.Gameplay
                 {
                     collectedThisAttempt.Add(prize);
                     OnPrizeCollected?.Invoke(prize);
-                    Destroy(prize.gameObject, 0.5f);
+                    Destroy(prize.gameObject, 0.85f);
                 }
             }
         }
