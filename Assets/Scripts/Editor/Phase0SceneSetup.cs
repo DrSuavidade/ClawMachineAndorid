@@ -64,13 +64,23 @@ namespace ClawMachine.Editor
                 : CreateOrLoadPrizeDefinitions();
 
             // 3. Environment & Light
-            SetupLightingAndCamera();
+            GameObject camObj = SetupLightingAndCamera();
 
             // 4. Cabinet & Chute
             GameObject cabinet = BuildCabinet(out Transform chuteDropPoint, out ChuteDetector chuteDetector, out Transform spawnCenter, out Transform refillPoint, out MeshRenderer[] frameRenderers, out MeshRenderer backdropRenderer);
 
             // 5. Claw Assembly
             GameObject clawObj = BuildClaw(config, chuteDropPoint, out ClawController clawController);
+
+            // Dynamic Cinematic Camera
+            ClawCameraController camController = camObj.AddComponent<ClawCameraController>();
+            Transform socketTransform = clawObj.transform.Find("Trolley/Hoist/GripSocket");
+            Transform chuteTransform = cabinet.transform.Find("PrizeChute");
+            camController.Initialize(clawController, socketTransform, chuteTransform);
+            SetSerializedProperty(camController, "targetCamera", camObj.GetComponent<Camera>());
+            SetSerializedProperty(camController, "clawController", clawController);
+            SetSerializedProperty(camController, "clawTarget", socketTransform);
+            SetSerializedProperty(camController, "chuteTarget", chuteTransform);
 
             // 6. Spawner & Machine Controller
             GameObject machineManager = new GameObject("MachineController");
@@ -100,6 +110,7 @@ namespace ClawMachine.Editor
             SetSerializedProperty(machineController, "prizeSpawner", spawner);
             SetSerializedProperty(machineController, "cabinetFrameRenderers", frameRenderers);
             SetSerializedProperty(machineController, "cabinetBackdropRenderer", backdropRenderer);
+            SetSerializedProperty(machineController, "cameraController", camController);
 
             // 7. Juice & Particle Systems
             GameObject juiceObj = new GameObject("JuiceEffects");
@@ -290,7 +301,7 @@ namespace ClawMachine.Editor
             return defs;
         }
 
-        private static void SetupLightingAndCamera()
+        private static GameObject SetupLightingAndCamera()
         {
             // Light
             GameObject lightObj = new GameObject("Directional Light");
@@ -310,6 +321,7 @@ namespace ClawMachine.Editor
             camObj.transform.position = new Vector3(0f, 5f, -7f);
             camObj.transform.rotation = Quaternion.Euler(28f, 0f, 0f);
             camObj.AddComponent<AudioListener>();
+            return camObj;
         }
 
         private static GameObject BuildCabinet(out Transform chuteDropPoint, out ChuteDetector chuteDetector, out Transform spawnCenter, out Transform refillPoint, out MeshRenderer[] frameRenderers, out MeshRenderer backdropRenderer)

@@ -15,6 +15,7 @@ namespace ClawMachine.Gameplay
         [Header("Cabinet Visuals")]
         [SerializeField] private MeshRenderer[] cabinetFrameRenderers;
         [SerializeField] private MeshRenderer cabinetBackdropRenderer;
+        [SerializeField] private ClawCameraController cameraController;
 
         [Header("Stats for Prototype")]
         [SerializeField] private int totalAttempts;
