@@ -21,6 +21,7 @@ namespace ClawMachine.Gameplay
 
         [Header("Grip System")]
         [SerializeField] private ClawGripAnchor gripAnchor;
+        [SerializeField] private ClawPendulumSway pendulumSway;
 
         [Header("Ground & Depth Sensor")]
         [SerializeField] private float floorSurfaceY = 0.1f;
@@ -45,7 +46,7 @@ namespace ClawMachine.Gameplay
         private Prize targetedPrize;
         private float targetedAccuracy;
 
-        public void Setup(ClawConfiguration cfg, Transform trolleyTr, Transform hoistTr, ClawArm[] clawArms, Transform chutePoint, Transform marker, Transform socket, GripCaptureVolume volume, ClawGripAnchor anchor)
+        public void Setup(ClawConfiguration cfg, Transform trolleyTr, Transform hoistTr, ClawArm[] clawArms, Transform chutePoint, Transform marker, Transform socket, GripCaptureVolume volume, ClawGripAnchor anchor, ClawPendulumSway sway = null)
         {
             config = cfg;
             trolley = trolleyTr;
@@ -56,6 +57,7 @@ namespace ClawMachine.Gameplay
             gripSocket = socket;
             captureVolume = volume;
             gripAnchor = anchor;
+            pendulumSway = sway;
         }
 
         private void Awake()
@@ -67,6 +69,7 @@ namespace ClawMachine.Gameplay
 
             if (trolley == null) trolley = transform;
             if (hoist == null && trolley.childCount > 0) hoist = trolley.GetChild(0);
+            if (pendulumSway == null) pendulumSway = GetComponentInChildren<ClawPendulumSway>();
 
             // Set reasonable PhysX defaults
             Physics.defaultMaxDepenetrationVelocity = 3.0f;
@@ -263,7 +266,8 @@ namespace ClawMachine.Gameplay
                     break;
 
                 case ClawState.Descending:
-                    Vector3 rayOrigin = new Vector3(trolley.position.x, 3.5f, trolley.position.z);
+                    Vector3 dropOrigin = (gripSocket != null) ? gripSocket.position : trolley.position;
+                    Vector3 rayOrigin = new Vector3(dropOrigin.x, 3.5f, dropOrigin.z);
                     targetedPrize = null;
                     targetedAccuracy = 0f;
 
@@ -491,8 +495,16 @@ namespace ClawMachine.Gameplay
             if (clawMarker == null || trolley == null) return;
 
             Vector3 markerPos = clawMarker.position;
-            markerPos.x = trolley.position.x;
-            markerPos.z = trolley.position.z;
+            if (gripSocket != null)
+            {
+                markerPos.x = gripSocket.position.x;
+                markerPos.z = gripSocket.position.z;
+            }
+            else
+            {
+                markerPos.x = trolley.position.x;
+                markerPos.z = trolley.position.z;
+            }
             clawMarker.position = markerPos;
             clawMarker.gameObject.SetActive(CurrentState == ClawState.Aiming || CurrentState == ClawState.Carrying);
         }

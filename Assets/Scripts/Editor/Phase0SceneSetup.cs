@@ -575,8 +575,12 @@ namespace ClawMachine.Editor
             ClawGripAnchor anchor = hoist.AddComponent<ClawGripAnchor>();
             anchor.Initialize(socketObj.transform);
 
+            // Pendulum Sway (arcade cable inertia)
+            ClawPendulumSway sway = hoist.AddComponent<ClawPendulumSway>();
+            sway.Initialize(trolley.transform, hoist.transform, clawBody.transform);
+
             // Setup Controller references directly
-            controller.Setup(config, trolley.transform, hoist.transform, arms, chuteDropPoint, reticle.transform, socketObj.transform, captureVolume, anchor);
+            controller.Setup(config, trolley.transform, hoist.transform, arms, chuteDropPoint, reticle.transform, socketObj.transform, captureVolume, anchor, sway);
             SetSerializedProperty(controller, "config", config);
             SetSerializedProperty(controller, "trolley", trolley.transform);
             SetSerializedProperty(controller, "hoist", hoist.transform);
@@ -586,6 +590,7 @@ namespace ClawMachine.Editor
             SetSerializedProperty(controller, "gripSocket", socketObj.transform);
             SetSerializedProperty(controller, "captureVolume", captureVolume);
             SetSerializedProperty(controller, "gripAnchor", anchor);
+            SetSerializedProperty(controller, "pendulumSway", sway);
 
             return clawRoot;
         }
