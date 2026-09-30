@@ -19,7 +19,6 @@ namespace ClawMachine.Gameplay
                 if (!collectedThisAttempt.Contains(prize))
                 {
                     collectedThisAttempt.Add(prize);
-                    ClawAudio.Instance?.PlayWin();
                     OnPrizeCollected?.Invoke(prize);
                     Destroy(prize.gameObject, 0.5f);
                 }

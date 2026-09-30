@@ -26,6 +26,11 @@ namespace ClawMachine.Gameplay
         public Vector3 averageContactPoint;
     }
 
+    /// <summary>
+    /// Spring-damper grip assist system. NOT currently wired into main claw flow.
+    /// ClawGripAnchor (kinematic hold) is the active grip system.
+    /// Reserved for future physics-based grip.
+    /// </summary>
     public class GripAssist : MonoBehaviour
     {
         [Header("References")]

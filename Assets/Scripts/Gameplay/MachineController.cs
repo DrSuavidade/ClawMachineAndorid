@@ -67,31 +67,31 @@ namespace ClawMachine.Gameplay
         private void EnsurePerimeterBarriers()
         {
             // Front invisible barrier (keeps prizes inside without blocking camera)
-            if (GameObject.Find("FrontGlassBarrier") == null)
+            if (transform.Find("FrontGlassBarrier") == null)
             {
                 GameObject front = new GameObject("FrontGlassBarrier");
                 front.transform.parent = transform;
-                front.transform.position = new Vector3(0f, 1.8f, -1.6f);
+                front.transform.localPosition = new Vector3(0f, 1.8f, -1.6f);
                 BoxCollider col = front.AddComponent<BoxCollider>();
                 col.size = new Vector3(3.4f, 3.6f, 0.15f);
             }
 
             // Left invisible barrier
-            if (GameObject.Find("LeftGlassBarrier") == null)
+            if (transform.Find("LeftGlassBarrier") == null)
             {
                 GameObject left = new GameObject("LeftGlassBarrier");
                 left.transform.parent = transform;
-                left.transform.position = new Vector3(-1.6f, 1.8f, 0f);
+                left.transform.localPosition = new Vector3(-1.6f, 1.8f, 0f);
                 BoxCollider col = left.AddComponent<BoxCollider>();
                 col.size = new Vector3(0.15f, 3.6f, 3.4f);
             }
 
             // Right invisible barrier
-            if (GameObject.Find("RightGlassBarrier") == null)
+            if (transform.Find("RightGlassBarrier") == null)
             {
                 GameObject right = new GameObject("RightGlassBarrier");
                 right.transform.parent = transform;
-                right.transform.position = new Vector3(1.6f, 1.8f, 0f);
+                right.transform.localPosition = new Vector3(1.6f, 1.8f, 0f);
                 BoxCollider col = right.AddComponent<BoxCollider>();
                 col.size = new Vector3(0.15f, 3.6f, 3.4f);
             }

@@ -17,7 +17,7 @@ namespace ClawMachine.Gameplay
         private AudioClip winClip;
 
         private Camera mainCam;
-        private Vector3 camOriginalPos;
+        private Vector3 shakeOffset;
         private float shakeTime;
         private float shakeMag;
 
@@ -39,10 +39,6 @@ namespace ClawMachine.Gameplay
             motorSource.volume = 0.22f;
 
             mainCam = Camera.main;
-            if (mainCam != null)
-            {
-                camOriginalPos = mainCam.transform.position;
-            }
 
             GenerateClips();
         }
@@ -129,16 +125,17 @@ namespace ClawMachine.Gameplay
         {
             if (mainCam == null) return;
 
+            // Remove last frame's shake offset first
+            mainCam.transform.position -= shakeOffset;
+            shakeOffset = Vector3.zero;
+
             if (shakeTime > 0f)
             {
                 shakeTime -= Time.deltaTime;
                 Vector3 offset = Random.insideUnitSphere * shakeMag;
                 offset.z = 0; // maintain camera distance
-                mainCam.transform.position = camOriginalPos + offset;
-            }
-            else
-            {
-                mainCam.transform.position = camOriginalPos;
+                shakeOffset = offset;
+                mainCam.transform.position += shakeOffset;
             }
         }
 

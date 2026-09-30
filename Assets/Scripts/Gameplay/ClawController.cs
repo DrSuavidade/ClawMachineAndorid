@@ -29,6 +29,7 @@ namespace ClawMachine.Gameplay
         [SerializeField] private Transform cabinetRoot;
 
         public ClawState CurrentState { get; private set; } = ClawState.Aiming;
+        public bool IsIdle => CurrentState == ClawState.Aiming;
         public ClawConfiguration Config => config;
         public ClawGripAnchor GripAnchor => gripAnchor;
 
@@ -167,12 +168,18 @@ namespace ClawMachine.Gameplay
                 case ClawState.Closing:
                     AnimateArms();
                     closingTimer += Time.deltaTime;
-                    if (closingTimer > 1.1f)
+                    if (closingTimer > config.closingDuration)
                     {
                         SetState(ClawState.EvaluatingGrip);
                     }
                     break;
 
+                // Canonical grip flow:
+                // 1. Descending state finds target via OverlapCapsule + distance check
+                // 2. EvaluatingGrip constructs GripEvaluation from targeting accuracy
+                // 3. ClawGripAnchor.TryAcquire() kinematically holds the prize
+                // NOTE: GripAssist (spring-damper) and GripEvaluator (static) exist but are
+                // not wired into this flow. They're reserved for future physics-based grip.
                 case ClawState.EvaluatingGrip:
                     float gripMult = CollectionManager.Instance != null ? CollectionManager.Instance.GetGripPowerMultiplier() : 1f;
                     if (gripAnchor != null && targetedPrize != null)
@@ -209,7 +216,7 @@ namespace ClawMachine.Gameplay
                 case ClawState.Releasing:
                     AnimateArms();
                     releasingTimer += Time.deltaTime;
-                    if (releasingTimer > 0.8f || AllArmsReachedTarget(4f))
+                    if (releasingTimer > config.releasingDuration || AllArmsReachedTarget(4f))
                     {
                         SetState(ClawState.Resolving);
                     }
@@ -263,7 +270,7 @@ namespace ClawMachine.Gameplay
                     Collider[] hits = Physics.OverlapCapsule(
                         new Vector3(rayOrigin.x, 0.15f, rayOrigin.z),
                         new Vector3(rayOrigin.x, 1.60f, rayOrigin.z),
-                        0.60f
+                        config != null ? config.descentScanRadius : 0.60f
                     );
                     Prize closest = null;
                     float minHorizDist = float.MaxValue;
@@ -281,35 +288,29 @@ namespace ClawMachine.Gameplay
                         }
                     }
 
-                    float baseTolerance = config != null ? config.grabToleranceRadius : 0.22f;
+                    float tolerance = config != null ? config.grabToleranceRadius : 0.22f;
                     PrizeRarity rarity = closest != null ? closest.Rarity : PrizeRarity.Normal;
-                    float rarityMultiplier = rarity switch
-                    {
-                        PrizeRarity.Normal => 1.0f,
-                        PrizeRarity.Rare => 0.60f,   // Needs 40% tighter aim
-                        PrizeRarity.Secret => 0.38f, // Requires near-bullseye aim
-                        _ => 1.0f
-                    };
-                    float tolerance = baseTolerance * rarityMultiplier;
                     float socketOffset = (gripSocket != null) ? Mathf.Abs(gripSocket.localPosition.y) : 0.65f;
+                    float clampMin = config != null ? config.descentMinY : 0.88f;
+                    float clampMax = config != null ? config.descentMaxY : 2.2f;
 
                     if (closest != null && minHorizDist <= tolerance)
                     {
                         targetedPrize = closest;
                         targetedAccuracy = Mathf.Clamp01(1f - (minHorizDist / tolerance));
                         float prizeY = closest.transform.position.y;
-                        targetDropY = Mathf.Clamp(prizeY + socketOffset, 0.88f, 2.2f);
-                        Debug.Log($"[ClawController] Target IN RANGE: {targetedPrize.name} ({rarity}) | Dist: {minHorizDist:F2}m / {tolerance:F2}m (Base: {baseTolerance:F2}m) | Acc: {targetedAccuracy:P0} | DropToY: {targetDropY:F2}");
+                        targetDropY = Mathf.Clamp(prizeY + socketOffset, clampMin, clampMax);
+                        Debug.Log($"[ClawController] Target IN RANGE: {targetedPrize.name} ({rarity}) | Dist: {minHorizDist:F2}m / {tolerance:F2}m | Acc: {targetedAccuracy:P0} | DropToY: {targetDropY:F2}");
                     }
                     else
                     {
                         targetedPrize = null;
                         targetedAccuracy = 0f;
                         float prizeY = closest != null ? closest.transform.position.y : 0.25f;
-                        targetDropY = Mathf.Clamp(prizeY + socketOffset, 0.88f, 2.2f);
+                        targetDropY = Mathf.Clamp(prizeY + socketOffset, clampMin, clampMax);
                         if (closest != null)
                         {
-                            Debug.Log($"[ClawController] Target MISSED: {closest.name} ({rarity}) | Dist: {minHorizDist:F2}m > {tolerance:F2}m (Base: {baseTolerance:F2}m)");
+                            Debug.Log($"[ClawController] Target MISSED: {closest.name} ({rarity}) | Dist: {minHorizDist:F2}m > {tolerance:F2}m");
                         }
                         else
                         {
@@ -344,7 +345,7 @@ namespace ClawMachine.Gameplay
                     break;
 
                 case ClawState.Resolving:
-                    resolveTimer = 1.0f;
+                    resolveTimer = config != null ? config.resolveDuration : 1.0f;
                     break;
             }
 

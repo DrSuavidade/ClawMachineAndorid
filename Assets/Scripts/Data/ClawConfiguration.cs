@@ -37,5 +37,21 @@ namespace ClawMachine.Data
         public float grabToleranceRadius = 0.22f;
         [Tooltip("Base slip chance multiplier when moving fast while carrying")]
         public float slipSensitivity = 1.0f;
+
+        [Header("State Timing")]
+        [Tooltip("Seconds to wait for arms to close before evaluating grip")]
+        public float closingDuration = 1.1f;
+        [Tooltip("Seconds to wait for arms to open during release")]
+        public float releasingDuration = 0.8f;
+        [Tooltip("Seconds to pause after releasing before returning to Aiming")]
+        public float resolveDuration = 1.0f;
+
+        [Header("Descent Targeting")]
+        [Tooltip("Capsule scan radius for finding prizes under reticle")]
+        public float descentScanRadius = 0.60f;
+        [Tooltip("Minimum hoist Y during descent")]
+        public float descentMinY = 0.88f;
+        [Tooltip("Maximum hoist Y during descent")]
+        public float descentMaxY = 2.2f;
     }
 }

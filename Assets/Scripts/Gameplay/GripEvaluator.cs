@@ -11,6 +11,11 @@ namespace ClawMachine.Gameplay
         public float slipDelay;    // seconds after lift starts before slipping (if unstable)
     }
 
+    /// <summary>
+    /// Static grip evaluator. NOT currently used in the main claw flow.
+    /// ClawController uses its own OverlapCapsule-based targeting instead.
+    /// Reserved for future physics-based grip evaluation.
+    /// </summary>
     public static class GripEvaluator
     {
         public const float UsefulGripRadius = 0.65f;

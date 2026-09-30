@@ -152,6 +152,14 @@ namespace ClawMachine.UI
         private void TryNavigateToMachine(int targetIndex)
         {
             if (targetIndex < 0 || targetIndex >= availableMachines.Length) return;
+
+            // Block switching while claw is active
+            if (machineController != null)
+            {
+                var claw = machineController.GetComponentInChildren<ClawController>();
+                if (claw != null && !claw.IsIdle) return;
+            }
+
             MachineDefinition target = availableMachines[targetIndex];
             if (target == null) return;
 
