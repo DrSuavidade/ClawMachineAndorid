@@ -1238,7 +1238,7 @@ namespace ClawMachine.Editor
             upgTextRect.offsetMax = Vector2.zero;
             upgTextRect.anchoredPosition = Vector2.zero;
             Text upgText = upgTextObj.AddComponent<Text>();
-            upgText.text = "⚡ UPGRADES";
+            upgText.text = "⚡ PROGRESS";
             upgText.font = font;
             upgText.fontSize = 24;
             upgText.fontStyle = FontStyle.Bold;
@@ -1578,7 +1578,7 @@ namespace ClawMachine.Editor
             Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
             // Modal Scrim
-            GameObject modalObj = new GameObject("UpgradesModal", typeof(RectTransform));
+            GameObject modalObj = new GameObject("ProgressModal", typeof(RectTransform));
             modalObj.transform.SetParent(canvasObj.transform, false);
             RectTransform modalRect = modalObj.GetComponent<RectTransform>();
             modalRect.anchorMin = Vector2.zero;
@@ -1592,7 +1592,7 @@ namespace ClawMachine.Editor
             GameObject headerObj = new GameObject("Header", typeof(RectTransform));
             headerObj.transform.SetParent(modalObj.transform, false);
             RectTransform hRect = headerObj.GetComponent<RectTransform>();
-            hRect.anchorMin = new Vector2(0.06f, 0.82f);
+            hRect.anchorMin = new Vector2(0.06f, 0.88f);
             hRect.anchorMax = new Vector2(0.94f, 0.96f);
             hRect.offsetMin = Vector2.zero;
             hRect.offsetMax = Vector2.zero;
@@ -1601,61 +1601,367 @@ namespace ClawMachine.Editor
             GameObject titleObj = new GameObject("Title", typeof(RectTransform));
             titleObj.transform.SetParent(headerObj.transform, false);
             RectTransform tRect = titleObj.GetComponent<RectTransform>();
-            tRect.anchorMin = new Vector2(0f, 0.50f);
-            tRect.anchorMax = new Vector2(1f, 1f);
+            tRect.anchorMin = Vector2.zero;
+            tRect.anchorMax = Vector2.one;
             tRect.offsetMin = Vector2.zero;
             tRect.offsetMax = Vector2.zero;
             Text titleText = titleObj.AddComponent<Text>();
-            titleText.text = "ARCADE WORKSHOP";
+            titleText.text = "PROGRESS & REWARDS";
             titleText.font = font;
-            titleText.fontSize = 50;
+            titleText.fontSize = 46;
             titleText.fontStyle = FontStyle.Bold;
             titleText.alignment = TextAnchor.MiddleCenter;
             titleText.color = new Color(1f, 0.88f, 0.30f);
 
-            // Set Bonus / Gold Claw Perk Subtitle
+            // Tab Bar
+            GameObject tabContainer = new GameObject("TabBar", typeof(RectTransform));
+            tabContainer.transform.SetParent(modalObj.transform, false);
+            RectTransform tabRect = tabContainer.GetComponent<RectTransform>();
+            tabRect.anchorMin = new Vector2(0.08f, 0.81f);
+            tabRect.anchorMax = new Vector2(0.92f, 0.87f);
+            tabRect.offsetMin = Vector2.zero;
+            tabRect.offsetMax = Vector2.zero;
+
+            // Tab 1: Upgrades
+            GameObject tabUpgObj = new GameObject("Tab_Upgrades", typeof(RectTransform));
+            tabUpgObj.transform.SetParent(tabContainer.transform, false);
+            RectTransform tuRect = tabUpgObj.GetComponent<RectTransform>();
+            tuRect.anchorMin = new Vector2(0f, 0f);
+            tuRect.anchorMax = new Vector2(0.48f, 1f);
+            tuRect.offsetMin = Vector2.zero;
+            tuRect.offsetMax = Vector2.zero;
+            Image tuImg = tabUpgObj.AddComponent<Image>();
+            tuImg.color = new Color(0.24f, 0.42f, 0.70f);
+            Button tuBtn = tabUpgObj.AddComponent<Button>();
+
+            GameObject tuTextObj = new GameObject("Text", typeof(RectTransform));
+            tuTextObj.transform.SetParent(tabUpgObj.transform, false);
+            RectTransform tutRect = tuTextObj.GetComponent<RectTransform>();
+            tutRect.anchorMin = Vector2.zero;
+            tutRect.anchorMax = Vector2.one;
+            tutRect.offsetMin = Vector2.zero;
+            tutRect.offsetMax = Vector2.zero;
+            Text tuText = tuTextObj.AddComponent<Text>();
+            tuText.text = "⚡ UPGRADES";
+            tuText.font = font;
+            tuText.fontSize = 28;
+            tuText.fontStyle = FontStyle.Bold;
+            tuText.alignment = TextAnchor.MiddleCenter;
+            tuText.color = Color.white;
+
+            // Tab 2: Rewards
+            GameObject tabRewObj = new GameObject("Tab_Rewards", typeof(RectTransform));
+            tabRewObj.transform.SetParent(tabContainer.transform, false);
+            RectTransform trRect = tabRewObj.GetComponent<RectTransform>();
+            trRect.anchorMin = new Vector2(0.52f, 0f);
+            trRect.anchorMax = new Vector2(1f, 1f);
+            trRect.offsetMin = Vector2.zero;
+            trRect.offsetMax = Vector2.zero;
+            Image trImg = tabRewObj.AddComponent<Image>();
+            trImg.color = new Color(0.14f, 0.16f, 0.22f);
+            Button trBtn = tabRewObj.AddComponent<Button>();
+
+            GameObject trTextObj = new GameObject("Text", typeof(RectTransform));
+            trTextObj.transform.SetParent(tabRewObj.transform, false);
+            RectTransform trtRect = trTextObj.GetComponent<RectTransform>();
+            trtRect.anchorMin = Vector2.zero;
+            trtRect.anchorMax = Vector2.one;
+            trtRect.offsetMin = Vector2.zero;
+            trtRect.offsetMax = Vector2.zero;
+            Text trText = trTextObj.AddComponent<Text>();
+            trText.text = "🎁 REWARDS & QUESTS";
+            trText.font = font;
+            trText.fontSize = 26;
+            trText.fontStyle = FontStyle.Bold;
+            trText.alignment = TextAnchor.MiddleCenter;
+            trText.color = Color.white;
+
+            // ---------------- VIEW 1: UPGRADES ----------------
+            GameObject upgradesView = new GameObject("UpgradesView", typeof(RectTransform));
+            upgradesView.transform.SetParent(modalObj.transform, false);
+            RectTransform uvRect = upgradesView.GetComponent<RectTransform>();
+            uvRect.anchorMin = new Vector2(0.06f, 0.15f);
+            uvRect.anchorMax = new Vector2(0.94f, 0.80f);
+            uvRect.offsetMin = Vector2.zero;
+            uvRect.offsetMax = Vector2.zero;
+
+            // Set Bonus Subtitle
             GameObject bonusObj = new GameObject("SetBonusText", typeof(RectTransform));
-            bonusObj.transform.SetParent(headerObj.transform, false);
+            bonusObj.transform.SetParent(upgradesView.transform, false);
             RectTransform bRect = bonusObj.GetComponent<RectTransform>();
-            bRect.anchorMin = new Vector2(0f, 0f);
-            bRect.anchorMax = new Vector2(1f, 0.50f);
+            bRect.anchorMin = new Vector2(0f, 0.90f);
+            bRect.anchorMax = new Vector2(1f, 1f);
             bRect.offsetMin = Vector2.zero;
             bRect.offsetMax = Vector2.zero;
             Text bonusText = bonusObj.AddComponent<Text>();
             bonusText.text = "COLLECT ALL 9 PRIZES IN ANY CABINET FOR SET BONUS & GOLD CLAW";
             bonusText.font = font;
-            bonusText.fontSize = 24;
+            bonusText.fontSize = 22;
             bonusText.fontStyle = FontStyle.Bold;
             bonusText.alignment = TextAnchor.MiddleCenter;
             bonusText.color = new Color(0.65f, 0.70f, 0.80f);
 
-            // Rows Container (Vertical List)
+            // Rows Container
             GameObject rowsContainer = new GameObject("RowsContainer", typeof(RectTransform));
-            rowsContainer.transform.SetParent(modalObj.transform, false);
+            rowsContainer.transform.SetParent(upgradesView.transform, false);
             RectTransform rcRect = rowsContainer.GetComponent<RectTransform>();
-            rcRect.anchorMin = new Vector2(0.06f, 0.20f);
-            rcRect.anchorMax = new Vector2(0.94f, 0.80f);
+            rcRect.anchorMin = new Vector2(0f, 0f);
+            rcRect.anchorMax = new Vector2(1f, 0.88f);
             rcRect.offsetMin = Vector2.zero;
             rcRect.offsetMax = Vector2.zero;
 
-            // Row 1: Trolley Speed
             CreateUpgradeRow(rowsContainer.transform, font, 0, "TROLLEY SPEED", "Faster horizontal claw carriage aiming",
                 out Text tLvl, out Text tCost, out Button tBuy);
 
-            // Row 2: Grip Power
             CreateUpgradeRow(rowsContainer.transform, font, 1, "GRIP POWER", "Stronger grip grasp & reduced toy slip",
                 out Text gLvl, out Text gCost, out Button gBuy);
 
-            // Row 3: Drop Precision
             CreateUpgradeRow(rowsContainer.transform, font, 2, "DROP PRECISION", "Faster cable plunge and hoist lift",
                 out Text dLvl, out Text dCost, out Button dBuy);
+
+            // ---------------- VIEW 2: REWARDS ----------------
+            GameObject rewardsView = new GameObject("RewardsView", typeof(RectTransform));
+            rewardsView.transform.SetParent(modalObj.transform, false);
+            RectTransform rvRect = rewardsView.GetComponent<RectTransform>();
+            rvRect.anchorMin = new Vector2(0.06f, 0.15f);
+            rvRect.anchorMax = new Vector2(0.94f, 0.80f);
+            rvRect.offsetMin = Vector2.zero;
+            rvRect.offsetMax = Vector2.zero;
+
+            // 1. Streak Box (Top half: 54% to 100%)
+            GameObject streakBox = new GameObject("StreakBox", typeof(RectTransform));
+            streakBox.transform.SetParent(rewardsView.transform, false);
+            RectTransform sbRect = streakBox.GetComponent<RectTransform>();
+            sbRect.anchorMin = new Vector2(0f, 0.54f);
+            sbRect.anchorMax = new Vector2(1f, 1f);
+            sbRect.offsetMin = Vector2.zero;
+            sbRect.offsetMax = Vector2.zero;
+            Image sbImg = streakBox.AddComponent<Image>();
+            sbImg.color = new Color(0.12f, 0.14f, 0.20f, 0.90f);
+
+            GameObject sbTitleObj = new GameObject("Title", typeof(RectTransform));
+            sbTitleObj.transform.SetParent(streakBox.transform, false);
+            RectTransform sbtRect = sbTitleObj.GetComponent<RectTransform>();
+            sbtRect.anchorMin = new Vector2(0.04f, 0.78f);
+            sbtRect.anchorMax = new Vector2(0.50f, 0.96f);
+            sbtRect.offsetMin = Vector2.zero;
+            sbtRect.offsetMax = Vector2.zero;
+            Text sbTitleText = sbTitleObj.AddComponent<Text>();
+            sbTitleText.text = "7-DAY LOGIN STREAK";
+            sbTitleText.font = font;
+            sbTitleText.fontSize = 28;
+            sbTitleText.fontStyle = FontStyle.Bold;
+            sbTitleText.alignment = TextAnchor.MiddleLeft;
+            sbTitleText.color = new Color(1f, 0.85f, 0.2f);
+
+            GameObject sbSubObj = new GameObject("Subtitle", typeof(RectTransform));
+            sbSubObj.transform.SetParent(streakBox.transform, false);
+            RectTransform sbsRect = sbSubObj.GetComponent<RectTransform>();
+            sbsRect.anchorMin = new Vector2(0.50f, 0.78f);
+            sbsRect.anchorMax = new Vector2(0.96f, 0.96f);
+            sbsRect.offsetMin = Vector2.zero;
+            sbsRect.offsetMax = Vector2.zero;
+            Text sbSubText = sbSubObj.AddComponent<Text>();
+            sbSubText.text = "CURRENT STREAK: 0/7 DAYS";
+            sbSubText.font = font;
+            sbSubText.fontSize = 22;
+            sbSubText.fontStyle = FontStyle.Bold;
+            sbSubText.alignment = TextAnchor.MiddleRight;
+            sbSubText.color = new Color(0.7f, 0.75f, 0.85f);
+
+            // 7 Days Cards Row
+            Text[] dayCards = new Text[7];
+            for (int i = 0; i < 7; i++)
+            {
+                float xMin = 0.02f + i * 0.138f;
+                float xMax = xMin + 0.132f;
+                GameObject dcObj = new GameObject($"DayCard_{i}", typeof(RectTransform));
+                dcObj.transform.SetParent(streakBox.transform, false);
+                RectTransform dcRect = dcObj.GetComponent<RectTransform>();
+                dcRect.anchorMin = new Vector2(xMin, 0.36f);
+                dcRect.anchorMax = new Vector2(xMax, 0.74f);
+                dcRect.offsetMin = Vector2.zero;
+                dcRect.offsetMax = Vector2.zero;
+                Image dcImg = dcObj.AddComponent<Image>();
+                dcImg.color = new Color(0.18f, 0.20f, 0.28f);
+
+                GameObject dctObj = new GameObject("Text", typeof(RectTransform));
+                dctObj.transform.SetParent(dcObj.transform, false);
+                RectTransform dctRect = dctObj.GetComponent<RectTransform>();
+                dctRect.anchorMin = Vector2.zero;
+                dctRect.anchorMax = Vector2.one;
+                dctRect.offsetMin = Vector2.zero;
+                dctRect.offsetMax = Vector2.zero;
+                Text dct = dctObj.AddComponent<Text>();
+                dct.font = font;
+                dct.fontSize = 18;
+                dct.fontStyle = FontStyle.Bold;
+                dct.alignment = TextAnchor.MiddleCenter;
+                dct.color = Color.white;
+                dct.text = $"DAY {i + 1}\n50 🪙";
+                dayCards[i] = dct;
+            }
+
+            // Claim Daily Reward Button
+            GameObject claimDailyBtnObj = new GameObject("Btn_ClaimDaily", typeof(RectTransform));
+            claimDailyBtnObj.transform.SetParent(streakBox.transform, false);
+            RectTransform cdbRect = claimDailyBtnObj.GetComponent<RectTransform>();
+            cdbRect.anchorMin = new Vector2(0.08f, 0.06f);
+            cdbRect.anchorMax = new Vector2(0.92f, 0.28f);
+            cdbRect.offsetMin = Vector2.zero;
+            cdbRect.offsetMax = Vector2.zero;
+            Image cdbImg = claimDailyBtnObj.AddComponent<Image>();
+            cdbImg.color = new Color(0.18f, 0.65f, 0.32f);
+            Button cdbBtn = claimDailyBtnObj.AddComponent<Button>();
+
+            GameObject cdbtObj = new GameObject("Text", typeof(RectTransform));
+            cdbtObj.transform.SetParent(claimDailyBtnObj.transform, false);
+            RectTransform cdbtRect = cdbtObj.GetComponent<RectTransform>();
+            cdbtRect.anchorMin = Vector2.zero;
+            cdbtRect.anchorMax = Vector2.one;
+            cdbtRect.offsetMin = Vector2.zero;
+            cdbtRect.offsetMax = Vector2.zero;
+            Text cdbtText = cdbtObj.AddComponent<Text>();
+            cdbtText.text = "★ CLAIM DAILY REWARD (+50 🪙) ★";
+            cdbtText.font = font;
+            cdbtText.fontSize = 26;
+            cdbtText.fontStyle = FontStyle.Bold;
+            cdbtText.alignment = TextAnchor.MiddleCenter;
+            cdbtText.color = Color.white;
+
+            // 2. Quests Box (Bottom half: 0% to 50%)
+            GameObject questBox = new GameObject("QuestBox", typeof(RectTransform));
+            questBox.transform.SetParent(rewardsView.transform, false);
+            RectTransform qbRect = questBox.GetComponent<RectTransform>();
+            qbRect.anchorMin = new Vector2(0f, 0f);
+            qbRect.anchorMax = new Vector2(1f, 0.50f);
+            qbRect.offsetMin = Vector2.zero;
+            qbRect.offsetMax = Vector2.zero;
+            Image qbImg = questBox.AddComponent<Image>();
+            qbImg.color = new Color(0.12f, 0.14f, 0.20f, 0.90f);
+
+            GameObject qbTitleObj = new GameObject("Title", typeof(RectTransform));
+            qbTitleObj.transform.SetParent(questBox.transform, false);
+            RectTransform qbtRect = qbTitleObj.GetComponent<RectTransform>();
+            qbtRect.anchorMin = new Vector2(0.04f, 0.84f);
+            qbtRect.anchorMax = new Vector2(0.96f, 0.98f);
+            qbtRect.offsetMin = Vector2.zero;
+            qbtRect.offsetMax = Vector2.zero;
+            Text qbTitleText = qbTitleObj.AddComponent<Text>();
+            qbTitleText.text = "DAILY QUESTS";
+            qbTitleText.font = font;
+            qbTitleText.fontSize = 28;
+            qbTitleText.fontStyle = FontStyle.Bold;
+            qbTitleText.alignment = TextAnchor.MiddleLeft;
+            qbTitleText.color = new Color(0.35f, 0.85f, 0.45f);
+
+            Text[] qTitles = new Text[3];
+            Text[] qDescs = new Text[3];
+            Text[] qProgs = new Text[3];
+            Button[] qBtns = new Button[3];
+            Text[] qBtnTexts = new Text[3];
+
+            for (int i = 0; i < 3; i++)
+            {
+                float yTop = 0.80f - i * 0.26f;
+                float yBot = yTop - 0.22f;
+
+                GameObject qCard = new GameObject($"QuestCard_{i}", typeof(RectTransform));
+                qCard.transform.SetParent(questBox.transform, false);
+                RectTransform qcRect = qCard.GetComponent<RectTransform>();
+                qcRect.anchorMin = new Vector2(0.03f, yBot);
+                qcRect.anchorMax = new Vector2(0.97f, yTop);
+                qcRect.offsetMin = Vector2.zero;
+                qcRect.offsetMax = Vector2.zero;
+                Image qcImg = qCard.AddComponent<Image>();
+                qcImg.color = new Color(0.16f, 0.18f, 0.26f);
+
+                // Quest Title
+                GameObject qtObj = new GameObject("Title", typeof(RectTransform));
+                qtObj.transform.SetParent(qCard.transform, false);
+                RectTransform qtRect = qtObj.GetComponent<RectTransform>();
+                qtRect.anchorMin = new Vector2(0.04f, 0.52f);
+                qtRect.anchorMax = new Vector2(0.64f, 0.94f);
+                qtRect.offsetMin = Vector2.zero;
+                qtRect.offsetMax = Vector2.zero;
+                Text qtText = qtObj.AddComponent<Text>();
+                qtText.text = "Quest Title";
+                qtText.font = font;
+                qtText.fontSize = 24;
+                qtText.fontStyle = FontStyle.Bold;
+                qtText.alignment = TextAnchor.MiddleLeft;
+                qtText.color = Color.white;
+                qTitles[i] = qtText;
+
+                // Quest Desc
+                GameObject qdObj = new GameObject("Desc", typeof(RectTransform));
+                qdObj.transform.SetParent(qCard.transform, false);
+                RectTransform qdRect = qdObj.GetComponent<RectTransform>();
+                qdRect.anchorMin = new Vector2(0.04f, 0.08f);
+                qdRect.anchorMax = new Vector2(0.64f, 0.50f);
+                qdRect.offsetMin = Vector2.zero;
+                qdRect.offsetMax = Vector2.zero;
+                Text qdText = qdObj.AddComponent<Text>();
+                qdText.text = "Quest Description";
+                qdText.font = font;
+                qdText.fontSize = 18;
+                qdText.alignment = TextAnchor.MiddleLeft;
+                qdText.color = new Color(0.7f, 0.75f, 0.85f);
+                qDescs[i] = qdText;
+
+                // Quest Progress
+                GameObject qpObj = new GameObject("Progress", typeof(RectTransform));
+                qpObj.transform.SetParent(qCard.transform, false);
+                RectTransform qpRect = qpObj.GetComponent<RectTransform>();
+                qpRect.anchorMin = new Vector2(0.66f, 0.52f);
+                qpRect.anchorMax = new Vector2(0.96f, 0.94f);
+                qpRect.offsetMin = Vector2.zero;
+                qpRect.offsetMax = Vector2.zero;
+                Text qpText = qpObj.AddComponent<Text>();
+                qpText.text = "0 / 5";
+                qpText.font = font;
+                qpText.fontSize = 22;
+                qpText.fontStyle = FontStyle.Bold;
+                qpText.alignment = TextAnchor.MiddleRight;
+                qpText.color = new Color(1f, 0.85f, 0.2f);
+                qProgs[i] = qpText;
+
+                // Quest Claim Button
+                GameObject qbBtnObj = new GameObject("Btn_Claim", typeof(RectTransform));
+                qbBtnObj.transform.SetParent(qCard.transform, false);
+                RectTransform qbBtnRect = qbBtnObj.GetComponent<RectTransform>();
+                qbBtnRect.anchorMin = new Vector2(0.66f, 0.08f);
+                qbBtnRect.anchorMax = new Vector2(0.96f, 0.50f);
+                qbBtnRect.offsetMin = Vector2.zero;
+                qbBtnRect.offsetMax = Vector2.zero;
+                Image qbBtnImg = qbBtnObj.AddComponent<Image>();
+                qbBtnImg.color = new Color(0.25f, 0.70f, 0.35f);
+                Button qbButton = qbBtnObj.AddComponent<Button>();
+                qBtns[i] = qbButton;
+
+                GameObject qbtTxtObj = new GameObject("Text", typeof(RectTransform));
+                qbtTxtObj.transform.SetParent(qbBtnObj.transform, false);
+                RectTransform qbtTxtRect = qbtTxtObj.GetComponent<RectTransform>();
+                qbtTxtRect.anchorMin = Vector2.zero;
+                qbtTxtRect.anchorMax = Vector2.one;
+                qbtTxtRect.offsetMin = Vector2.zero;
+                qbtTxtRect.offsetMax = Vector2.zero;
+                Text qbText = qbtTxtObj.AddComponent<Text>();
+                qbText.text = "CLAIM";
+                qbText.font = font;
+                qbText.fontSize = 20;
+                qbText.fontStyle = FontStyle.Bold;
+                qbText.alignment = TextAnchor.MiddleCenter;
+                qbText.color = Color.white;
+                qBtnTexts[i] = qbText;
+            }
 
             // Close Button
             GameObject closeBtnObj = new GameObject("Btn_Close", typeof(RectTransform));
             closeBtnObj.transform.SetParent(modalObj.transform, false);
             RectTransform closeRect = closeBtnObj.GetComponent<RectTransform>();
-            closeRect.anchorMin = new Vector2(0.25f, 0.06f);
-            closeRect.anchorMax = new Vector2(0.75f, 0.14f);
+            closeRect.anchorMin = new Vector2(0.25f, 0.05f);
+            closeRect.anchorMax = new Vector2(0.75f, 0.12f);
             closeRect.offsetMin = Vector2.zero;
             closeRect.offsetMax = Vector2.zero;
             Image closeImg = closeBtnObj.AddComponent<Image>();
@@ -1677,25 +1983,41 @@ namespace ClawMachine.Editor
             cltText.alignment = TextAnchor.MiddleCenter;
             cltText.color = Color.white;
 
-            // Hook up UpgradesModalUI
-            UpgradesModalUI upgUI = canvasObj.AddComponent<UpgradesModalUI>();
-            SetSerializedProperty(upgUI, "modalPanel", modalObj);
-            SetSerializedProperty(upgUI, "toggleButton", toggleBtn);
-            SetSerializedProperty(upgUI, "closeButton", closeBtn);
-            SetSerializedProperty(upgUI, "coinsText", coinsText);
-            SetSerializedProperty(upgUI, "setBonusText", bonusText);
+            // Hook up ProgressModalUI
+            ProgressModalUI progUI = canvasObj.AddComponent<ProgressModalUI>();
+            SetSerializedProperty(progUI, "modalPanel", modalObj);
+            SetSerializedProperty(progUI, "toggleButton", toggleBtn);
+            SetSerializedProperty(progUI, "closeButton", closeBtn);
+            SetSerializedProperty(progUI, "coinsText", coinsText);
 
-            SetSerializedProperty(upgUI, "trolleyLevelText", tLvl);
-            SetSerializedProperty(upgUI, "trolleyCostText", tCost);
-            SetSerializedProperty(upgUI, "trolleyBuyBtn", tBuy);
+            SetSerializedProperty(progUI, "upgradesTabBtn", tuBtn);
+            SetSerializedProperty(progUI, "rewardsTabBtn", trBtn);
+            SetSerializedProperty(progUI, "upgradesTabBg", tuImg);
+            SetSerializedProperty(progUI, "rewardsTabBg", trImg);
+            SetSerializedProperty(progUI, "upgradesView", upgradesView);
+            SetSerializedProperty(progUI, "rewardsView", rewardsView);
 
-            SetSerializedProperty(upgUI, "gripLevelText", gLvl);
-            SetSerializedProperty(upgUI, "gripCostText", gCost);
-            SetSerializedProperty(upgUI, "gripBuyBtn", gBuy);
+            SetSerializedProperty(progUI, "setBonusText", bonusText);
+            SetSerializedProperty(progUI, "trolleyLevelText", tLvl);
+            SetSerializedProperty(progUI, "trolleyCostText", tCost);
+            SetSerializedProperty(progUI, "trolleyBuyBtn", tBuy);
+            SetSerializedProperty(progUI, "gripLevelText", gLvl);
+            SetSerializedProperty(progUI, "gripCostText", gCost);
+            SetSerializedProperty(progUI, "gripBuyBtn", gBuy);
+            SetSerializedProperty(progUI, "dropLevelText", dLvl);
+            SetSerializedProperty(progUI, "dropCostText", dCost);
+            SetSerializedProperty(progUI, "dropBuyBtn", dBuy);
 
-            SetSerializedProperty(upgUI, "dropLevelText", dLvl);
-            SetSerializedProperty(upgUI, "dropCostText", dCost);
-            SetSerializedProperty(upgUI, "dropBuyBtn", dBuy);
+            SetSerializedProperty(progUI, "streakHeaderSubtitle", sbSubText);
+            SetSerializedProperty(progUI, "streakDayCards", dayCards);
+            SetSerializedProperty(progUI, "claimDailyBtn", cdbBtn);
+            SetSerializedProperty(progUI, "claimDailyBtnText", cdbtText);
+
+            SetSerializedProperty(progUI, "questTitleTexts", qTitles);
+            SetSerializedProperty(progUI, "questDescTexts", qDescs);
+            SetSerializedProperty(progUI, "questProgressTexts", qProgs);
+            SetSerializedProperty(progUI, "questClaimBtns", qBtns);
+            SetSerializedProperty(progUI, "questClaimBtnTexts", qBtnTexts);
 
             modalObj.SetActive(false);
         }
