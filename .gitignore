@@ -24,3 +24,5 @@ ExportedObj/
 *.aab
 *.unitypackage
 crashlytics-build.properties
+
+.sf/
