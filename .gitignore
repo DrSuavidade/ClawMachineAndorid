@@ -24,3 +24,6 @@ ExportedObj/
 *.aab
 *.unitypackage
 crashlytics-build.properties
+
+# Graphify
+graphify-out/

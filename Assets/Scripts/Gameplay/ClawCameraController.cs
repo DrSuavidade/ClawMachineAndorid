@@ -33,6 +33,19 @@ namespace ClawMachine.Gameplay
         [SerializeField] private Transform clawTarget;
         [SerializeField] private Transform chuteTarget;
 
+        public Camera TargetCamera => targetCamera;
+
+        public void SetThemePreset(float fov, float pitchOffset = 0f)
+        {
+            defaultFov = fov;
+            defaultRotationEuler.x = 28f + pitchOffset;
+            if (clawController == null || clawController.IsIdle)
+            {
+                targetFovVal = fov;
+                targetRot = Quaternion.Euler(defaultRotationEuler);
+            }
+        }
+
         private Vector3 targetPos;
         private Quaternion targetRot;
         private float targetFovVal;

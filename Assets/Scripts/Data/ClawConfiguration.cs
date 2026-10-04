@@ -6,21 +6,21 @@ namespace ClawMachine.Data
     public class ClawConfiguration : ScriptableObject
     {
         [Header("Rail Movement")]
-        public float moveSpeed = 2.5f;
+        public float moveSpeed = 1.45f;
         public float moveDamping = 8f;
         public Vector2 xBounds = new Vector2(-1.5f, 1.5f);
         public Vector2 zBounds = new Vector2(-1.5f, 1.5f);
 
         [Header("Vertical Action")]
-        public float dropSpeed = 1.8f;
-        public float liftSpeed = 1.5f;
+        public float dropSpeed = 1.3f;
+        public float liftSpeed = 1.2f;
         public float returnSpeed = 2.0f;
-        public float dropMinY = 1.35f;
+        public float dropMinY = 0.78f;
         public float homeY = 3.6f;
 
         [Header("Claw Mechanics")]
         public float openAngle = 38f;
-        public float closedAngle = -28f;
+        public float closedAngle = 2f;
         public float armRotateSpeed = 65f;
         public float armMaxTorque = 15f;
 
@@ -50,9 +50,9 @@ namespace ClawMachine.Data
         [Tooltip("Capsule scan radius for finding prizes under reticle")]
         public float descentScanRadius = 0.60f;
         [Tooltip("Minimum hoist Y during descent")]
-        public float descentMinY = 0.88f;
+        public float descentMinY = 0.78f;
         [Tooltip("Maximum hoist Y during descent")]
-        public float descentMaxY = 2.2f;
+        public float descentMaxY = 2.6f;
 
         [Header("Upgrade Economy")]
         [Tooltip("Cost to upgrade from level N to N+1. Index = current level - 1.")]

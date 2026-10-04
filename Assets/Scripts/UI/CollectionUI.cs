@@ -75,22 +75,12 @@ namespace ClawMachine.UI
             {
                 econ.OnCoinsChanged += HandleCoinsChanged;
             }
-            else if (CollectionManager.Instance != null)
-            {
-                CollectionManager.Instance.OnCoinsChanged += HandleCoinsChanged;
-            }
 
             if (ServiceLocator.TryGet<ICollectionService>(out var coll))
             {
                 coll.OnPrizeRegistered += HandlePrizeRegistered;
                 coll.OnMachineCompleted += HandleMachineCompleted;
                 coll.OnCurrentMachineChanged += HandleCurrentMachineChanged;
-            }
-            else if (CollectionManager.Instance != null)
-            {
-                CollectionManager.Instance.OnPrizeRegistered += HandlePrizeRegistered;
-                CollectionManager.Instance.OnMachineCompleted += HandleMachineCompleted;
-                CollectionManager.Instance.OnCurrentMachineChanged += HandleCurrentMachineChanged;
             }
 
             isSubscribed = true;
@@ -104,22 +94,12 @@ namespace ClawMachine.UI
             {
                 econ.OnCoinsChanged -= HandleCoinsChanged;
             }
-            else if (CollectionManager.Instance != null)
-            {
-                CollectionManager.Instance.OnCoinsChanged -= HandleCoinsChanged;
-            }
 
             if (ServiceLocator.TryGet<ICollectionService>(out var coll))
             {
                 coll.OnPrizeRegistered -= HandlePrizeRegistered;
                 coll.OnMachineCompleted -= HandleMachineCompleted;
                 coll.OnCurrentMachineChanged -= HandleCurrentMachineChanged;
-            }
-            else if (CollectionManager.Instance != null)
-            {
-                CollectionManager.Instance.OnPrizeRegistered -= HandlePrizeRegistered;
-                CollectionManager.Instance.OnMachineCompleted -= HandleMachineCompleted;
-                CollectionManager.Instance.OnCurrentMachineChanged -= HandleCurrentMachineChanged;
             }
 
             isSubscribed = false;
@@ -188,20 +168,12 @@ namespace ClawMachine.UI
             {
                 coins = econ.Coins;
             }
-            else if (CollectionManager.Instance != null)
-            {
-                coins = CollectionManager.Instance.Coins;
-            }
             coinsText.text = $"{coins} 🪙";
         }
 
         public void RefreshCollectionGrid()
         {
-            ICollectionService collService = null;
-            if (!ServiceLocator.TryGet(out collService))
-            {
-                collService = CollectionManager.Instance;
-            }
+            ICollectionService collService = ServiceLocator.Get<ICollectionService>();
             if (collService == null) return;
 
             MachineDefinition machine = collService.CurrentMachine;
@@ -262,24 +234,13 @@ namespace ClawMachine.UI
 
         private void OnSellDuplicatesClicked()
         {
-            ICollectionService collService = null;
-            if (!ServiceLocator.TryGet(out collService))
-            {
-                collService = CollectionManager.Instance;
-            }
+            ICollectionService collService = ServiceLocator.Get<ICollectionService>();
             if (collService == null) return;
 
             int earned = collService.SellAllDuplicates();
             if (earned > 0)
             {
-                if (ServiceLocator.TryGet<IAudioService>(out var audio))
-                {
-                    audio.PlayWin();
-                }
-                else
-                {
-                    ClawAudio.Instance?.PlayWin();
-                }
+                ServiceLocator.Get<IAudioService>()?.PlayWin();
 
                 UpdateCoinsUI();
                 RefreshCollectionGrid();

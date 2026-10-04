@@ -98,10 +98,6 @@ namespace ClawMachine.UI
                 {
                     collectionService.ResetProgress();
                 }
-                else if (CollectionManager.Instance != null)
-                {
-                    CollectionManager.Instance.ResetProgress();
-                }
 
                 if (resetText != null) resetText.text = "RESET COMPLETE!";
                 var img = resetButton != null ? resetButton.GetComponent<Image>() : null;

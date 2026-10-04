@@ -16,8 +16,7 @@ namespace ClawMachine.Editor
         {
             EnsurePrefabDirectories();
 
-            // 1. Build prototype scene in memory or load existing
-            Phase0SceneSetup.BuildPrototype();
+            // 1. Locate scene objects in current open scene
 
             // 2. Locate scene objects
             GameObject cabinet = GameObject.Find("Cabinet");

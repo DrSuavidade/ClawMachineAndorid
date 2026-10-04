@@ -18,7 +18,10 @@ namespace ClawMachine.Gameplay
             collectedThisAttempt.Clear();
         }
 
-        private void OnTriggerEnter(Collider other)
+        private void OnTriggerEnter(Collider other) => TryCollect(other);
+        private void OnTriggerStay(Collider other) => TryCollect(other);
+
+        private void TryCollect(Collider other)
         {
             Prize prize = other.GetComponentInParent<Prize>();
             if (prize != null)
@@ -33,8 +36,9 @@ namespace ClawMachine.Gameplay
                 if (!collectedThisAttempt.Contains(prize))
                 {
                     collectedThisAttempt.Add(prize);
+                    Debug.Log($"[ChuteDetector] Collected prize: {prize.name}");
                     OnPrizeCollected?.Invoke(prize);
-                    Destroy(prize.gameObject, 0.85f);
+                    Destroy(prize.gameObject, 0.5f);
                 }
             }
         }

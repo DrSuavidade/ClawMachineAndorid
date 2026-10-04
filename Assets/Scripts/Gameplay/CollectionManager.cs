@@ -44,10 +44,7 @@ namespace ClawMachine.Gameplay
         public int dailyStreak = 0;
         public string lastQuestDateUtc = "";
         public List<DailyQuestData> activeQuests = new List<DailyQuestData>();
-        // Legacy global fields — kept for v1 migration only
-        public int trolleySpeedLevel = 1;
-        public int gripPowerLevel = 1;
-        public int dropSpeedLevel = 1;
+        public List<string> claimedMilestoneIds = new List<string>();
         public long lastPassiveIncomeTimestamp;
     }
 
@@ -83,6 +80,10 @@ namespace ClawMachine.Gameplay
         public event Action<MachineDefinition> OnMachineUnlocked;
         public event Action<MachineDefinition> OnCurrentMachineChanged;
         public event Action<UpgradeType, int> OnUpgradePurchased;
+        public event Action<int, TimeSpan> OnOfflineEarningsPending;
+
+        public int PendingOfflineCoins { get; private set; }
+        public TimeSpan PendingOfflineTime { get; private set; }
 
         private float passiveTimer;
 
@@ -124,6 +125,24 @@ namespace ClawMachine.Gameplay
             }
 
             LoadData();
+        }
+
+        private void Start()
+        {
+            if (PendingOfflineCoins > 0)
+            {
+                OnOfflineEarningsPending?.Invoke(PendingOfflineCoins, PendingOfflineTime);
+            }
+        }
+
+        public void ClaimOfflineEarnings()
+        {
+            if (PendingOfflineCoins > 0)
+            {
+                int earned = PendingOfflineCoins;
+                PendingOfflineCoins = 0;
+                AddCoins(earned);
+            }
         }
 
         private void OnDestroy()
@@ -447,16 +466,21 @@ namespace ClawMachine.Gameplay
                 data.unlockedMachineIds.Add("toy_box");
             }
 
-            // Calculate offline passive income
-            if (data.ownedMachineIds.Count > 0 && data.lastPassiveIncomeTimestamp > 0)
+            // Calculate offline passive income if player was away > 5 minutes (never on first launch)
+            if (data.lastPassiveIncomeTimestamp > 0)
             {
                 TimeSpan elapsed = DateTime.UtcNow - new DateTime(data.lastPassiveIncomeTimestamp);
-                int minutes = Mathf.Clamp((int)elapsed.TotalMinutes, 0, 480); // Cap at 8 hours
-                if (minutes > 0 && currentMachine != null && IsMachineOwned(currentMachine.machineId))
+                if (elapsed.TotalSeconds >= 300) // Away for > 5 minutes
                 {
-                    int offlineCoins = minutes * currentMachine.passiveIncomePerMinute;
-                    data.coins += offlineCoins;
-                    Debug.Log($"[CollectionManager] Welcome back! Earned {offlineCoins} coins while offline ({minutes}m).");
+                    int minutes = Mathf.Clamp((int)elapsed.TotalMinutes, 0, 480); // Cap at 8 hours
+                    int rate = 5;
+                    if (currentMachine != null && currentMachine.passiveIncomePerMinute > 0)
+                    {
+                        rate = currentMachine.passiveIncomePerMinute;
+                    }
+                    PendingOfflineCoins = minutes * rate;
+                    PendingOfflineTime = elapsed;
+                    Debug.Log($"[CollectionManager] Player away for {elapsed.TotalMinutes:F1}m. Pending offline earnings: {PendingOfflineCoins} 🪙");
                 }
             }
 
@@ -487,9 +511,9 @@ namespace ClawMachine.Gameplay
                 data.machineUpgrades.Add(new MachineUpgradeData
                 {
                     machineId = "toy_box",
-                    trolleySpeedLevel = data.trolleySpeedLevel,
-                    gripPowerLevel = data.gripPowerLevel,
-                    dropPrecisionLevel = data.dropSpeedLevel
+                    trolleySpeedLevel = 1,
+                    gripPowerLevel = 1,
+                    dropPrecisionLevel = 1
                 });
                 data.saveVersion = 2;
                 Debug.Log("[CollectionManager] Migrated save data v1 → v2 (per-machine upgrades)");
@@ -528,7 +552,7 @@ namespace ClawMachine.Gameplay
             return type switch
             {
                 UpgradeType.TrolleySpeed => Mathf.Clamp(upg.trolleySpeedLevel, 1, 5),
-                UpgradeType.GripPower => Mathf.Clamp(upg.gripPowerLevel, 1, 5),
+                UpgradeType.GripPower => Mathf.Clamp(upg.gripPowerLevel, 1, 10), // Magnet: 10 levels (1% to 10%)
                 UpgradeType.DropPrecision => Mathf.Clamp(upg.dropPrecisionLevel, 1, 5),
                 _ => 1
             };
@@ -537,8 +561,15 @@ namespace ClawMachine.Gameplay
         public int GetUpgradeCost(UpgradeType type)
         {
             int lvl = GetUpgradeLevel(type);
-            int[] defaultCosts = { 45, 85, 150, 250 };
             int idx = lvl - 1; // level 1 = index 0 (cost for lvl 1 -> 2)
+            if (type == UpgradeType.GripPower)
+            {
+                // Magnet has 10 levels (+1% to +10% grab aura)
+                int[] magnetCosts = { 30, 45, 65, 90, 120, 160, 210, 270, 340 };
+                if (idx < 0 || idx >= magnetCosts.Length) return -1;
+                return magnetCosts[idx];
+            }
+            int[] defaultCosts = { 45, 85, 150, 250 };
             if (idx < 0 || idx >= defaultCosts.Length) return -1; // Max level reached
             return defaultCosts[idx];
         }
@@ -561,7 +592,7 @@ namespace ClawMachine.Gameplay
                     newLvl = upg.trolleySpeedLevel;
                     break;
                 case UpgradeType.GripPower:
-                    upg.gripPowerLevel = Mathf.Min(5, upg.gripPowerLevel + 1);
+                    upg.gripPowerLevel = Mathf.Min(10, upg.gripPowerLevel + 1);
                     newLvl = upg.gripPowerLevel;
                     break;
                 case UpgradeType.DropPrecision:
@@ -577,9 +608,14 @@ namespace ClawMachine.Gameplay
             return true;
         }
 
-        public float GetTrolleySpeedMultiplier() => 1f + (GetUpgradeLevel(UpgradeType.TrolleySpeed) - 1) * 0.15f;
-        public float GetGripPowerMultiplier() => 1f + (GetUpgradeLevel(UpgradeType.GripPower) - 1) * 0.20f;
-        public float GetDropSpeedMultiplier() => 1f + (GetUpgradeLevel(UpgradeType.DropPrecision) - 1) * 0.18f;
+        // Trolley Speed: Controlled progression (+10% per level)
+        public float GetTrolleySpeedMultiplier() => 1f + (GetUpgradeLevel(UpgradeType.TrolleySpeed) - 1) * 0.10f;
+
+        // Magnet Aura: 10 levels (+1% at Lv.1 up to +10% at Lv.10 as secondary grab range)
+        public float GetGripPowerMultiplier() => 1f + GetUpgradeLevel(UpgradeType.GripPower) * 0.01f;
+
+        // Aim Grab Range: Level 4 is baseline (1.0x), Level 5 (+10%), Level 3 (-10%), Level 1 (0.70x tiny shadow)
+        public float GetDropSpeedMultiplier() => 0.70f + (GetUpgradeLevel(UpgradeType.DropPrecision) - 1) * 0.10f;
 
         public void ResetProgress()
         {

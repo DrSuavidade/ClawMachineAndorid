@@ -12,17 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 90ee521ef1cf1be42a446c3fc0c4c606, type: 3}
   m_Name: ClawConfig_Default
   m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.Data.ClawConfiguration
-  moveSpeed: 2.2
+  moveSpeed: 1.75
   moveDamping: 10
-  xBounds: {x: -1.05, y: 1.05}
-  zBounds: {x: -1.05, y: 1.05}
-  dropSpeed: 1.8
-  liftSpeed: 1.4
+  xBounds: {x: -1.08, y: 1.08}
+  zBounds: {x: -1.08, y: 1.08}
+  dropSpeed: 1.3
+  liftSpeed: 1.2
   returnSpeed: 2.2
-  dropMinY: 0.5
+  dropMinY: 0.78
   homeY: 3.6
   openAngle: 38
-  closedAngle: -52
+  closedAngle: 2
   armRotateSpeed: 70
   armMaxTorque: 15
   minContactsForAssist: 2
@@ -30,3 +30,10 @@ MonoBehaviour:
   maxGripCapacity: 2.5
   grabToleranceRadius: 0.22
   slipSensitivity: 1
+  closingDuration: 1.1
+  releasingDuration: 0.8
+  resolveDuration: 1
+  descentScanRadius: 0.6
+  descentMinY: 0.78
+  descentMaxY: 2.6
+  upgradeCosts: 2d0000005500000096000000fa000000

@@ -29,6 +29,7 @@ namespace ClawMachine.Gameplay
         // Angular state in radians: X = pitch (driven by Z accel), Y = roll (driven by X accel)
         private Vector2 angle;
         private Vector2 angleVelocity;
+        private Rigidbody targetRb;
 
         public Vector3 CurrentSwayOffset { get; private set; }
         public Quaternion CurrentSwayRotation { get; private set; } = Quaternion.identity;
@@ -39,6 +40,10 @@ namespace ClawMachine.Gameplay
             trolley = trolleyTransform;
             hoist = hoistTransform;
             visualClawBody = visualBody;
+            if (visualClawBody != null)
+            {
+                targetRb = visualClawBody.GetComponent<Rigidbody>();
+            }
 
             if (trolley != null)
             {
@@ -67,56 +72,76 @@ namespace ClawMachine.Gameplay
 
             // 1. Calculate trolley velocity and acceleration
             Vector3 currentPos = trolley.position;
-            trolleyVelocity = (currentPos - prevTrolleyPos) / dt;
+            Vector3 rawVelocity = (currentPos - prevTrolleyPos) / dt;
+            trolleyVelocity = Vector3.Lerp(trolleyVelocity, rawVelocity, Mathf.Clamp01(dt * 20f));
             trolleyAcceleration = (trolleyVelocity - prevTrolleyVelocity) / dt;
 
             prevTrolleyPos = currentPos;
             prevTrolleyVelocity = trolleyVelocity;
 
-            // Clamp acceleration spikes from discrete teleports
+            // Clamp acceleration spikes
             trolleyAcceleration.x = Mathf.Clamp(trolleyAcceleration.x, -25f, 25f);
             trolleyAcceleration.z = Mathf.Clamp(trolleyAcceleration.z, -25f, 25f);
 
-            // 2. Harmonic pendulum physics
+            // 2. Pendulum harmonic physics
             float effLength = Mathf.Max(0.25f, CableLength);
             float omega = Mathf.Sqrt(gravity / effLength);
             float damping = 2f * dampingRatio * omega;
 
-            // Acceleration excitation: forward trolley accel forces claw backward
-            float drivingX = (-trolleyAcceleration.z / effLength) * swaySensitivity;
-            float drivingZ = (trolleyAcceleration.x / effLength) * swaySensitivity;
+            // Inertial excitation: Opposite to motion!
+            // When trolley moves/accelerates +X, claw bob lags in -X.
+            // When trolley moves/accelerates +Z, claw bob lags in -Z.
+            // Steady velocity drag: keeps claw trailing opposite to travel direction while moving.
+            float velocityDragGain = 0.55f;
+            float accelGain = 0.65f * swaySensitivity;
 
-            // Angular acceleration: theta'' = -damping * theta' - omega^2 * theta + driving
-            float alphaX = -damping * angleVelocity.x - (omega * omega * angle.x) + drivingX;
-            float alphaZ = -damping * angleVelocity.y - (omega * omega * angle.y) + drivingZ;
+            // Bob displacement acceleration:
+            // a_bob = -omega^2 * d - damping * v_bob - (accelGain * a_trolley + velocityDragGain * v_trolley)
+            float drivingX = (-trolleyAcceleration.x * accelGain) - (trolleyVelocity.x * velocityDragGain);
+            float drivingZ = (-trolleyAcceleration.z * accelGain) - (trolleyVelocity.z * velocityDragGain);
 
-            angleVelocity.x += alphaX * dt;
-            angleVelocity.y += alphaZ * dt;
+            float accelDispX = -(omega * omega * angle.x) - (damping * angleVelocity.x) + drivingX;
+            float accelDispZ = -(omega * omega * angle.y) - (damping * angleVelocity.y) + drivingZ;
+
+            angleVelocity.x += accelDispX * dt;
+            angleVelocity.y += accelDispZ * dt;
 
             angle.x += angleVelocity.x * dt;
             angle.y += angleVelocity.y * dt;
 
-            // Clamp max swing angle
-            float maxRad = maxAngleDegrees * Mathf.Deg2Rad;
-            angle.x = Mathf.Clamp(angle.x, -maxRad, maxRad);
-            angle.y = Mathf.Clamp(angle.y, -maxRad, maxRad);
+            // 3. Clamp maximum horizontal displacement
+            float maxDisplacement = effLength * Mathf.Sin(maxAngleDegrees * Mathf.Deg2Rad);
+            Vector2 disp2D = new Vector2(angle.x, angle.y);
+            if (disp2D.magnitude > maxDisplacement)
+            {
+                disp2D = disp2D.normalized * maxDisplacement;
+                angle.x = disp2D.x;
+                angle.y = disp2D.y;
+            }
 
-            // 3. Compute offset and rotation
-            float degX = angle.x * Mathf.Rad2Deg;
-            float degZ = angle.y * Mathf.Rad2Deg;
-            CurrentSwayRotation = Quaternion.Euler(degX, 0f, degZ);
+            // 4. Calculate 3D cable direction and rotation
+            float dispX = angle.x;
+            float dispZ = angle.y;
+            float hSqr = effLength * effLength - dispX * dispX - dispZ * dispZ;
+            float h = Mathf.Sqrt(Mathf.Max(0.01f, hSqr));
 
-            // Displacement relative to vertical cable:
-            // roll around Z moves in X; pitch around X moves in Z
-            float offsetX = Mathf.Sin(angle.y) * effLength;
-            float offsetZ = -Mathf.Sin(angle.x) * effLength;
-            CurrentSwayOffset = new Vector3(offsetX, 0f, offsetZ);
+            // Cable direction vector from trolley downwards to claw bob
+            Vector3 cableDir = new Vector3(dispX, -h, dispZ).normalized;
+            CurrentSwayRotation = Quaternion.FromToRotation(Vector3.down, cableDir);
 
-            // 4. Apply to visual body
+            // Vertical offset lift as pendulum swings: (h - effLength) is negative
+            CurrentSwayOffset = new Vector3(dispX, -(effLength - h), dispZ);
+
+            // 5. Apply to visual body
             if (visualClawBody != null)
             {
                 visualClawBody.localRotation = CurrentSwayRotation;
                 visualClawBody.localPosition = CurrentSwayOffset;
+                if (targetRb != null && targetRb.isKinematic && hoist != null)
+                {
+                    targetRb.MovePosition(hoist.position + CurrentSwayOffset);
+                    targetRb.MoveRotation(hoist.rotation * CurrentSwayRotation);
+                }
             }
         }
     }

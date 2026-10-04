@@ -114,10 +114,19 @@ namespace ClawMachine.UI
             Debug.Log($"[ArcadeJoystickUI] Joystick Armed: {isArmed}");
         }
 
+        public void SetThemeColor(Color themeColor)
+        {
+            if (ballKnobImage != null)
+            {
+                ballKnobImage.color = themeColor;
+            }
+        }
+
         // Direct drag on joystick
         public void OnBeginDrag(PointerEventData eventData)
         {
             isDirectDragging = true;
+            if (knobTransform != null) knobTransform.localScale = Vector3.one * 1.08f;
         }
 
         public void OnDrag(PointerEventData eventData)
@@ -140,6 +149,7 @@ namespace ClawMachine.UI
         {
             isDirectDragging = false;
             currentInputVector = Vector2.zero;
+            if (knobTransform != null) knobTransform.localScale = Vector3.one;
         }
 
         // Floating screen center mode: click anywhere on screen to establish center

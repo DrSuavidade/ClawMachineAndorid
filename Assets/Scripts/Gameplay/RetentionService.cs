@@ -35,7 +35,7 @@ namespace ClawMachine.Gameplay
         {
             if (collectionManager == null)
             {
-                collectionManager = CollectionManager.Instance ?? FindFirstObjectByType<CollectionManager>();
+                collectionManager = ServiceLocator.Get<ICollectionService>() as CollectionManager ?? FindFirstObjectByType<CollectionManager>();
             }
         }
 
@@ -263,6 +263,152 @@ namespace ClawMachine.Gameplay
                 collectionManager?.ForceSave();
                 OnRetentionStateChanged?.Invoke();
             }
+        }
+
+        public bool HasAnyClaimableReward
+        {
+            get
+            {
+                if (CanClaimDailyReward) return true;
+                var quests = GetActiveQuests();
+                for (int i = 0; i < quests.Count; i++)
+                {
+                    if (quests[i].IsComplete && !quests[i].isClaimed) return true;
+                }
+                var milestones = GetMilestones();
+                for (int i = 0; i < milestones.Count; i++)
+                {
+                    if (milestones[i].isUnlocked && !milestones[i].isClaimed) return true;
+                }
+                return false;
+            }
+        }
+
+        public IReadOnlyList<MilestoneRewardData> GetMilestones()
+        {
+            var d = GetData();
+            var list = new List<MilestoneRewardData>();
+            if (d == null) return list;
+
+            if (d.claimedMilestoneIds == null)
+            {
+                d.claimedMilestoneIds = new List<string>();
+            }
+
+            int totalToys = 0;
+            if (d.inventory != null)
+            {
+                for (int i = 0; i < d.inventory.Count; i++)
+                {
+                    totalToys += d.inventory[i].count;
+                }
+            }
+
+            // Milestone 1: First Catch
+            list.Add(new MilestoneRewardData
+            {
+                id = "m_first_catch",
+                title = "First Catch",
+                hint = "Catch your first toy from any machine",
+                rewardCoins = 100,
+                isUnlocked = totalToys >= 1 || (d.discoveredPrizeIds != null && d.discoveredPrizeIds.Count >= 1),
+                isClaimed = d.claimedMilestoneIds.Contains("m_first_catch")
+            });
+
+            // Milestone 2: Catch 5 Toys
+            list.Add(new MilestoneRewardData
+            {
+                id = "m_catch_5",
+                title = "Toy Hoarder",
+                hint = "Catch 5 prizes across all machines",
+                rewardCoins = 200,
+                isUnlocked = totalToys >= 5,
+                isClaimed = d.claimedMilestoneIds.Contains("m_catch_5")
+            });
+
+            // Milestone 3: Novice Collector (5 Unique Toys)
+            list.Add(new MilestoneRewardData
+            {
+                id = "m_unique_5",
+                title = "Novice Collector",
+                hint = "Discover 5 unique different toys in collection",
+                rewardCoins = 250,
+                isUnlocked = d.discoveredPrizeIds != null && d.discoveredPrizeIds.Count >= 5,
+                isClaimed = d.claimedMilestoneIds.Contains("m_unique_5")
+            });
+
+            // Milestone 4: Set Champion (Complete 1 Cabinet)
+            list.Add(new MilestoneRewardData
+            {
+                id = "m_set_master",
+                title = "Set Champion",
+                hint = "Complete all 9 prizes in any cabinet",
+                rewardCoins = 500,
+                isUnlocked = d.ownedMachineIds != null && d.ownedMachineIds.Count > 0,
+                isClaimed = d.claimedMilestoneIds.Contains("m_set_master")
+            });
+
+            // Milestone 5: Arcade Regular (3-Day Streak)
+            list.Add(new MilestoneRewardData
+            {
+                id = "m_streak_3",
+                title = "Arcade Regular",
+                hint = "Achieve a 3-day daily login streak",
+                rewardCoins = 300,
+                isUnlocked = d.dailyStreak >= 3,
+                isClaimed = d.claimedMilestoneIds.Contains("m_streak_3")
+            });
+
+            // Milestone 6: High Roller (500 Coins)
+            list.Add(new MilestoneRewardData
+            {
+                id = "m_rich_500",
+                title = "High Roller",
+                hint = "Hold 500 or more coins in your balance",
+                rewardCoins = 200,
+                isUnlocked = d.coins >= 500,
+                isClaimed = d.claimedMilestoneIds.Contains("m_rich_500")
+            });
+
+            return list;
+        }
+
+        public bool ClaimMilestoneReward(string milestoneId, out int coinsAwarded)
+        {
+            coinsAwarded = 0;
+            var d = GetData();
+            if (d == null) return false;
+
+            if (d.claimedMilestoneIds == null)
+            {
+                d.claimedMilestoneIds = new List<string>();
+            }
+
+            if (d.claimedMilestoneIds.Contains(milestoneId)) return false;
+
+            var milestones = GetMilestones();
+            MilestoneRewardData target = null;
+            for (int i = 0; i < milestones.Count; i++)
+            {
+                if (milestones[i].id == milestoneId)
+                {
+                    target = milestones[i];
+                    break;
+                }
+            }
+
+            if (target == null || !target.isUnlocked) return false;
+
+            coinsAwarded = target.rewardCoins;
+            d.claimedMilestoneIds.Add(milestoneId);
+            if (collectionManager != null)
+            {
+                collectionManager.AwardCoins(coinsAwarded);
+                collectionManager.ForceSave();
+            }
+
+            OnRetentionStateChanged?.Invoke();
+            return true;
         }
     }
 }
