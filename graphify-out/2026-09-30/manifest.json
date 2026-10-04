@@ -1,0 +1,282 @@
+{
+  "Assets/Scripts/Core/Services/IAudioService.cs": {
+    "mtime": 1790760123.0153182,
+    "ast_hash": "91b531ba3ea4ff92a4f477ab7050d626",
+    "semantic_hash": "91b531ba3ea4ff92a4f477ab7050d626"
+  },
+  "Assets/Scripts/Core/Services/ICollectionService.cs": {
+    "mtime": 1790762099.254881,
+    "ast_hash": "da01c97d026714d9b00dd41cd70bdfba",
+    "semantic_hash": "da01c97d026714d9b00dd41cd70bdfba"
+  },
+  "Assets/Scripts/Core/Services/IEconomyService.cs": {
+    "mtime": 1790769598.7910354,
+    "ast_hash": "af0c3e51c3d79f9727b4ad5cb6483b53",
+    "semantic_hash": "af0c3e51c3d79f9727b4ad5cb6483b53"
+  },
+  "Assets/Scripts/Core/Services/IRetentionService.cs": {
+    "mtime": 1790770635.6489594,
+    "ast_hash": "d2379a7519528e585db21ace8f88718e",
+    "semantic_hash": "d2379a7519528e585db21ace8f88718e"
+  },
+  "Assets/Scripts/Core/Services/ISaveService.cs": {
+    "mtime": 1790758590.2775536,
+    "ast_hash": "4ace472c36b1282ed4121a2752ad4e57",
+    "semantic_hash": "4ace472c36b1282ed4121a2752ad4e57"
+  },
+  "Assets/Scripts/Core/Services/JsonFileSaveService.cs": {
+    "mtime": 1790758598.6743326,
+    "ast_hash": "0a7e4421dcf7ed435c3af6fbcf7837b8",
+    "semantic_hash": "0a7e4421dcf7ed435c3af6fbcf7837b8"
+  },
+  "Assets/Scripts/Core/Services/ServiceLocator.cs": {
+    "mtime": 1790760116.2589903,
+    "ast_hash": "fee1f01ae15d5f13532f7273f3a54c36",
+    "semantic_hash": "fee1f01ae15d5f13532f7273f3a54c36"
+  },
+  "Assets/Scripts/Data/ClawConfiguration.cs": {
+    "mtime": 1790804142.3893087,
+    "ast_hash": "447197fed109c9328e0de7b3f4f8ad8f",
+    "semantic_hash": ""
+  },
+  "Assets/Scripts/Data/MachineCatalog.cs": {
+    "mtime": 1790726997.4580083,
+    "ast_hash": "4ec3adbf6000d61ffe1fb0aa3413a27d",
+    "semantic_hash": "4ec3adbf6000d61ffe1fb0aa3413a27d"
+  },
+  "Assets/Scripts/Data/MachineDefinition.cs": {
+    "mtime": 1790725776.7857456,
+    "ast_hash": "2493350b373983ce2f4af5b56a19c832",
+    "semantic_hash": "2493350b373983ce2f4af5b56a19c832"
+  },
+  "Assets/Scripts/Data/PrizeDefinition.cs": {
+    "mtime": 1790721782.7492957,
+    "ast_hash": "43948c0be5618801bdf3a75394572073",
+    "semantic_hash": "43948c0be5618801bdf3a75394572073"
+  },
+  "Assets/Scripts/Editor/Phase0SceneSetup.cs": {
+    "mtime": 1790804189.1932561,
+    "ast_hash": "ddde25b36da9eb9448b66605b9febb7e",
+    "semantic_hash": ""
+  },
+  "Assets/Scripts/Editor/PrefabExporter.cs": {
+    "mtime": 1790761088.367951,
+    "ast_hash": "b2cc27c8b3e0aff0ff38a302a3c27400",
+    "semantic_hash": "b2cc27c8b3e0aff0ff38a302a3c27400"
+  },
+  "Assets/Scripts/Editor/RetroArcadeAssetGenerator.cs": {
+    "mtime": 1790727407.1408281,
+    "ast_hash": "dbef1002600fd93f3028e2bb4aeeeb23",
+    "semantic_hash": "dbef1002600fd93f3028e2bb4aeeeb23"
+  },
+  "Assets/Scripts/Editor/ToyBoxAssetGenerator.cs": {
+    "mtime": 1790721817.982933,
+    "ast_hash": "24222f1a132c824733e90f5109605adb",
+    "semantic_hash": "24222f1a132c824733e90f5109605adb"
+  },
+  "Assets/Scripts/Gameplay/ChuteDetector.cs": {
+    "mtime": 1790772794.3459508,
+    "ast_hash": "ade09d460d690ae55a0da9727d11f2cd",
+    "semantic_hash": "ade09d460d690ae55a0da9727d11f2cd"
+  },
+  "Assets/Scripts/Gameplay/ClawArm.cs": {
+    "mtime": 1790804044.871523,
+    "ast_hash": "b06cfc9407fd1a2a36e7c8214aa78fce",
+    "semantic_hash": ""
+  },
+  "Assets/Scripts/Gameplay/ClawAudio.cs": {
+    "mtime": 1790760151.3822865,
+    "ast_hash": "d0ba2d70a2c834eabe4d8b1052ca0559",
+    "semantic_hash": "d0ba2d70a2c834eabe4d8b1052ca0559"
+  },
+  "Assets/Scripts/Gameplay/ClawCameraController.cs": {
+    "mtime": 1790769012.8107138,
+    "ast_hash": "313cccfc779b70e49d2ce2d81eccd1f9",
+    "semantic_hash": "313cccfc779b70e49d2ce2d81eccd1f9"
+  },
+  "Assets/Scripts/Gameplay/ClawController.cs": {
+    "mtime": 1790804111.5694492,
+    "ast_hash": "60996b1cdf4284697846c06092bb9e1a",
+    "semantic_hash": ""
+  },
+  "Assets/Scripts/Gameplay/ClawGripAnchor.cs": {
+    "mtime": 1790803018.5963264,
+    "ast_hash": "bcb5e1eaaed8ac8c71321e2ee7709445",
+    "semantic_hash": ""
+  },
+  "Assets/Scripts/Gameplay/ClawJuiceEffects.cs": {
+    "mtime": 1790728000.6344934,
+    "ast_hash": "2a8988ad2f3f754360add9e67bb22990",
+    "semantic_hash": "2a8988ad2f3f754360add9e67bb22990"
+  },
+  "Assets/Scripts/Gameplay/ClawPendulumSway.cs": {
+    "mtime": 1790780159.779956,
+    "ast_hash": "aab30bcf03a789f67c5308bc5a33c34d",
+    "semantic_hash": "aab30bcf03a789f67c5308bc5a33c34d"
+  },
+  "Assets/Scripts/Gameplay/ClawState.cs": {
+    "mtime": 1790719453.9784102,
+    "ast_hash": "e860fda3cf6432c08abcc6a53551e0ea",
+    "semantic_hash": "e860fda3cf6432c08abcc6a53551e0ea"
+  },
+  "Assets/Scripts/Gameplay/CollectionManager.cs": {
+    "mtime": 1790804056.410995,
+    "ast_hash": "a536cb10270d389ef327c88662e9bfd1",
+    "semantic_hash": ""
+  },
+  "Assets/Scripts/Gameplay/MachineController.cs": {
+    "mtime": 1790801105.5663202,
+    "ast_hash": "defecc77c43994d54ab8634967887022",
+    "semantic_hash": ""
+  },
+  "Assets/Scripts/Gameplay/Prize.cs": {
+    "mtime": 1790721569.34268,
+    "ast_hash": "7fd766413147e87e1fdfa04c6c574714",
+    "semantic_hash": "7fd766413147e87e1fdfa04c6c574714"
+  },
+  "Assets/Scripts/Gameplay/PrizeSpawner.cs": {
+    "mtime": 1790785539.4555323,
+    "ast_hash": "49fdb28bfb4ac0c4bf9dbe4aa491da97",
+    "semantic_hash": ""
+  },
+  "Assets/Scripts/Gameplay/RetentionService.cs": {
+    "mtime": 1790770660.3590546,
+    "ast_hash": "ce26fc5bf71794e0df36d65a54279c97",
+    "semantic_hash": "ce26fc5bf71794e0df36d65a54279c97"
+  },
+  "Assets/Scripts/UI/ArcadeConsoleUI.cs": {
+    "mtime": 1790801122.0936122,
+    "ast_hash": "67fae74425b3240304b4d19ad83a8d98",
+    "semantic_hash": ""
+  },
+  "Assets/Scripts/UI/ArcadeJoystickUI.cs": {
+    "mtime": 1790727685.9532254,
+    "ast_hash": "a536f4dc460772f272700062d1bf4dd6",
+    "semantic_hash": "a536f4dc460772f272700062d1bf4dd6"
+  },
+  "Assets/Scripts/UI/ArcadePushButtonUI.cs": {
+    "mtime": 1790727693.164017,
+    "ast_hash": "1dfbc11a7824ea89e441f6da6d1ac628",
+    "semantic_hash": "1dfbc11a7824ea89e441f6da6d1ac628"
+  },
+  "Assets/Scripts/UI/CollectionUI.cs": {
+    "mtime": 1790762255.8987176,
+    "ast_hash": "ad17719f82ebbaf14a26217acb59c2a2",
+    "semantic_hash": "ad17719f82ebbaf14a26217acb59c2a2"
+  },
+  "Assets/Scripts/UI/MachineControlsUI.cs": {
+    "mtime": 1790762189.952011,
+    "ast_hash": "45cae1ee19afd745643fbfbc59ee96e4",
+    "semantic_hash": "45cae1ee19afd745643fbfbc59ee96e4"
+  },
+  "Assets/Scripts/UI/OfflineEarningsModalUI.cs": {
+    "mtime": 1790783135.855371,
+    "ast_hash": "c37532f9e88a6b129b86bf3a2f7a29dc",
+    "semantic_hash": ""
+  },
+  "Assets/Scripts/UI/ProgressModalUI.cs": {
+    "mtime": 1790804124.020249,
+    "ast_hash": "9686750e2cb762256cad07682536fbe9",
+    "semantic_hash": ""
+  },
+  "Assets/Scripts/UI/SafeArea.cs": {
+    "mtime": 1790760333.9290686,
+    "ast_hash": "e0418a8b3a7f8fca5a6a68e497d988dd",
+    "semantic_hash": "e0418a8b3a7f8fca5a6a68e497d988dd"
+  },
+  "Assets/Scripts/UI/SettingsModalUI.cs": {
+    "mtime": 1790760597.515039,
+    "ast_hash": "8f61fcd91b6a4f7c8c89c7111377f83e",
+    "semantic_hash": "8f61fcd91b6a4f7c8c89c7111377f83e"
+  },
+  "Assets/Scripts/UI/UpgradesModalUI.cs": {
+    "mtime": 1790804133.7995646,
+    "ast_hash": "9c7c74027223412efc5ab16d640e5452",
+    "semantic_hash": ""
+  },
+  "Packages/manifest.json": {
+    "mtime": 1790761762.9757946,
+    "ast_hash": "1b5e872513b9c4e29eb2c7fa40e1956c",
+    "semantic_hash": "1b5e872513b9c4e29eb2c7fa40e1956c"
+  },
+  "Packages/packages-lock.json": {
+    "mtime": 1790761762.9810655,
+    "ast_hash": "8e72851c107aedc125e5c46ca15eaef5",
+    "semantic_hash": "8e72851c107aedc125e5c46ca15eaef5"
+  },
+  "ProjectSettings/SceneTemplateSettings.json": {
+    "mtime": 1790710754.8876681,
+    "ast_hash": "eeb26e313b89cd9334b828428a4847ef",
+    "semantic_hash": "eeb26e313b89cd9334b828428a4847ef"
+  },
+  "ProjectSettings/ProjectVersion.txt": {
+    "mtime": 1790708661.9904659,
+    "ast_hash": "b648e06a66b3a136b7db9280f72fab4b",
+    "semantic_hash": "b648e06a66b3a136b7db9280f72fab4b"
+  },
+  "docs/superpowers/plans/2026-09-29-kinematic-anchor-grab.md": {
+    "mtime": 1790715834.5510497,
+    "ast_hash": "ab8e02fa826b91881a0eafd15d087db7",
+    "semantic_hash": "ab8e02fa826b91881a0eafd15d087db7"
+  },
+  "docs/superpowers/plans/2026-09-30-modular-progression-and-skeuomorphic-deck.md": {
+    "mtime": 1790726886.522048,
+    "ast_hash": "586f2ac1ec392fa335b0be9b3ace08f9",
+    "semantic_hash": "586f2ac1ec392fa335b0be9b3ace08f9"
+  },
+  "docs/superpowers/plans/2026-09-30-phase3-machine-progression.md": {
+    "mtime": 1790725759.3301413,
+    "ast_hash": "3192d0d8d934a1dd4c90611db829a87a",
+    "semantic_hash": "3192d0d8d934a1dd4c90611db829a87a"
+  },
+  "docs/superpowers/plans/2026-09-30-phase5-improvements.md": {
+    "mtime": 1790769489.4567635,
+    "ast_hash": "ee8cada8b86e051f3d12b13d54477767",
+    "semantic_hash": "ee8cada8b86e051f3d12b13d54477767"
+  },
+  "docs/superpowers/specs/2026-09-30-phase3-machine-progression-design.md": {
+    "mtime": 1790725740.540903,
+    "ast_hash": "53207ab9771b8185b0c53cabf4f873c7",
+    "semantic_hash": "53207ab9771b8185b0c53cabf4f873c7"
+  },
+  "docs/superpowers/specs/2026-09-30-phase5-improvements-design.md": {
+    "mtime": 1790768009.4789858,
+    "ast_hash": "a65597cac67aead3dafc9b40d3e38509",
+    "semantic_hash": "a65597cac67aead3dafc9b40d3e38509"
+  },
+  "Assets/Textures/UI/Sprite_Circle.png": {
+    "mtime": 1790803409.4755952,
+    "ast_hash": "b144fde3d0a2dfbb7596d031d187408b",
+    "semantic_hash": "b144fde3d0a2dfbb7596d031d187408b"
+  },
+  "Assets/Textures/UI/Sprite_Ring.png": {
+    "mtime": 1790803409.5399568,
+    "ast_hash": "8f32c4046b5a6f1d9d6313930d7c5f55",
+    "semantic_hash": "8f32c4046b5a6f1d9d6313930d7c5f55"
+  },
+  "Assets/Scripts/Editor/AdditionalMachinesGenerator.cs": {
+    "mtime": 1790783617.4089897,
+    "ast_hash": "3333e28e058907eefda95f479ffd9746",
+    "semantic_hash": ""
+  },
+  "Assets/Scripts/Gameplay/ClawCableVisual.cs": {
+    "mtime": 1790788286.7042327,
+    "ast_hash": "c32eb7d201a3d9840efd92f1c5730f77",
+    "semantic_hash": ""
+  },
+  "Assets/Scripts/UI/PrizeWinModalUI.cs": {
+    "mtime": 1790797389.1789825,
+    "ast_hash": "9232805a104ead85ead7139954460946",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-09-30-demo-presentation-refinement.md": {
+    "mtime": 1790786407.5259912,
+    "ast_hash": "9b4ed2fa56524b8adf5fcbc6895e2d90",
+    "semantic_hash": ""
+  },
+  "Assets/Scripts/Editor/MaterialStylizer.cs": {
+    "mtime": 1790800267.3361335,
+    "ast_hash": "6be090c8cbc0050c9f8824ca11e08083",
+    "semantic_hash": ""
+  }
+}
