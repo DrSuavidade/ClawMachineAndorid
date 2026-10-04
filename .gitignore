@@ -27,3 +27,5 @@ crashlytics-build.properties
 
 # Graphify
 graphify-out/
+
+.sf/
