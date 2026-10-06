@@ -14,25 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.Data.MachineDefinition
   machineId: steampunk_foundry
   displayName: Steampunk Foundry
-  description: Industrial boiler-plate mechanical cabinet driven by visible gears, pressure valves, and steam.
-  unlockCost: 18000
+  description: Industrial boiler-plate mechanical cabinet driven by visible gears,
+    pressure valves, and steam.
+  unlockCost: 20000
   entryCost: 0
+  passiveIncomePerMinute: 90
   theme: {fileID: 11400000, guid: 0e62f99b639f4aa1b80bd5ccb283b9a4, type: 2}
-  passiveIncomePerMinute: 75
-  cabinetFrameColor: {r: 0.45, g: 0.28, b: 0.18, a: 1.0}
-  cabinetBackdropColor: {r: 0.18, g: 0.16, b: 0.14, a: 1.0}
+  cabinetFrameColor: {r: 0.45, g: 0.28, b: 0.18, a: 1}
+  cabinetBackdropColor: {r: 0.18, g: 0.16, b: 0.14, a: 1}
   environmentPrefab: {fileID: 0}
   ambientLightColor: {r: 0.25, g: 0.25, b: 0.3, a: 1}
   directionalLightColor: {r: 1, g: 0.96, b: 0.9, a: 1}
   cameraFieldOfView: 45
   cameraPitch: 28
   prizes:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 11400000, guid: bf4ad8c29415c85fa9162e0deca77b82, type: 2}
+  - {fileID: 11400000, guid: a8a7709e4df3224a6844b29a2eb96f4a, type: 2}
+  - {fileID: 11400000, guid: 25fc9442cfae160458b4da24940f91e1, type: 2}
+  - {fileID: 11400000, guid: 0475108652d9d119da967ff0eebfb12b, type: 2}
+  - {fileID: 11400000, guid: 430b2ed1dd7c93387b20f6b24b31ce3e, type: 2}
+  - {fileID: 11400000, guid: 2e2b24d3b656bd52da6f8bc4da200ed3, type: 2}
+  - {fileID: 11400000, guid: e5e390c6272958eca90ef9789a31259e, type: 2}
+  - {fileID: 11400000, guid: f0e8a5e1f8576799f8e6492df401738c, type: 2}
+  - {fileID: 11400000, guid: 8d731cf2fb2e907979e16c39bbf2be3a, type: 2}

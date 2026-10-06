@@ -14,25 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.Data.MachineDefinition
   machineId: haunted_manor
   displayName: Haunted Manor
-  description: Gothic séance parlor cabinet illuminated by eerie green ectoplasm and candlelit spirits.
-  unlockCost: 14000
+  description: "Gothic s\xE9ance parlor cabinet illuminated by eerie green ectoplasm
+    and candlelit spirits."
+  unlockCost: 16000
   entryCost: 0
+  passiveIncomePerMinute: 75
   theme: {fileID: 11400000, guid: 91fb2d66ed9e40f29659764026f6707c, type: 2}
-  passiveIncomePerMinute: 60
-  cabinetFrameColor: {r: 0.24, g: 0.16, b: 0.32, a: 1.0}
-  cabinetBackdropColor: {r: 0.08, g: 0.14, b: 0.1, a: 1.0}
+  cabinetFrameColor: {r: 0.24, g: 0.16, b: 0.32, a: 1}
+  cabinetBackdropColor: {r: 0.08, g: 0.14, b: 0.1, a: 1}
   environmentPrefab: {fileID: 0}
   ambientLightColor: {r: 0.25, g: 0.25, b: 0.3, a: 1}
   directionalLightColor: {r: 1, g: 0.96, b: 0.9, a: 1}
   cameraFieldOfView: 45
   cameraPitch: 28
   prizes:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 11400000, guid: 9e1afe7dcfe9fc8dbacb2f0428a52397, type: 2}
+  - {fileID: 11400000, guid: 178101682b3a9b1d0804a39f221649fc, type: 2}
+  - {fileID: 11400000, guid: aa49a2f3a4f1ac0eaaf87fe1788dc420, type: 2}
+  - {fileID: 11400000, guid: 4ef0b5c38d9810c8db28c502e6a52e97, type: 2}
+  - {fileID: 11400000, guid: 4995507e2b74f4735bec6336e13044ac, type: 2}
+  - {fileID: 11400000, guid: fdd9a357286722cb88baf6b723c34398, type: 2}
+  - {fileID: 11400000, guid: edc9b73a519bd9db18a1873b7beb1179, type: 2}
+  - {fileID: 11400000, guid: 9f17ae76e403975edbb092fb9846aa97, type: 2}
+  - {fileID: 11400000, guid: 88715ac67deaa633ba5c2770d1125d39, type: 2}

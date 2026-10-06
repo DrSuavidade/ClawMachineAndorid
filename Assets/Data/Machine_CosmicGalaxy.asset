@@ -15,10 +15,10 @@ MonoBehaviour:
   machineId: cosmic_galaxy
   displayName: Cosmic Galaxy
   description: Delve into deep space relics, planetary artifacts, and alien tech.
-  unlockCost: 400
+  unlockCost: 5000
   entryCost: 20
   theme: {fileID: 11400000, guid: ab80c9313c2d4cdab58bf145ace5f320, type: 2}
-  passiveIncomePerMinute: 30
+  passiveIncomePerMinute: 35
   cabinetFrameColor: {r: 0.42, g: 0.16, b: 0.72, a: 1}
   cabinetBackdropColor: {r: 0.06, g: 0.08, b: 0.16, a: 1}
   environmentPrefab: {fileID: 3787341914049684072, guid: 9eed627f32acdd34ab9670830c79696b, type: 3}

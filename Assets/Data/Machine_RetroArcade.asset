@@ -16,10 +16,10 @@ MonoBehaviour:
   displayName: Retro Arcade
   description: Step into neon nostalgia with pixel relics, vintage tech, and rare
     arcade collectibles.
-  unlockCost: 150
+  unlockCost: 500
   entryCost: 10
   theme: {fileID: 11400000, guid: 5bcd350f8b33414b85272d82e7174657, type: 2}
-  passiveIncomePerMinute: 15
+  passiveIncomePerMinute: 10
   cabinetFrameColor: {r: 0.78, g: 0.15, b: 0.88, a: 1}
   cabinetBackdropColor: {r: 0.1, g: 0.12, b: 0.22, a: 1}
   environmentPrefab: {fileID: 6533916832541230528, guid: 91472a8858f840b45b33586bc9a4acb9, type: 3}

@@ -14,25 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.Data.MachineDefinition
   machineId: neon_casino
   displayName: Neon Casino
-  description: High-roller 1970s Vegas casino cabinet gleaming in mirror lacquer, sovereign gold, and jackpot lights.
+  description: High-roller 1970s Vegas casino cabinet gleaming in mirror lacquer,
+    sovereign gold, and jackpot lights.
   unlockCost: 25000
   entryCost: 0
+  passiveIncomePerMinute: 110
   theme: {fileID: 11400000, guid: 83f0cbfc3e374b289c303174b7e64751, type: 2}
-  passiveIncomePerMinute: 100
-  cabinetFrameColor: {r: 0.2, g: 0.05, b: 0.08, a: 1.0}
-  cabinetBackdropColor: {r: 0.08, g: 0.18, b: 0.1, a: 1.0}
+  cabinetFrameColor: {r: 0.2, g: 0.05, b: 0.08, a: 1}
+  cabinetBackdropColor: {r: 0.08, g: 0.18, b: 0.1, a: 1}
   environmentPrefab: {fileID: 0}
   ambientLightColor: {r: 0.25, g: 0.25, b: 0.3, a: 1}
   directionalLightColor: {r: 1, g: 0.96, b: 0.9, a: 1}
   cameraFieldOfView: 45
   cameraPitch: 28
   prizes:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 11400000, guid: 223fb8bdcd29d5830b1daf807d354351, type: 2}
+  - {fileID: 11400000, guid: af228b39d6208349b89b5ab0e91753da, type: 2}
+  - {fileID: 11400000, guid: eb62fbb83e6dd5ced900ef4a9758d6b8, type: 2}
+  - {fileID: 11400000, guid: f9f0a88a43e04e07f9607ab557f6c1fe, type: 2}
+  - {fileID: 11400000, guid: 4d84d13b6130308e3a165d9ab2d12f09, type: 2}
+  - {fileID: 11400000, guid: fd3a56f354546deb187d168ca41f6488, type: 2}
+  - {fileID: 11400000, guid: 007a85b22800a62ca814003888992e40, type: 2}
+  - {fileID: 11400000, guid: 9556ff0a849fab1c4bd309ab43299bc9, type: 2}
+  - {fileID: 11400000, guid: 64096972106141a8699dfe65a6a021a8, type: 2}

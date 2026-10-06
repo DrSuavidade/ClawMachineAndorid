@@ -14,25 +14,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.Data.MachineDefinition
   machineId: traveling_circus
   displayName: Traveling Circus
-  description: Grand Victorian wonder circus cabinet draped in royal burgundy velvet and polished brass.
-  unlockCost: 10000
+  description: Grand Victorian wonder circus cabinet draped in royal burgundy velvet
+    and polished brass.
+  unlockCost: 12000
   entryCost: 0
+  passiveIncomePerMinute: 60
   theme: {fileID: 11400000, guid: cdbdf19e9ec747fd915d5bdc47cf3186, type: 2}
-  passiveIncomePerMinute: 45
-  cabinetFrameColor: {r: 0.55, g: 0.12, b: 0.16, a: 1.0}
-  cabinetBackdropColor: {r: 0.12, g: 0.22, b: 0.16, a: 1.0}
+  cabinetFrameColor: {r: 0.55, g: 0.12, b: 0.16, a: 1}
+  cabinetBackdropColor: {r: 0.12, g: 0.22, b: 0.16, a: 1}
   environmentPrefab: {fileID: 0}
   ambientLightColor: {r: 0.25, g: 0.25, b: 0.3, a: 1}
   directionalLightColor: {r: 1, g: 0.96, b: 0.9, a: 1}
   cameraFieldOfView: 45
   cameraPitch: 28
   prizes:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 11400000, guid: 66b5e11b51f90fc46a027c5ff5cd3dcc, type: 2}
+  - {fileID: 11400000, guid: eb94a42335d6399cdb72a17402f4e054, type: 2}
+  - {fileID: 11400000, guid: d8b3224338e8d061bb96345dbd7819ad, type: 2}
+  - {fileID: 11400000, guid: b4f498ab4a5d9d3a6b55d297d08820ae, type: 2}
+  - {fileID: 11400000, guid: ea093e5bf48bf8318a6838eb8da00928, type: 2}
+  - {fileID: 11400000, guid: 8fc51259f28a7d91a9020c1e52b52eb6, type: 2}
+  - {fileID: 11400000, guid: a0ad11c54d4629b0ead088328dbb72f2, type: 2}
+  - {fileID: 11400000, guid: 0517a6fb5c22ad65bb6ca34b9021781e, type: 2}
+  - {fileID: 11400000, guid: 5b2d218e313ed5bb7b90c7bb7167d01c, type: 2}
