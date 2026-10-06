@@ -17,7 +17,8 @@ MonoBehaviour:
   description: A colorful starter machine filled with classic nursery and playroom
     favorites.
   unlockCost: 0
-  entryCost: 0
+  entryCost: 5
+  theme: {fileID: 11400000, guid: fc2e315370fa47df96090012e9bd3155, type: 2}
   passiveIncomePerMinute: 5
   cabinetFrameColor: {r: 0.85, g: 0.25, b: 0.25, a: 1}
   cabinetBackdropColor: {r: 0.4, g: 0.48, b: 0.62, a: 1}

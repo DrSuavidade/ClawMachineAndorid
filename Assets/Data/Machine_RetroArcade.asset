@@ -18,6 +18,7 @@ MonoBehaviour:
     arcade collectibles.
   unlockCost: 150
   entryCost: 10
+  theme: {fileID: 11400000, guid: 5bcd350f8b33414b85272d82e7174657, type: 2}
   passiveIncomePerMinute: 15
   cabinetFrameColor: {r: 0.78, g: 0.15, b: 0.88, a: 1}
   cabinetBackdropColor: {r: 0.1, g: 0.12, b: 0.22, a: 1}

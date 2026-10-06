@@ -17,6 +17,7 @@ MonoBehaviour:
   description: Dive into abyssal reefs, sunken galleons, and mystical sea relics.
   unlockCost: 3500
   entryCost: 85
+  theme: {fileID: 11400000, guid: 8c1ce3122f6346df84ceb1b6d0bd67b0, type: 2}
   passiveIncomePerMinute: 140
   cabinetFrameColor: {r: 0.08, g: 0.74, b: 0.72, a: 1}
   cabinetBackdropColor: {r: 0.03, g: 0.07, b: 0.15, a: 1}

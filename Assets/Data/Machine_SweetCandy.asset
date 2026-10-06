@@ -17,6 +17,7 @@ MonoBehaviour:
   description: Indulge in sugary confectioneries, pastries, and crystalline desserts.
   unlockCost: 900
   entryCost: 35
+  theme: {fileID: 11400000, guid: 8e97e3348e5747b6b89de0211d081fad, type: 2}
   passiveIncomePerMinute: 50
   cabinetFrameColor: {r: 0.96, g: 0.36, b: 0.62, a: 1}
   cabinetBackdropColor: {r: 0.18, g: 0.38, b: 0.34, a: 1}

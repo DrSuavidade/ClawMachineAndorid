@@ -17,6 +17,7 @@ MonoBehaviour:
   description: Delve into deep space relics, planetary artifacts, and alien tech.
   unlockCost: 400
   entryCost: 20
+  theme: {fileID: 11400000, guid: ab80c9313c2d4cdab58bf145ace5f320, type: 2}
   passiveIncomePerMinute: 30
   cabinetFrameColor: {r: 0.42, g: 0.16, b: 0.72, a: 1}
   cabinetBackdropColor: {r: 0.06, g: 0.08, b: 0.16, a: 1}
