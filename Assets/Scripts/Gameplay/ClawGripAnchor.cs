@@ -2,6 +2,15 @@ using UnityEngine;
 
 namespace ClawMachine.Gameplay
 {
+    public struct GripEvaluation
+    {
+        public bool hasPrize;
+        public Prize candidate;
+        public float quality;      // 0.0 to 1.0 (aim accuracy)
+        public bool isStable;      // quality >= stableThreshold -> makes it to chute
+        public float slipDelay;    // seconds after lift starts before slipping (if unstable)
+    }
+
     public class ClawGripAnchor : MonoBehaviour
     {
         [Header("References")]
@@ -28,13 +37,19 @@ namespace ClawMachine.Gameplay
         private float holdTimer;
         private float slipAccumulator;
 
+        private Vector3 startLocalPos;
+        private Quaternion startLocalRot;
+        private Vector3 targetSocketOffset;
+        private float grabLerpTime = 1f;
+        private const float GrabTransitionDuration = 0.35f;
+
         public void Initialize(Transform socket)
         {
             gripSocket = socket != null ? socket : transform;
             lastCarriagePos = transform.position;
         }
 
-        public bool TryAcquire(GripEvaluation eval)
+        public bool TryAcquire(GripEvaluation eval, Vector3 socketLocalOffset = default)
         {
             if (!eval.hasPrize || eval.candidate == null) return false;
 
@@ -48,11 +63,13 @@ namespace ClawMachine.Gameplay
             rb.angularVelocity = Vector3.zero;
             rb.isKinematic = true;
 
-            // Seat centered inside the claw basket
+            // Smooth grab transition: start at captured position, smoothly lift into basket seat
             originalParent = HeldPrize.transform.parent;
             HeldPrize.transform.SetParent(gripSocket, true);
-            HeldPrize.transform.localPosition = Vector3.zero;
-            HeldPrize.transform.localRotation = Quaternion.identity;
+            targetSocketOffset = (socketLocalOffset != Vector3.zero) ? socketLocalOffset : new Vector3(0f, -0.38f, 0f);
+            startLocalPos = HeldPrize.transform.localPosition;
+            startLocalRot = HeldPrize.transform.localRotation;
+            grabLerpTime = 0f;
 
             // Ignore collisions between prize and claw assembly so kinematic hold doesn't glitch joints
             Collider[] prizeCols = HeldPrize.GetComponentsInChildren<Collider>();
@@ -106,13 +123,24 @@ namespace ClawMachine.Gameplay
                 slipAccumulator = Mathf.Max(0f, slipAccumulator - deltaTime * 0.4f);
             }
 
-            // Sway in direction opposite to carriage movement
-            Vector3 localVel = gripSocket.InverseTransformDirection(carriageVelocity);
-            float pitch = Mathf.Clamp(-localVel.z * 6f, -maxSwayAngle, maxSwayAngle);
-            float roll = Mathf.Clamp(localVel.x * 6f, -maxSwayAngle, maxSwayAngle);
+            if (grabLerpTime < GrabTransitionDuration)
+            {
+                grabLerpTime += deltaTime;
+                float t = Mathf.SmoothStep(0f, 1f, grabLerpTime / GrabTransitionDuration);
+                HeldPrize.transform.localPosition = Vector3.Lerp(startLocalPos, targetSocketOffset, t);
+                HeldPrize.transform.localRotation = Quaternion.Slerp(startLocalRot, Quaternion.identity, t);
+            }
+            else
+            {
+                // Sway in direction opposite to carriage movement
+                Vector3 localVel = gripSocket.InverseTransformDirection(carriageVelocity);
+                float pitch = Mathf.Clamp(-localVel.z * 5f, -maxSwayAngle, maxSwayAngle);
+                float roll = Mathf.Clamp(localVel.x * 5f, -maxSwayAngle, maxSwayAngle);
 
-            targetSwayRotation = Quaternion.Euler(pitch, 0f, roll);
-            HeldPrize.transform.localRotation = Quaternion.Slerp(HeldPrize.transform.localRotation, targetSwayRotation, deltaTime * swaySmoothSpeed);
+                targetSwayRotation = Quaternion.Euler(pitch, 0f, roll);
+                HeldPrize.transform.localPosition = targetSocketOffset;
+                HeldPrize.transform.localRotation = Quaternion.Slerp(HeldPrize.transform.localRotation, targetSwayRotation, deltaTime * swaySmoothSpeed);
+            }
         }
 
         public void Release()
@@ -123,6 +151,7 @@ namespace ClawMachine.Gameplay
 
             Rigidbody rb = HeldPrize.Rigidbody;
             rb.isKinematic = false;
+            rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
 
             // Restore collisions
             Collider[] prizeCols = HeldPrize.GetComponentsInChildren<Collider>();
@@ -138,13 +167,15 @@ namespace ClawMachine.Gameplay
                 }
             }
 
-            // Inherit horizontal momentum + slight downward kick
-            rb.linearVelocity = carriageVelocity + (Vector3.down * 0.4f);
-            rb.angularVelocity = Random.insideUnitSphere * 2.0f;
+            // Gentle release: zero tumble spin, minimal horizontal carry momentum, gentle downward drop
+            Vector3 horizVel = Vector3.ClampMagnitude(new Vector3(carriageVelocity.x, 0f, carriageVelocity.z) * 0.20f, 0.4f);
+            rb.linearVelocity = horizVel + (Vector3.down * 0.25f);
+            rb.angularVelocity = Vector3.zero;
 
             Debug.Log($"[ClawGripAnchor] Dropped {HeldPrize.name}");
             HeldPrize = null;
             CurrentGrip = default;
+            grabLerpTime = 1f;
         }
 
         private void OnGUI()

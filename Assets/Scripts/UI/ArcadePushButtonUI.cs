@@ -81,15 +81,49 @@ namespace ClawMachine.UI
             }
         }
 
+        private Coroutine punchRoutine;
+
+        public void SetThemeColor(Color themeColor)
+        {
+            normalColor = themeColor;
+            pressedColor = themeColor * 0.72f;
+            if (plungerImage != null && isInteractable)
+            {
+                plungerImage.color = normalColor;
+            }
+        }
+
         public void OnPointerClick(PointerEventData eventData)
         {
             if (!isInteractable) return;
 
-            Debug.Log("[ArcadePushButtonUI] Plunger pressed -> DROP triggered!");
+            if (punchRoutine != null) StopCoroutine(punchRoutine);
+            punchRoutine = StartCoroutine(PunchRoutine());
+
             if (machineController != null)
             {
                 machineController.TriggerDrop();
             }
+        }
+
+        private System.Collections.IEnumerator PunchRoutine()
+        {
+            if (plungerTransform == null) yield break;
+            float elapsed = 0f;
+            float duration = 0.22f;
+            Vector3 startScale = Vector3.one * 0.92f;
+            Vector3 peakScale = Vector3.one * 1.08f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                plungerTransform.localScale = (t < 0.45f)
+                    ? Vector3.Lerp(startScale, peakScale, t / 0.45f)
+                    : Vector3.Lerp(peakScale, Vector3.one, (t - 0.45f) / 0.55f);
+                yield return null;
+            }
+            plungerTransform.localScale = Vector3.one;
+            punchRoutine = null;
         }
 
         private void HandleStateChanged(ClawState state)

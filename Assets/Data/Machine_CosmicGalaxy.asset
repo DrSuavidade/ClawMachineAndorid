@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e43e2d75f55b32447924fcd3fe31ac05, type: 3}
+  m_Name: Machine_CosmicGalaxy
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.Data.MachineDefinition
+  machineId: cosmic_galaxy
+  displayName: Cosmic Galaxy
+  description: Delve into deep space relics, planetary artifacts, and alien tech.
+  unlockCost: 400
+  entryCost: 20
+  passiveIncomePerMinute: 30
+  cabinetFrameColor: {r: 0.42, g: 0.16, b: 0.72, a: 1}
+  cabinetBackdropColor: {r: 0.06, g: 0.08, b: 0.16, a: 1}
+  environmentPrefab: {fileID: 3787341914049684072, guid: 9eed627f32acdd34ab9670830c79696b, type: 3}
+  ambientLightColor: {r: 0.08, g: 0.12, b: 0.24, a: 1}
+  directionalLightColor: {r: 0.5, g: 0.85, b: 1, a: 1}
+  cameraFieldOfView: 46
+  cameraPitch: 28
+  prizes:
+  - {fileID: 11400000, guid: 606046c90cf82924cb0b0641afbb8c96, type: 2}
+  - {fileID: 11400000, guid: 55537973d2368e34f8adcf6ddc17a911, type: 2}
+  - {fileID: 11400000, guid: 0a1e9b8af6e6c3240858f7e9c4b53955, type: 2}
+  - {fileID: 11400000, guid: 52b40bf064f5cea4bb38c239a73dc549, type: 2}
+  - {fileID: 11400000, guid: 99c861b80f02bc14981060cf9c8d5913, type: 2}
+  - {fileID: 11400000, guid: bc20989a7e1731841af88b54b84618ff, type: 2}
+  - {fileID: 11400000, guid: dd78fc00bfebae849842b7390ba1b981, type: 2}
+  - {fileID: 11400000, guid: fcee0720c4d71674fb0588c8dc106f12, type: 2}
+  - {fileID: 11400000, guid: b6ac0d837c5c14a49a109fe800f14854, type: 2}

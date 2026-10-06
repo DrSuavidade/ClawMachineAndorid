@@ -21,6 +21,11 @@ MonoBehaviour:
   passiveIncomePerMinute: 15
   cabinetFrameColor: {r: 0.78, g: 0.15, b: 0.88, a: 1}
   cabinetBackdropColor: {r: 0.1, g: 0.12, b: 0.22, a: 1}
+  environmentPrefab: {fileID: 6533916832541230528, guid: 91472a8858f840b45b33586bc9a4acb9, type: 3}
+  ambientLightColor: {r: 0.12, g: 0.1, b: 0.2, a: 1}
+  directionalLightColor: {r: 0.85, g: 0.4, b: 1, a: 1}
+  cameraFieldOfView: 43
+  cameraPitch: 28
   prizes:
   - {fileID: 11400000, guid: 12463202d32643d46a0ead8821b0fdb7, type: 2}
   - {fileID: 11400000, guid: 399798b33c9d3c04584db77dd9524ea8, type: 2}

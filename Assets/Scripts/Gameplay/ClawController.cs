@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using ClawMachine.Data;
+using ClawMachine.Core.Services;
 
 namespace ClawMachine.Gameplay
 {
@@ -16,23 +18,32 @@ namespace ClawMachine.Gameplay
         [SerializeField] private Transform chuteDropPoint;
         [SerializeField] private Transform clawMarker; // Shadow/reticle projected on floor
         [SerializeField] private Transform gripSocket;
-        [SerializeField] private GripCaptureVolume captureVolume;
 
         [Header("Grip System")]
         [SerializeField] private ClawGripAnchor gripAnchor;
+        [SerializeField] private ClawPendulumSway pendulumSway;
 
         [Header("Ground & Depth Sensor")]
         [SerializeField] private float floorSurfaceY = 0.1f;
         [SerializeField] private float tipFloorClearance = 0.03f; // 3cm above floor
 
+        [Header("Environment")]
+        [SerializeField] private Transform cabinetRoot;
+
         public ClawState CurrentState { get; private set; } = ClawState.Aiming;
+        public bool IsIdle => CurrentState == ClawState.Aiming;
+        public bool HasPrize => gripAnchor != null && gripAnchor.HasPrize;
+        public bool CanSwitchMachine => IsIdle && !HasPrize;
         public ClawConfiguration Config => config;
         public ClawGripAnchor GripAnchor => gripAnchor;
+        public Transform GripSocket => gripSocket;
 
         public event Action<ClawState> OnStateChanged;
 
         private Vector3 targetTrolleyPos;
         private float targetArmAngle;
+        private float targetClosedAngle;
+        private Vector3 targetHoldOffset = Vector3.zero;
         private float resolveTimer;
         private float closingTimer;
         private float releasingTimer;
@@ -40,7 +51,7 @@ namespace ClawMachine.Gameplay
         private Prize targetedPrize;
         private float targetedAccuracy;
 
-        public void Setup(ClawConfiguration cfg, Transform trolleyTr, Transform hoistTr, ClawArm[] clawArms, Transform chutePoint, Transform marker, Transform socket, GripCaptureVolume volume, ClawGripAnchor anchor)
+        public void Setup(ClawConfiguration cfg, Transform trolleyTr, Transform hoistTr, ClawArm[] clawArms, Transform chutePoint, Transform marker, Transform socket, ClawGripAnchor anchor, ClawPendulumSway sway = null)
         {
             config = cfg;
             trolley = trolleyTr;
@@ -49,8 +60,8 @@ namespace ClawMachine.Gameplay
             chuteDropPoint = chutePoint;
             clawMarker = marker;
             gripSocket = socket;
-            captureVolume = volume;
             gripAnchor = anchor;
+            pendulumSway = sway;
         }
 
         private void Awake()
@@ -62,6 +73,7 @@ namespace ClawMachine.Gameplay
 
             if (trolley == null) trolley = transform;
             if (hoist == null && trolley.childCount > 0) hoist = trolley.GetChild(0);
+            if (pendulumSway == null) pendulumSway = GetComponentInChildren<ClawPendulumSway>();
 
             // Set reasonable PhysX defaults
             Physics.defaultMaxDepenetrationVelocity = 3.0f;
@@ -71,11 +83,7 @@ namespace ClawMachine.Gameplay
 
             if (gripSocket == null && hoist != null)
             {
-                gripSocket = hoist.Find("GripSocket");
-            }
-            if (captureVolume == null && hoist != null)
-            {
-                captureVolume = hoist.GetComponentInChildren<GripCaptureVolume>();
+                gripSocket = hoist.Find("GripSocket") ?? hoist.Find("ClawSuspensionHub/GripSocket");
             }
             if (gripAnchor == null && hoist != null)
             {
@@ -118,7 +126,7 @@ namespace ClawMachine.Gameplay
             if (CurrentState != ClawState.Aiming && CurrentState != ClawState.Carrying) return;
             if (config == null || trolley == null) return;
 
-            float speedMult = CollectionManager.Instance != null ? CollectionManager.Instance.GetTrolleySpeedMultiplier() : 1f;
+            float speedMult = GetTrolleySpeedMultiplier();
 
             // X = Left/Right, Y = Forward/Back (mapped to 3D Z)
             targetTrolleyPos.x += inputDelta.x * config.moveSpeed * speedMult * Time.deltaTime;
@@ -163,15 +171,24 @@ namespace ClawMachine.Gameplay
 
                 case ClawState.Closing:
                     AnimateArms();
+                    if (targetedPrize != null && gripSocket != null)
+                    {
+                        Vector3 targetH = new Vector3(gripSocket.position.x, targetedPrize.transform.position.y, gripSocket.position.z);
+                        targetedPrize.transform.position = Vector3.MoveTowards(targetedPrize.transform.position, targetH, 0.40f * Time.deltaTime);
+                    }
                     closingTimer += Time.deltaTime;
-                    if (closingTimer > 1.1f)
+                    if (closingTimer > config.closingDuration)
                     {
                         SetState(ClawState.EvaluatingGrip);
                     }
                     break;
 
+                // Canonical grip flow:
+                // 1. Descending state finds target via OverlapCapsule + distance check
+                // 2. EvaluatingGrip constructs GripEvaluation from targeting accuracy
+                // 3. ClawGripAnchor.TryAcquire() kinematically holds the prize
                 case ClawState.EvaluatingGrip:
-                    float gripMult = CollectionManager.Instance != null ? CollectionManager.Instance.GetGripPowerMultiplier() : 1f;
+                    float gripMult = GetGripPowerMultiplier();
                     if (gripAnchor != null && targetedPrize != null)
                     {
                         GripEvaluation eval = new GripEvaluation
@@ -182,9 +199,9 @@ namespace ClawMachine.Gameplay
                             isStable = true,
                             slipDelay = 10f * gripMult
                         };
-                        if (gripAnchor.TryAcquire(eval))
+                        if (gripAnchor.TryAcquire(eval, targetHoldOffset))
                         {
-                            ClawAudio.Instance?.PlayGrab();
+                            PlayAudioGrab();
                         }
                     }
                     SetState(ClawState.Lifting);
@@ -206,7 +223,7 @@ namespace ClawMachine.Gameplay
                 case ClawState.Releasing:
                     AnimateArms();
                     releasingTimer += Time.deltaTime;
-                    if (releasingTimer > 0.8f || AllArmsReachedTarget(4f))
+                    if (releasingTimer > config.releasingDuration || AllArmsReachedTarget(4f))
                     {
                         SetState(ClawState.Resolving);
                     }
@@ -252,7 +269,8 @@ namespace ClawMachine.Gameplay
                     break;
 
                 case ClawState.Descending:
-                    Vector3 rayOrigin = new Vector3(trolley.position.x, 3.5f, trolley.position.z);
+                    Vector3 dropOrigin = (gripSocket != null) ? gripSocket.position : trolley.position;
+                    Vector3 rayOrigin = new Vector3(dropOrigin.x, 3.5f, dropOrigin.z);
                     targetedPrize = null;
                     targetedAccuracy = 0f;
 
@@ -260,7 +278,7 @@ namespace ClawMachine.Gameplay
                     Collider[] hits = Physics.OverlapCapsule(
                         new Vector3(rayOrigin.x, 0.15f, rayOrigin.z),
                         new Vector3(rayOrigin.x, 1.60f, rayOrigin.z),
-                        0.60f
+                        config != null ? config.descentScanRadius : 0.60f
                     );
                     Prize closest = null;
                     float minHorizDist = float.MaxValue;
@@ -278,35 +296,71 @@ namespace ClawMachine.Gameplay
                         }
                     }
 
+                    float aimMult = GetDropSpeedMultiplier();
                     float baseTolerance = config != null ? config.grabToleranceRadius : 0.22f;
-                    PrizeRarity rarity = closest != null ? closest.Rarity : PrizeRarity.Normal;
-                    float rarityMultiplier = rarity switch
-                    {
-                        PrizeRarity.Normal => 1.0f,
-                        PrizeRarity.Rare => 0.60f,   // Needs 40% tighter aim
-                        PrizeRarity.Secret => 0.38f, // Requires near-bullseye aim
-                        _ => 1.0f
-                    };
-                    float tolerance = baseTolerance * rarityMultiplier;
-                    float socketOffset = (gripSocket != null) ? Mathf.Abs(gripSocket.localPosition.y) : 0.65f;
+                    float grabRadius = baseTolerance * aimMult;
 
-                    if (closest != null && minHorizDist <= tolerance)
+                    // Magnet is a 2nd grab range slightly bigger than grab area (+1% to +10%)
+                    float magnetBonus = Mathf.Max(0.01f, GetGripPowerMultiplier() - 1f);
+                    float magnetRadius = grabRadius * (1f + magnetBonus);
+
+                    PrizeRarity rarity = closest != null ? closest.Rarity : PrizeRarity.Normal;
+                    // Tips are 0.65m below hoist when open. Hoist clamp ensures tips never penetrate floor.
+                    float minTipY = floorSurfaceY + tipFloorClearance;
+                    float clampMin = Mathf.Max(config != null ? config.descentMinY : 0.78f, minTipY + 0.65f);
+                    float clampMax = config != null ? config.descentMaxY : 2.6f;
+
+                    if (closest != null)
                     {
-                        targetedPrize = closest;
-                        targetedAccuracy = Mathf.Clamp01(1f - (minHorizDist / tolerance));
-                        float prizeY = closest.transform.position.y;
-                        targetDropY = Mathf.Clamp(prizeY + socketOffset, 0.88f, 2.2f);
-                        Debug.Log($"[ClawController] Target IN RANGE: {targetedPrize.name} ({rarity}) | Dist: {minHorizDist:F2}m / {tolerance:F2}m (Base: {baseTolerance:F2}m) | Acc: {targetedAccuracy:P0} | DropToY: {targetDropY:F2}");
+                        if (minHorizDist <= grabRadius)
+                        {
+                            targetedPrize = closest;
+                            targetedAccuracy = Mathf.Clamp01(1f - (minHorizDist / grabRadius));
+                        }
+                        else if (minHorizDist <= magnetRadius)
+                        {
+                            targetedPrize = closest;
+                            targetedAccuracy = 0.55f;
+                            Debug.Log($"[ClawController] 🧲 MAGNET ATTRACTED: {closest.name} ({rarity})! Dist: {minHorizDist:F3}m <= MagnetRadius: {magnetRadius:F3}m (+{magnetBonus * 100f:F0}%)");
+                        }
+                        else
+                        {
+                            targetedPrize = null;
+                            targetedAccuracy = 0f;
+                        }
+                    }
+
+                    if (targetedPrize != null)
+                    {
+                        Bounds pBounds = GetPrizeBounds(targetedPrize);
+                        float pRadius = Mathf.Max(pBounds.extents.x, pBounds.extents.z);
+                        float pHalfHeight = pBounds.extents.y;
+
+                        // Content-aware closed angle: stopped firmly around toy perimeter (min 6°, max 32°)
+                        targetClosedAngle = Mathf.Clamp(pRadius * 80f, 6f, 32f);
+
+                        // Content-aware cradle seating: prize sits nestled in palm basket
+                        targetHoldOffset = new Vector3(0f, -0.38f - pHalfHeight * 0.2f, 0f);
+
+                        // Gentle descent: tips land gently flanking the equator of toy, never slamming floor
+                        float prizeY = targetedPrize.transform.position.y;
+                        float desiredTipY = Mathf.Max(minTipY, prizeY - pHalfHeight * 0.3f);
+                        targetDropY = Mathf.Clamp(desiredTipY + 0.65f, clampMin, clampMax);
+                        Debug.Log($"[ClawController] Target IN RANGE: {targetedPrize.name} ({rarity}) | Radius: {pRadius:F2}m | ContentAngle: {targetClosedAngle:F1}° | DropToY: {targetDropY:F2}");
                     }
                     else
                     {
                         targetedPrize = null;
                         targetedAccuracy = 0f;
-                        float prizeY = closest != null ? closest.transform.position.y : 0.25f;
-                        targetDropY = Mathf.Clamp(prizeY + socketOffset, 0.88f, 2.2f);
+                        targetClosedAngle = 2f; // Minimum angle is 2°, never crossing
+                        targetHoldOffset = Vector3.zero;
+
+                        float prizeY = closest != null ? closest.transform.position.y : 0.20f;
+                        float desiredTipY = Mathf.Max(minTipY, prizeY - 0.02f);
+                        targetDropY = Mathf.Clamp(desiredTipY + 0.65f, clampMin, clampMax);
                         if (closest != null)
                         {
-                            Debug.Log($"[ClawController] Target MISSED: {closest.name} ({rarity}) | Dist: {minHorizDist:F2}m > {tolerance:F2}m (Base: {baseTolerance:F2}m)");
+                            Debug.Log($"[ClawController] Target MISSED: {closest.name} ({rarity}) | Dist: {minHorizDist:F2}m > MagnetRadius: {magnetRadius:F2}m");
                         }
                         else
                         {
@@ -317,8 +371,8 @@ namespace ClawMachine.Gameplay
 
                 case ClawState.Closing:
                     closingTimer = 0f;
-                    targetArmAngle = config != null ? config.closedAngle : -52f;
-                    ClawAudio.Instance?.PlayClamp();
+                    targetArmAngle = (targetedPrize != null) ? targetClosedAngle : 2f;
+                    PlayAudioClamp();
                     break;
 
                 case ClawState.EvaluatingGrip:
@@ -337,17 +391,17 @@ namespace ClawMachine.Gameplay
                     releasingTimer = 0f;
                     if (gripAnchor != null) gripAnchor.Release();
                     targetArmAngle = config != null ? config.openAngle : 38f;
-                    ClawAudio.Instance?.PlayDrop();
+                    PlayAudioDrop();
                     break;
 
                 case ClawState.Resolving:
-                    resolveTimer = 1.0f;
+                    resolveTimer = config != null ? config.resolveDuration : 1.0f;
                     break;
             }
 
             if (newState != ClawState.Aiming && newState != ClawState.Carrying)
             {
-                ClawAudio.Instance?.SetMotorMoving(false);
+                SetAudioMotor(false);
             }
 
             OnStateChanged?.Invoke(newState);
@@ -359,14 +413,14 @@ namespace ClawMachine.Gameplay
             Vector3 prev = trolley.position;
             trolley.position = Vector3.Lerp(trolley.position, targetTrolleyPos, Time.deltaTime * config.moveDamping);
             bool moving = (trolley.position - prev).sqrMagnitude > 0.00002f;
-            ClawAudio.Instance?.SetMotorMoving(moving);
+            SetAudioMotor(moving);
         }
 
         private void DescendHoist()
         {
             if (hoist == null) return;
 
-            float dropMult = CollectionManager.Instance != null ? CollectionManager.Instance.GetDropSpeedMultiplier() : 1f;
+            float dropMult = GetDropSpeedMultiplier();
             float speed = (config != null ? config.dropSpeed : 1.8f) * dropMult;
             Vector3 pos = hoist.position;
             pos.y -= speed * Time.deltaTime;
@@ -375,7 +429,7 @@ namespace ClawMachine.Gameplay
             {
                 pos.y = targetDropY;
                 hoist.position = pos;
-                ClawAudio.Instance?.PlayDrop();
+                PlayAudioDrop();
                 ClawJuiceEffects.Instance?.PlayDustPuff(hoist.position);
                 SetState(ClawState.Closing);
             }
@@ -403,7 +457,7 @@ namespace ClawMachine.Gameplay
         {
             if (hoist == null || config == null) return;
 
-            float liftMult = CollectionManager.Instance != null ? CollectionManager.Instance.GetDropSpeedMultiplier() : 1f;
+            float liftMult = GetDropSpeedMultiplier();
             Vector3 pos = hoist.position;
             pos.y += (config.liftSpeed * liftMult) * Time.deltaTime;
 
@@ -486,30 +540,98 @@ namespace ClawMachine.Gameplay
             if (clawMarker == null || trolley == null) return;
 
             Vector3 markerPos = clawMarker.position;
-            markerPos.x = trolley.position.x;
-            markerPos.z = trolley.position.z;
+            if (gripSocket != null)
+            {
+                markerPos.x = gripSocket.position.x;
+                markerPos.z = gripSocket.position.z;
+            }
+            else
+            {
+                markerPos.x = trolley.position.x;
+                markerPos.z = trolley.position.z;
+            }
+            markerPos.y = 0.11f;
             clawMarker.position = markerPos;
             clawMarker.gameObject.SetActive(CurrentState == ClawState.Aiming || CurrentState == ClawState.Carrying);
+
+            // Shadow diameter visually matches the exact grab tolerance radius
+            float baseTolerance = config != null ? config.grabToleranceRadius : 0.22f;
+            float currentTolerance = baseTolerance * GetDropSpeedMultiplier();
+            clawMarker.localScale = new Vector3(currentTolerance * 2f, 0.005f, currentTolerance * 2f);
+
+            // Magnet Ring Aura (2nd grab area slightly bigger than grab area: +1% to +10%)
+            Transform magnetRing = clawMarker.Find("MagnetRing");
+            float magnetBonus = GetGripPowerMultiplier() - 1f;
+            if (magnetBonus > 0.001f)
+            {
+                if (magnetRing == null)
+                {
+                    GameObject ringObj = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                    ringObj.name = "MagnetRing";
+                    ringObj.transform.parent = clawMarker;
+                    ringObj.transform.localPosition = new Vector3(0f, 0.001f, 0f);
+                    ringObj.GetComponent<Collider>().enabled = false;
+                    Material mat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Unlit/Color"));
+                    mat.color = new Color(0.18f, 0.85f, 1.0f, 0.35f);
+                    ringObj.GetComponent<Renderer>().sharedMaterial = mat;
+                    magnetRing = ringObj.transform;
+                }
+                magnetRing.gameObject.SetActive(true);
+                float magnetScaleRatio = 1f + magnetBonus;
+                magnetRing.localScale = new Vector3(magnetScaleRatio, 1.05f, magnetScaleRatio);
+            }
+            else if (magnetRing != null)
+            {
+                magnetRing.gameObject.SetActive(false);
+            }
         }
 
         private void IgnoreEnvironmentCollisions()
         {
-            Collider[] clawCols = GetComponentsInChildren<Collider>(true);
-
-            // Ignore all non-prize colliders in Cabinet (walls, glass, floor, chute dividers)
-            GameObject cabinet = GameObject.Find("Cabinet");
-            if (cabinet != null)
+            // Only ignore environment collisions on finger prongs, allowing fingers to phase through glass to reach edge toys,
+            // while the central hub/carriage remains physically restricted within cabinet bounds.
+            List<Collider> fingerCols = new List<Collider>();
+            if (arms != null)
             {
-                Collider[] envCols = cabinet.GetComponentsInChildren<Collider>(true);
-                for (int c = 0; c < clawCols.Length; c++)
+                for (int i = 0; i < arms.Length; i++)
+                {
+                    if (arms[i] != null)
+                    {
+                        fingerCols.AddRange(arms[i].GetComponentsInChildren<Collider>(true));
+                    }
+                }
+            }
+
+            if (fingerCols.Count == 0)
+            {
+                Collider[] allCols = GetComponentsInChildren<Collider>(true);
+                for (int i = 0; i < allCols.Length; i++)
+                {
+                    if (allCols[i] != null && allCols[i].gameObject.name != "ClawHub")
+                    {
+                        fingerCols.Add(allCols[i]);
+                    }
+                }
+            }
+
+            if (cabinetRoot == null)
+            {
+                GameObject cabinet = GameObject.Find("Cabinet");
+                if (cabinet != null) cabinetRoot = cabinet.transform;
+            }
+
+            if (cabinetRoot != null)
+            {
+                Collider[] envCols = cabinetRoot.GetComponentsInChildren<Collider>(true);
+                for (int c = 0; c < fingerCols.Count; c++)
                 {
                     for (int e = 0; e < envCols.Length; e++)
                     {
-                        if (clawCols[c] != null && envCols[e] != null && !envCols[e].isTrigger)
+                        if (fingerCols[c] != null && envCols[e] != null && !envCols[e].isTrigger)
                         {
                             if (envCols[e].GetComponentInParent<Prize>() == null)
                             {
-                                Physics.IgnoreCollision(clawCols[c], envCols[e], true);
+                                Physics.IgnoreCollision(fingerCols[c], envCols[e], true);
                             }
                         }
                     }
@@ -521,17 +643,78 @@ namespace ClawMachine.Gameplay
             if (mc != null)
             {
                 Collider[] mcCols = mc.GetComponentsInChildren<Collider>(true);
-                for (int c = 0; c < clawCols.Length; c++)
+                for (int c = 0; c < fingerCols.Count; c++)
                 {
                     for (int e = 0; e < mcCols.Length; e++)
                     {
-                        if (clawCols[c] != null && mcCols[e] != null && !mcCols[e].isTrigger)
+                        if (fingerCols[c] != null && mcCols[e] != null && !mcCols[e].isTrigger)
                         {
-                            Physics.IgnoreCollision(clawCols[c], mcCols[e], true);
+                            Physics.IgnoreCollision(fingerCols[c], mcCols[e], true);
                         }
                     }
                 }
             }
+        }
+
+        private float GetTrolleySpeedMultiplier()
+        {
+            return ServiceLocator.TryGet<IEconomyService>(out var econ) ? econ.GetTrolleySpeedMultiplier() : 1f;
+        }
+
+        private float GetGripPowerMultiplier()
+        {
+            return ServiceLocator.TryGet<IEconomyService>(out var econ) ? econ.GetGripPowerMultiplier() : 1f;
+        }
+
+        private float GetDropSpeedMultiplier()
+        {
+            return ServiceLocator.TryGet<IEconomyService>(out var econ) ? econ.GetDropSpeedMultiplier() : 1f;
+        }
+
+        private void PlayAudioGrab()
+        {
+            ServiceLocator.Get<IAudioService>()?.PlayGrabSuccess();
+        }
+
+        private void PlayAudioClamp()
+        {
+            ServiceLocator.Get<IAudioService>()?.PlayClamp();
+        }
+
+        private void PlayAudioDrop()
+        {
+            ServiceLocator.Get<IAudioService>()?.PlayDropFloor();
+        }
+
+        private void SetAudioMotor(bool moving)
+        {
+            ServiceLocator.Get<IAudioService>()?.SetMotorMoving(moving);
+        }
+
+        private Bounds GetPrizeBounds(Prize prize)
+        {
+            if (prize == null) return new Bounds(Vector3.zero, Vector3.one * 0.4f);
+            Renderer[] rends = prize.GetComponentsInChildren<Renderer>();
+            if (rends != null && rends.Length > 0)
+            {
+                Bounds b = rends[0].bounds;
+                for (int i = 1; i < rends.Length; i++)
+                {
+                    b.Encapsulate(rends[i].bounds);
+                }
+                return b;
+            }
+            Collider[] cols = prize.GetComponentsInChildren<Collider>();
+            if (cols != null && cols.Length > 0)
+            {
+                Bounds b = cols[0].bounds;
+                for (int i = 1; i < cols.Length; i++)
+                {
+                    b.Encapsulate(cols[i].bounds);
+                }
+                return b;
+            }
+            return new Bounds(prize.transform.position, Vector3.one * 0.4f);
         }
     }
 }

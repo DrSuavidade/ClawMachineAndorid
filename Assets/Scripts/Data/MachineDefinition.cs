@@ -19,6 +19,13 @@ namespace ClawMachine.Data
         public Color cabinetFrameColor = new Color(0.85f, 0.25f, 0.25f);
         public Color cabinetBackdropColor = new Color(0.40f, 0.48f, 0.62f);
 
+        [Header("Atmosphere & Environment")]
+        public GameObject environmentPrefab;
+        public Color ambientLightColor = new Color(0.25f, 0.25f, 0.30f);
+        public Color directionalLightColor = new Color(1.0f, 0.96f, 0.90f);
+        public float cameraFieldOfView = 45f;
+        public float cameraPitch = 28f;
+
         [Header("Prizes (Exactly 9: 5 Normal, 3 Rare, 1 Secret)")]
         public PrizeDefinition[] prizes = new PrizeDefinition[9];
 

@@ -10,16 +10,33 @@ namespace ClawMachine.Gameplay
         public event Action<Prize> OnPrizeCollected;
 
         private readonly HashSet<Prize> collectedThisAttempt = new HashSet<Prize>();
+        private float suppressUntilTime = 0f;
 
-        private void OnTriggerEnter(Collider other)
+        public void Suppress(float durationSeconds)
+        {
+            suppressUntilTime = Time.time + durationSeconds;
+            collectedThisAttempt.Clear();
+        }
+
+        private void OnTriggerEnter(Collider other) => TryCollect(other);
+        private void OnTriggerStay(Collider other) => TryCollect(other);
+
+        private void TryCollect(Collider other)
         {
             Prize prize = other.GetComponentInParent<Prize>();
             if (prize != null)
             {
+                if (Time.time < suppressUntilTime)
+                {
+                    // Suppressed during machine setup/settling - quietly clean up stray
+                    Destroy(prize.gameObject, 0.1f);
+                    return;
+                }
+
                 if (!collectedThisAttempt.Contains(prize))
                 {
                     collectedThisAttempt.Add(prize);
-                    ClawAudio.Instance?.PlayWin();
+                    Debug.Log($"[ChuteDetector] Collected prize: {prize.name}");
                     OnPrizeCollected?.Invoke(prize);
                     Destroy(prize.gameObject, 0.5f);
                 }

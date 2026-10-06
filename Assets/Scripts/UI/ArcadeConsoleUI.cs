@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using ClawMachine.Data;
 using ClawMachine.Gameplay;
+using ClawMachine.Core.Services;
 
 namespace ClawMachine.UI
 {
@@ -69,9 +70,11 @@ namespace ClawMachine.UI
 
         private void Start()
         {
-            if (catalog == null && CollectionManager.Instance != null && CollectionManager.Instance.Catalog != null)
+            ICollectionService collService = ServiceLocator.Get<ICollectionService>();
+
+            if (catalog == null && collService is CollectionManager cm && cm.Catalog != null)
             {
-                catalog = CollectionManager.Instance.Catalog;
+                catalog = cm.Catalog;
             }
 
             if (catalog != null && catalog.Machines != null && catalog.Machines.Length > 0)
@@ -80,31 +83,15 @@ namespace ClawMachine.UI
             }
             else if (availableMachines == null || availableMachines.Length == 0)
             {
-                var list = new List<MachineDefinition>();
-#if UNITY_EDITOR
-                var loadedCatalog = UnityEditor.AssetDatabase.LoadAssetAtPath<MachineCatalog>("Assets/Data/MachineCatalog.asset");
-                if (loadedCatalog != null && loadedCatalog.Machines != null)
-                {
-                    catalog = loadedCatalog;
-                    availableMachines = loadedCatalog.Machines;
-                }
-                else
-                {
-                    var toyBox = UnityEditor.AssetDatabase.LoadAssetAtPath<MachineDefinition>("Assets/Data/Machine_ToyBox.asset");
-                    if (toyBox != null) list.Add(toyBox);
-                    var retro = UnityEditor.AssetDatabase.LoadAssetAtPath<MachineDefinition>("Assets/Data/Machine_RetroArcade.asset");
-                    if (retro != null) list.Add(retro);
-                    availableMachines = list.ToArray();
-                }
-#endif
+                Debug.LogWarning("[ArcadeConsoleUI] No machines available. Please assign MachineCatalog in inspector.");
             }
 
             // Sync index with current machine
-            if (CollectionManager.Instance != null && CollectionManager.Instance.CurrentMachine != null)
+            if (collService != null && collService.CurrentMachine != null)
             {
                 for (int i = 0; i < availableMachines.Length; i++)
                 {
-                    if (availableMachines[i] != null && availableMachines[i].machineId == CollectionManager.Instance.CurrentMachine.machineId)
+                    if (availableMachines[i] != null && availableMachines[i].machineId == collService.CurrentMachine.machineId)
                     {
                         currentMachineIndex = i;
                         break;
@@ -115,8 +102,23 @@ namespace ClawMachine.UI
             UpdateCarouselDisplay();
         }
 
+        private Vector2 swipeTouchStart;
+        private bool isTouchSwiping;
+
         private void Update()
         {
+            bool canSwitch = machineController == null || machineController.CanSwitchMachine;
+            if (prevMachineButton != null && prevMachineButton.interactable != canSwitch)
+            {
+                prevMachineButton.interactable = canSwitch;
+            }
+            if (nextMachineButton != null && nextMachineButton.interactable != canSwitch)
+            {
+                nextMachineButton.interactable = canSwitch;
+            }
+
+            if (!canSwitch) return;
+
             // Keyboard shortcuts to switch machine (Q / E keys)
             if (Input.GetKeyDown(KeyCode.Q))
             {
@@ -125,6 +127,23 @@ namespace ClawMachine.UI
             else if (Input.GetKeyDown(KeyCode.E))
             {
                 OnNextClicked();
+            }
+
+            // Touch / mouse horizontal swipe detection across playfield
+            if (Input.GetMouseButtonDown(0))
+            {
+                swipeTouchStart = Input.mousePosition;
+                isTouchSwiping = true;
+            }
+            else if (Input.GetMouseButtonUp(0) && isTouchSwiping)
+            {
+                isTouchSwiping = false;
+                Vector2 delta = (Vector2)Input.mousePosition - swipeTouchStart;
+                if (Mathf.Abs(delta.x) > 85f && Mathf.Abs(delta.y) < Mathf.Abs(delta.x) * 1.2f && Input.mousePosition.y > Screen.height * 0.32f)
+                {
+                    if (delta.x < 0) OnNextClicked();
+                    else OnPrevClicked();
+                }
             }
         }
 
@@ -136,6 +155,7 @@ namespace ClawMachine.UI
 
         public void OnPrevClicked()
         {
+            if (machineController != null && !machineController.CanSwitchMachine) return;
             if (availableMachines == null || availableMachines.Length <= 1) return;
             int target = currentMachineIndex - 1;
             if (target < 0) target = availableMachines.Length - 1;
@@ -144,6 +164,7 @@ namespace ClawMachine.UI
 
         public void OnNextClicked()
         {
+            if (machineController != null && !machineController.CanSwitchMachine) return;
             if (availableMachines == null || availableMachines.Length <= 1) return;
             int target = (currentMachineIndex + 1) % availableMachines.Length;
             TryNavigateToMachine(target);
@@ -152,10 +173,19 @@ namespace ClawMachine.UI
         private void TryNavigateToMachine(int targetIndex)
         {
             if (targetIndex < 0 || targetIndex >= availableMachines.Length) return;
+
+            // Block switching while claw is active or carrying a prize
+            if (machineController != null && !machineController.CanSwitchMachine)
+            {
+                return;
+            }
+
             MachineDefinition target = availableMachines[targetIndex];
             if (target == null) return;
 
-            bool isUnlocked = CollectionManager.Instance == null || CollectionManager.Instance.IsMachineUnlocked(target.machineId);
+            ICollectionService collService = ServiceLocator.Get<ICollectionService>();
+
+            bool isUnlocked = collService == null || collService.IsMachineUnlocked(target.machineId);
 
             if (isUnlocked)
             {
@@ -167,6 +197,31 @@ namespace ClawMachine.UI
             }
         }
 
+        private Coroutine titleBounceRoutine;
+
+        private void BounceTitle()
+        {
+            if (machineNameText == null) return;
+            if (titleBounceRoutine != null) StopCoroutine(titleBounceRoutine);
+            titleBounceRoutine = StartCoroutine(TitleBounceRoutine());
+        }
+
+        private System.Collections.IEnumerator TitleBounceRoutine()
+        {
+            float elapsed = 0f;
+            float duration = 0.25f;
+            Vector3 punch = Vector3.one * 1.25f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                machineNameText.transform.localScale = Vector3.Lerp(punch, Vector3.one, t);
+                yield return null;
+            }
+            machineNameText.transform.localScale = Vector3.one;
+            titleBounceRoutine = null;
+        }
+
         private void SwitchToMachine(int index)
         {
             currentMachineIndex = index;
@@ -174,11 +229,19 @@ namespace ClawMachine.UI
 
             if (machineController != null)
             {
-                machineController.ApplyMachine(target);
+                machineController.SwipeToMachine(index, target);
             }
-            else if (CollectionManager.Instance != null)
+            else
             {
-                CollectionManager.Instance.SetCurrentMachine(target);
+                ServiceLocator.Get<ICollectionService>()?.SetCurrentMachine(target);
+            }
+
+            BounceTitle();
+            var audioSvc = ServiceLocator.Get<IAudioService>();
+            if (audioSvc != null)
+            {
+                audioSvc.PlayClamp();
+                audioSvc.TriggerHapticLight();
             }
 
             UpdateCarouselDisplay();
@@ -191,6 +254,8 @@ namespace ClawMachine.UI
             MachineDefinition cur = availableMachines[currentMachineIndex];
             if (cur == null) return;
 
+            ICollectionService collService = ServiceLocator.Get<ICollectionService>();
+
             if (machineNameText != null)
             {
                 machineNameText.text = cur.displayName.ToUpper();
@@ -198,12 +263,12 @@ namespace ClawMachine.UI
 
             if (machineStatusText != null)
             {
-                if (CollectionManager.Instance != null && CollectionManager.Instance.IsMachineOwned(cur.machineId))
+                if (collService != null && collService.IsMachineOwned(cur.machineId))
                 {
                     machineStatusText.text = "★ OWNED (FREE PLAYS)";
                     machineStatusText.color = new Color(0.3f, 0.95f, 0.45f);
                 }
-                else if (CollectionManager.Instance != null && !CollectionManager.Instance.IsMachineUnlocked(cur.machineId))
+                else if (collService != null && !collService.IsMachineUnlocked(cur.machineId))
                 {
                     machineStatusText.text = $"🔒 LOCKED (UNLOCK: {cur.unlockCost} 🪙)";
                     machineStatusText.color = new Color(1f, 0.45f, 0.45f);
@@ -214,6 +279,12 @@ namespace ClawMachine.UI
                     machineStatusText.color = new Color(0.85f, 0.88f, 0.95f);
                 }
             }
+
+            var btn = GetComponentInChildren<ArcadePushButtonUI>() ?? FindFirstObjectByType<ArcadePushButtonUI>();
+            if (btn != null) btn.SetThemeColor(cur.cabinetFrameColor);
+
+            var joy = GetComponentInChildren<ArcadeJoystickUI>() ?? FindFirstObjectByType<ArcadeJoystickUI>();
+            if (joy != null) joy.SetThemeColor(cur.cabinetFrameColor);
         }
 
         private void OpenUnlockModal(MachineDefinition machine, int targetIndex)
@@ -221,7 +292,12 @@ namespace ClawMachine.UI
             pendingUnlockMachine = machine;
             if (unlockModal == null) return;
 
-            int currentCoins = CollectionManager.Instance != null ? CollectionManager.Instance.Coins : 0;
+            int currentCoins = 0;
+            if (ServiceLocator.TryGet<IEconomyService>(out var econ))
+            {
+                currentCoins = econ.Coins;
+            }
+
             bool canAfford = currentCoins >= machine.unlockCost;
 
             if (unlockTitleText != null)
@@ -251,9 +327,14 @@ namespace ClawMachine.UI
 
         private void OnConfirmUnlockClicked()
         {
-            if (pendingUnlockMachine == null || CollectionManager.Instance == null) return;
+            if (pendingUnlockMachine == null) return;
 
-            bool success = CollectionManager.Instance.TryUnlockMachine(pendingUnlockMachine);
+            bool success = false;
+            if (ServiceLocator.TryGet<ICollectionService>(out var coll))
+            {
+                success = coll.TryUnlockMachine(pendingUnlockMachine);
+            }
+
             if (success)
             {
                 CloseUnlockModal();

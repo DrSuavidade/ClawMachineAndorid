@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using ClawMachine.Data;
+using ClawMachine.Core.Services;
 
 namespace ClawMachine.Gameplay
 {
@@ -13,29 +14,58 @@ namespace ClawMachine.Gameplay
     }
 
     [Serializable]
+    public class MachineUpgradeData
+    {
+        public string machineId;
+        public int trolleySpeedLevel = 1;
+        public int gripPowerLevel = 1;
+        public int dropPrecisionLevel = 1;
+    }
+
+    [Serializable]
+    public class PrizeInventoryEntry
+    {
+        public string prizeId;
+        public int count = 1;
+    }
+
+    [Serializable]
     public class PlayerCollectionData
     {
+        public int saveVersion = 2;
         public int coins = 100;
         public List<string> discoveredPrizeIds = new List<string>();
         public List<string> unlockedMachineIds = new List<string> { "toy_box" };
         public List<string> ownedMachineIds = new List<string>();
-        public int trolleySpeedLevel = 1;
-        public int gripPowerLevel = 1;
-        public int dropSpeedLevel = 1;
+        public List<MachineUpgradeData> machineUpgrades = new List<MachineUpgradeData>();
+        public List<PrizeInventoryEntry> inventory = new List<PrizeInventoryEntry>();
+        // Phase 5 Retention Data
+        public string lastDailyClaimUtc = "";
+        public int dailyStreak = 0;
+        public string lastQuestDateUtc = "";
+        public List<DailyQuestData> activeQuests = new List<DailyQuestData>();
+        public List<string> claimedMilestoneIds = new List<string>();
         public long lastPassiveIncomeTimestamp;
     }
 
-    public class CollectionManager : MonoBehaviour
+    public class CollectionManager : MonoBehaviour, IEconomyService, ICollectionService
     {
         private const string SAVE_KEY = "ProjectClaw_SaveData";
+        private const int CURRENT_SAVE_VERSION = 2;
 
         private static CollectionManager instance;
         public static CollectionManager Instance => instance;
+
+        private ISaveService saveService;
 
         [Header("State")]
         [SerializeField] private PlayerCollectionData data = new PlayerCollectionData();
         [SerializeField] private MachineCatalog catalog;
         [SerializeField] private MachineDefinition currentMachine;
+
+        public PlayerCollectionData Data => data;
+        public void ForceSave() => SaveData();
+        public void AwardCoins(int amount) => AddCoins(amount);
 
         public int Coins => data.coins;
         public MachineCatalog Catalog => catalog;
@@ -44,12 +74,23 @@ namespace ClawMachine.Gameplay
 
         public event Action<int> OnCoinsChanged;
         public event Action<PrizeDefinition, bool> OnPrizeRegistered; // (prize, isNew)
+        public event Action<PrizeDefinition, bool, int> OnPrizeAwarded; // (prize, isNew, coinReward)
+        public event Action<int> OnDuplicatesSold; // (totalCoinsEarned)
         public event Action<MachineDefinition> OnMachineCompleted;
         public event Action<MachineDefinition> OnMachineUnlocked;
         public event Action<MachineDefinition> OnCurrentMachineChanged;
         public event Action<UpgradeType, int> OnUpgradePurchased;
+        public event Action<int, TimeSpan> OnOfflineEarningsPending;
+
+        public int PendingOfflineCoins { get; private set; }
+        public TimeSpan PendingOfflineTime { get; private set; }
 
         private float passiveTimer;
+
+        public void SetSaveService(ISaveService customSaveService)
+        {
+            saveService = customSaveService;
+        }
 
         private void Awake()
         {
@@ -60,11 +101,18 @@ namespace ClawMachine.Gameplay
             }
             instance = this;
 
+            if (saveService == null)
+            {
+                saveService = new JsonFileSaveService();
+            }
+
+            ServiceLocator.Register<IEconomyService>(this);
+            ServiceLocator.Register<ICollectionService>(this);
+            ServiceLocator.Register<ISaveService>(saveService);
+
             if (catalog == null)
             {
-#if UNITY_EDITOR
-                catalog = UnityEditor.AssetDatabase.LoadAssetAtPath<MachineCatalog>("Assets/Data/MachineCatalog.asset");
-#endif
+                Debug.LogWarning("[CollectionManager] MachineCatalog not assigned! Please assign it in inspector.");
             }
 
             if (currentMachine == null && catalog != null && catalog.Count > 0)
@@ -73,12 +121,39 @@ namespace ClawMachine.Gameplay
             }
             else if (currentMachine == null)
             {
-#if UNITY_EDITOR
-                currentMachine = UnityEditor.AssetDatabase.LoadAssetAtPath<MachineDefinition>("Assets/Data/Machine_ToyBox.asset");
-#endif
+                Debug.LogWarning("[CollectionManager] No currentMachine and no catalog assigned! Please assign MachineCatalog in inspector.");
             }
 
             LoadData();
+        }
+
+        private void Start()
+        {
+            if (PendingOfflineCoins > 0)
+            {
+                OnOfflineEarningsPending?.Invoke(PendingOfflineCoins, PendingOfflineTime);
+            }
+        }
+
+        public void ClaimOfflineEarnings()
+        {
+            if (PendingOfflineCoins > 0)
+            {
+                int earned = PendingOfflineCoins;
+                PendingOfflineCoins = 0;
+                AddCoins(earned);
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (instance == this)
+            {
+                ServiceLocator.Unregister<IEconomyService>();
+                ServiceLocator.Unregister<ICollectionService>();
+                ServiceLocator.Unregister<ISaveService>();
+                instance = null;
+            }
         }
 
         private void Update()
@@ -218,17 +293,33 @@ namespace ClawMachine.Gameplay
             string prizeId = def != null ? def.id : prize.name;
             string prizeName = def != null ? def.displayName : prize.name;
 
+            // 1. Track inventory quantity
+            if (data.inventory == null) data.inventory = new List<PrizeInventoryEntry>();
+            var entry = data.inventory.Find(e => e.prizeId == prizeId);
+            if (entry == null)
+            {
+                entry = new PrizeInventoryEntry { prizeId = prizeId, count = 1 };
+                data.inventory.Add(entry);
+            }
+            else
+            {
+                entry.count++;
+            }
+
             bool isNew = !data.discoveredPrizeIds.Contains(prizeId);
+            int reward = 0;
 
             if (isNew)
             {
                 data.discoveredPrizeIds.Add(prizeId);
-                Debug.Log($"[CollectionManager] NEW PRIZE DISCOVERED: {prizeName} (ID: {prizeId})!");
+                reward = GetDiscoveryReward(def);
+                AddCoins(reward);
+                Debug.Log($"[CollectionManager] ★ NEW PRIZE DISCOVERED: {prizeName} (ID: {prizeId})! Awarded +{reward} coins!");
 
                 if (currentMachine != null && !IsMachineOwned(currentMachine.machineId))
                 {
                     int totalDiscovered = GetDiscoveredCount(currentMachine);
-                    if (totalDiscovered >= 9)
+                    if (totalDiscovered >= currentMachine.prizes.Length)
                     {
                         data.ownedMachineIds.Add(currentMachine.machineId);
                         Debug.Log($"[CollectionManager] ★ MACHINE OWNED! {currentMachine.displayName} collection complete! ★");
@@ -238,41 +329,133 @@ namespace ClawMachine.Gameplay
             }
             else
             {
-                int reward = def != null ? def.duplicateCoinValue : 15;
+                reward = GetDuplicateSellPrice(def);
                 AddCoins(reward);
-                Debug.Log($"[CollectionManager] Duplicate prize {prizeName}. Awarded +{reward} coins!");
+                Debug.Log($"[CollectionManager] Duplicate prize {prizeName} (Total Owned: {entry.count}). Awarded +{reward} coins!");
             }
 
+            OnPrizeAwarded?.Invoke(def, isNew, reward);
             OnPrizeRegistered?.Invoke(def, isNew);
             SaveData();
         }
 
+        public int GetPrizeCount(string prizeId)
+        {
+            if (string.IsNullOrEmpty(prizeId) || data.inventory == null) return 0;
+            var entry = data.inventory.Find(e => e.prizeId == prizeId);
+            if (entry != null) return entry.count;
+            return data.discoveredPrizeIds.Contains(prizeId) ? 1 : 0;
+        }
+
+        public int GetDiscoveryReward(PrizeDefinition def)
+        {
+            if (def == null) return 30;
+            return def.rarity switch
+            {
+                PrizeRarity.Secret => 250,
+                PrizeRarity.Rare => 75,
+                _ => 30
+            };
+        }
+
+        public int GetDuplicateSellPrice(PrizeDefinition def)
+        {
+            if (def == null) return 15;
+            return Mathf.Max(10, (int)(def.duplicateCoinValue * def.sellMultiplier));
+        }
+
+        public int GetTotalDuplicateValue()
+        {
+            if (data.inventory == null) return 0;
+            int total = 0;
+            foreach (var item in data.inventory)
+            {
+                if (item.count > 1)
+                {
+                    PrizeDefinition def = FindPrizeDefinition(item.prizeId);
+                    int sellPrice = GetDuplicateSellPrice(def);
+                    total += sellPrice * (item.count - 1);
+                }
+            }
+            return total;
+        }
+
+        public int SellAllDuplicates()
+        {
+            if (data.inventory == null) return 0;
+
+            int totalEarned = 0;
+            int itemsSold = 0;
+
+            foreach (var item in data.inventory)
+            {
+                if (item.count > 1)
+                {
+                    int extras = item.count - 1;
+                    PrizeDefinition def = FindPrizeDefinition(item.prizeId);
+                    int sellPrice = GetDuplicateSellPrice(def);
+                    totalEarned += sellPrice * extras;
+                    itemsSold += extras;
+                    item.count = 1;
+                }
+            }
+
+            if (totalEarned > 0)
+            {
+                AddCoins(totalEarned);
+                OnDuplicatesSold?.Invoke(totalEarned);
+                Debug.Log($"[CollectionManager] Sold {itemsSold} duplicates for +{totalEarned} coins!");
+                SaveData();
+            }
+
+            return totalEarned;
+        }
+
+        public bool TrySellPrize(string prizeId, int count = 1)
+        {
+            if (string.IsNullOrEmpty(prizeId) || data.inventory == null) return false;
+            var entry = data.inventory.Find(e => e.prizeId == prizeId);
+            if (entry == null || entry.count <= count) return false;
+
+            entry.count -= count;
+            PrizeDefinition def = FindPrizeDefinition(prizeId);
+            int earned = GetDuplicateSellPrice(def) * count;
+            AddCoins(earned);
+            OnDuplicatesSold?.Invoke(earned);
+            SaveData();
+            return true;
+        }
+
+        private PrizeDefinition FindPrizeDefinition(string prizeId)
+        {
+            if (catalog != null && catalog.Machines != null)
+            {
+                foreach (var m in catalog.Machines)
+                {
+                    if (m != null && m.prizes != null)
+                    {
+                        foreach (var p in m.prizes)
+                        {
+                            if (p != null && p.id == prizeId) return p;
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
         public void SaveData()
         {
+            data.saveVersion = CURRENT_SAVE_VERSION;
             data.lastPassiveIncomeTimestamp = DateTime.UtcNow.Ticks;
-            string json = JsonUtility.ToJson(data);
-            PlayerPrefs.SetString(SAVE_KEY, json);
-            PlayerPrefs.Save();
+            if (saveService == null) saveService = new JsonFileSaveService();
+            saveService.Save(SAVE_KEY, data, CURRENT_SAVE_VERSION);
         }
 
         public void LoadData()
         {
-            if (PlayerPrefs.HasKey(SAVE_KEY))
-            {
-                string json = PlayerPrefs.GetString(SAVE_KEY);
-                try
-                {
-                    data = JsonUtility.FromJson<PlayerCollectionData>(json) ?? new PlayerCollectionData();
-                }
-                catch
-                {
-                    data = new PlayerCollectionData();
-                }
-            }
-            else
-            {
-                data = new PlayerCollectionData();
-            }
+            if (saveService == null) saveService = new JsonFileSaveService();
+            data = saveService.Load<PlayerCollectionData>(SAVE_KEY, CURRENT_SAVE_VERSION, MigrateSaveDataPayload) ?? new PlayerCollectionData();
 
             if (data.unlockedMachineIds == null)
             {
@@ -283,27 +466,94 @@ namespace ClawMachine.Gameplay
                 data.unlockedMachineIds.Add("toy_box");
             }
 
-            // Calculate offline passive income
-            if (data.ownedMachineIds.Count > 0 && data.lastPassiveIncomeTimestamp > 0)
+            // Calculate offline passive income if player was away > 5 minutes (never on first launch)
+            if (data.lastPassiveIncomeTimestamp > 0)
             {
                 TimeSpan elapsed = DateTime.UtcNow - new DateTime(data.lastPassiveIncomeTimestamp);
-                int minutes = Mathf.Clamp((int)elapsed.TotalMinutes, 0, 480); // Cap at 8 hours
-                if (minutes > 0 && currentMachine != null && IsMachineOwned(currentMachine.machineId))
+                if (elapsed.TotalSeconds >= 300) // Away for > 5 minutes
                 {
-                    int offlineCoins = minutes * currentMachine.passiveIncomePerMinute;
-                    data.coins += offlineCoins;
-                    Debug.Log($"[CollectionManager] Welcome back! Earned {offlineCoins} coins while offline ({minutes}m).");
+                    int minutes = Mathf.Clamp((int)elapsed.TotalMinutes, 0, 480); // Cap at 8 hours
+                    int rate = 5;
+                    if (currentMachine != null && currentMachine.passiveIncomePerMinute > 0)
+                    {
+                        rate = currentMachine.passiveIncomePerMinute;
+                    }
+                    PendingOfflineCoins = minutes * rate;
+                    PendingOfflineTime = elapsed;
+                    Debug.Log($"[CollectionManager] Player away for {elapsed.TotalMinutes:F1}m. Pending offline earnings: {PendingOfflineCoins} 🪙");
                 }
+            }
+
+            MigrateSaveData();
+        }
+
+        private PlayerCollectionData MigrateSaveDataPayload(string json, int oldVersion)
+        {
+            try
+            {
+                var loaded = JsonUtility.FromJson<PlayerCollectionData>(json);
+                return loaded ?? new PlayerCollectionData();
+            }
+            catch
+            {
+                return new PlayerCollectionData();
             }
         }
 
+        private void MigrateSaveData()
+        {
+            if (data.saveVersion < 2)
+            {
+                // v1 → v2: Migrate global upgrades to first machine (toy_box)
+                if (data.machineUpgrades == null)
+                    data.machineUpgrades = new List<MachineUpgradeData>();
+
+                data.machineUpgrades.Add(new MachineUpgradeData
+                {
+                    machineId = "toy_box",
+                    trolleySpeedLevel = 1,
+                    gripPowerLevel = 1,
+                    dropPrecisionLevel = 1
+                });
+                data.saveVersion = 2;
+                Debug.Log("[CollectionManager] Migrated save data v1 → v2 (per-machine upgrades)");
+            }
+
+            if (data.saveVersion < CURRENT_SAVE_VERSION)
+            {
+                data.saveVersion = CURRENT_SAVE_VERSION;
+                SaveData();
+            }
+        }
+
+        private MachineUpgradeData GetOrCreateMachineUpgrades(string machineId)
+        {
+            if (data.machineUpgrades == null)
+                data.machineUpgrades = new List<MachineUpgradeData>();
+
+            for (int i = 0; i < data.machineUpgrades.Count; i++)
+            {
+                if (data.machineUpgrades[i].machineId == machineId)
+                    return data.machineUpgrades[i];
+            }
+
+            var entry = new MachineUpgradeData { machineId = machineId };
+            data.machineUpgrades.Add(entry);
+            return entry;
+        }
+
+        private MachineUpgradeData CurrentMachineUpgrades =>
+            currentMachine != null ? GetOrCreateMachineUpgrades(currentMachine.machineId) : null;
+
         public int GetUpgradeLevel(UpgradeType type)
         {
+            var upg = CurrentMachineUpgrades;
+            if (upg == null) return 1;
             return type switch
             {
-                UpgradeType.TrolleySpeed => Mathf.Clamp(data.trolleySpeedLevel, 1, 5),
-                UpgradeType.GripPower => Mathf.Clamp(data.gripPowerLevel, 1, 5),
-                UpgradeType.DropPrecision => Mathf.Clamp(data.dropSpeedLevel, 1, 5),
+                UpgradeType.TrolleySpeed => Mathf.Clamp(upg.trolleySpeedLevel, 1, 5),
+                UpgradeType.GripPower => Mathf.Clamp(upg.gripPowerLevel, 1, 10), // Magnet: 10 levels (1% to 10%)
+                UpgradeType.DropPrecision => Mathf.Clamp(upg.dropPrecisionLevel, 1, 5),
                 _ => 1
             };
         }
@@ -311,15 +561,17 @@ namespace ClawMachine.Gameplay
         public int GetUpgradeCost(UpgradeType type)
         {
             int lvl = GetUpgradeLevel(type);
-            if (lvl >= 5) return -1; // Max level
-            return lvl switch
+            int idx = lvl - 1; // level 1 = index 0 (cost for lvl 1 -> 2)
+            if (type == UpgradeType.GripPower)
             {
-                1 => 45,
-                2 => 85,
-                3 => 150,
-                4 => 250,
-                _ => -1
-            };
+                // Magnet has 10 levels (+1% to +10% grab aura)
+                int[] magnetCosts = { 30, 45, 65, 90, 120, 160, 210, 270, 340 };
+                if (idx < 0 || idx >= magnetCosts.Length) return -1;
+                return magnetCosts[idx];
+            }
+            int[] defaultCosts = { 45, 85, 150, 250 };
+            if (idx < 0 || idx >= defaultCosts.Length) return -1; // Max level reached
+            return defaultCosts[idx];
         }
 
         public bool TryPurchaseUpgrade(UpgradeType type)
@@ -327,22 +579,25 @@ namespace ClawMachine.Gameplay
             int cost = GetUpgradeCost(type);
             if (cost < 0 || data.coins < cost) return false;
 
+            var upg = CurrentMachineUpgrades;
+            if (upg == null) return false;
+
             data.coins -= cost;
             int newLvl = 1;
 
             switch (type)
             {
                 case UpgradeType.TrolleySpeed:
-                    data.trolleySpeedLevel = Mathf.Min(5, data.trolleySpeedLevel + 1);
-                    newLvl = data.trolleySpeedLevel;
+                    upg.trolleySpeedLevel = Mathf.Min(5, upg.trolleySpeedLevel + 1);
+                    newLvl = upg.trolleySpeedLevel;
                     break;
                 case UpgradeType.GripPower:
-                    data.gripPowerLevel = Mathf.Min(5, data.gripPowerLevel + 1);
-                    newLvl = data.gripPowerLevel;
+                    upg.gripPowerLevel = Mathf.Min(10, upg.gripPowerLevel + 1);
+                    newLvl = upg.gripPowerLevel;
                     break;
                 case UpgradeType.DropPrecision:
-                    data.dropSpeedLevel = Mathf.Min(5, data.dropSpeedLevel + 1);
-                    newLvl = data.dropSpeedLevel;
+                    upg.dropPrecisionLevel = Mathf.Min(5, upg.dropPrecisionLevel + 1);
+                    newLvl = upg.dropPrecisionLevel;
                     break;
             }
 
@@ -353,13 +608,19 @@ namespace ClawMachine.Gameplay
             return true;
         }
 
-        public float GetTrolleySpeedMultiplier() => 1f + (GetUpgradeLevel(UpgradeType.TrolleySpeed) - 1) * 0.15f;
-        public float GetGripPowerMultiplier() => 1f + (GetUpgradeLevel(UpgradeType.GripPower) - 1) * 0.20f;
-        public float GetDropSpeedMultiplier() => 1f + (GetUpgradeLevel(UpgradeType.DropPrecision) - 1) * 0.18f;
+        // Trolley Speed: Controlled progression (+10% per level)
+        public float GetTrolleySpeedMultiplier() => 1f + (GetUpgradeLevel(UpgradeType.TrolleySpeed) - 1) * 0.10f;
+
+        // Magnet Aura: 10 levels (+1% at Lv.1 up to +10% at Lv.10 as secondary grab range)
+        public float GetGripPowerMultiplier() => 1f + GetUpgradeLevel(UpgradeType.GripPower) * 0.01f;
+
+        // Aim Grab Range: Level 4 is baseline (1.0x), Level 5 (+10%), Level 3 (-10%), Level 1 (0.70x tiny shadow)
+        public float GetDropSpeedMultiplier() => 0.70f + (GetUpgradeLevel(UpgradeType.DropPrecision) - 1) * 0.10f;
 
         public void ResetProgress()
         {
-            PlayerPrefs.DeleteKey(SAVE_KEY);
+            if (saveService == null) saveService = new JsonFileSaveService();
+            saveService.Delete(SAVE_KEY);
             data = new PlayerCollectionData();
             OnCoinsChanged?.Invoke(data.coins);
         }

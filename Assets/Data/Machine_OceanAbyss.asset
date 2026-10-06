@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e43e2d75f55b32447924fcd3fe31ac05, type: 3}
+  m_Name: Machine_OceanAbyss
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.Data.MachineDefinition
+  machineId: ocean_abyss
+  displayName: Ocean Abyss
+  description: Dive into abyssal reefs, sunken galleons, and mystical sea relics.
+  unlockCost: 3500
+  entryCost: 85
+  passiveIncomePerMinute: 140
+  cabinetFrameColor: {r: 0.08, g: 0.74, b: 0.72, a: 1}
+  cabinetBackdropColor: {r: 0.03, g: 0.07, b: 0.15, a: 1}
+  environmentPrefab: {fileID: 894602937652009111, guid: de03ce032ea28614b8aa66dc61acfb89, type: 3}
+  ambientLightColor: {r: 0.06, g: 0.18, b: 0.24, a: 1}
+  directionalLightColor: {r: 0.3, g: 0.8, b: 0.9, a: 1}
+  cameraFieldOfView: 45
+  cameraPitch: 28
+  prizes:
+  - {fileID: 11400000, guid: 180bbef2a0c16434483cb36136a89f70, type: 2}
+  - {fileID: 11400000, guid: 2a5319e91e366424a815fdd99b19c20f, type: 2}
+  - {fileID: 11400000, guid: 99d1ef34caefed84ab76cfff849ffbd7, type: 2}
+  - {fileID: 11400000, guid: af372850ccde12d468c27438cd4bb8fc, type: 2}
+  - {fileID: 11400000, guid: 760be963764d9b84891035d7c4f860bd, type: 2}
+  - {fileID: 11400000, guid: 312bdb2cb6334d34c931e53883930a2b, type: 2}
+  - {fileID: 11400000, guid: ef5caa9127288144a9cb060e7f569ad3, type: 2}
+  - {fileID: 11400000, guid: d98fe074098796c4f97e657036f88cb6, type: 2}
+  - {fileID: 11400000, guid: 3b7c69ef8c26f014f8346ac0ca00299e, type: 2}

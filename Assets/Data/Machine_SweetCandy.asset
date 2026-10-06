@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e43e2d75f55b32447924fcd3fe31ac05, type: 3}
+  m_Name: Machine_SweetCandy
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.Data.MachineDefinition
+  machineId: sweet_candy
+  displayName: Sweet Candy
+  description: Indulge in sugary confectioneries, pastries, and crystalline desserts.
+  unlockCost: 900
+  entryCost: 35
+  passiveIncomePerMinute: 50
+  cabinetFrameColor: {r: 0.96, g: 0.36, b: 0.62, a: 1}
+  cabinetBackdropColor: {r: 0.18, g: 0.38, b: 0.34, a: 1}
+  environmentPrefab: {fileID: 2276124567081969334, guid: b35a6ea9f71ffe345a4cce41df108cb4, type: 3}
+  ambientLightColor: {r: 0.32, g: 0.25, b: 0.28, a: 1}
+  directionalLightColor: {r: 1, g: 0.85, b: 0.9, a: 1}
+  cameraFieldOfView: 45
+  cameraPitch: 28
+  prizes:
+  - {fileID: 11400000, guid: a6d07ebbf922c5442a42ad34c506dbc9, type: 2}
+  - {fileID: 11400000, guid: d0e828070d022a644ad2d1ec0241ea25, type: 2}
+  - {fileID: 11400000, guid: 3b3ef328364df974a8a64cdf62673c7b, type: 2}
+  - {fileID: 11400000, guid: 7668615f80561294eb0ade9c2d5c1d4b, type: 2}
+  - {fileID: 11400000, guid: f9543ba208ace514d9debf6c2f805dfa, type: 2}
+  - {fileID: 11400000, guid: 1b78a397dad961c439f6124ab56c63cf, type: 2}
+  - {fileID: 11400000, guid: 7bb89a1eafcb6064eb2325fb18b594eb, type: 2}
+  - {fileID: 11400000, guid: 56d74e7cf7790f749a74d36e3382cfc8, type: 2}
+  - {fileID: 11400000, guid: 75dd8ee74890bb042a72d88b385a7dea, type: 2}
