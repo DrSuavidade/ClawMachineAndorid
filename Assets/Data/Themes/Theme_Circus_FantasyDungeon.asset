@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b82adecdbe6c430f91d0f4f505a060f9, type: 3}
-  m_Name: Grand Traveling Circus
+  m_Name: Theme_Circus_FantasyDungeon
   m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.Data.CabinetTheme
   themeId: circus_grand
   displayName: Grand Traveling Circus

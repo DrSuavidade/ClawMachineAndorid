@@ -44,7 +44,7 @@ namespace ClawMachine.UI.Theming
         {
             if (ServiceLocator.TryGet<ICollectionService>(out var collectionService))
             {
-                collectionService.OnMachineChanged += HandleMachineChanged;
+                collectionService.OnCurrentMachineChanged += HandleMachineChanged;
                 if (collectionService.CurrentMachine != null)
                 {
                     ApplyMachineTheme(collectionService.CurrentMachine);
@@ -61,7 +61,7 @@ namespace ClawMachine.UI.Theming
         {
             if (ServiceLocator.TryGet<ICollectionService>(out var collectionService))
             {
-                collectionService.OnMachineChanged -= HandleMachineChanged;
+                collectionService.OnCurrentMachineChanged -= HandleMachineChanged;
             }
         }
 

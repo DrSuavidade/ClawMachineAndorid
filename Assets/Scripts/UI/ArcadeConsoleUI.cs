@@ -44,6 +44,12 @@ namespace ClawMachine.UI
                 machineController = FindFirstObjectByType<MachineController>();
             }
 
+            if (ClawMachine.UI.Theming.UIThemeManager.Instance == null)
+            {
+                var mgr = gameObject.GetComponent<ClawMachine.UI.Theming.UIThemeManager>();
+                if (mgr == null) gameObject.AddComponent<ClawMachine.UI.Theming.UIThemeManager>();
+            }
+
             if (prevMachineButton != null)
             {
                 prevMachineButton.onClick.AddListener(OnPrevClicked);
