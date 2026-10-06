@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b231937ac317fcd428d6cb526a708495, type: 3}
+  m_Name: circus_ringmaster_hat
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.Data.PrizeDefinition
+  id: circus_ringmaster_hat
+  displayName: Ringmaster Top Hat
+  rarity: 1
+  prefab: {fileID: 4769630530971705436, guid: e5f2855a23931c4c083fd237ce528f6d, type: 3}
+  mass: 0.55
+  bounciness: 0.1
+  dynamicFriction: 0.6
+  staticFriction: 0.7
+  duplicateCoinValue: 150
+  sellMultiplier: 1
+  essenceMultiplier: 1

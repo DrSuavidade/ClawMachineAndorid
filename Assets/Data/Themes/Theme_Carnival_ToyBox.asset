@@ -20,8 +20,8 @@ MonoBehaviour:
   surfaceColor: {r: 0.1, g: 0.11, b: 0.14, a: 0.96}
   textColorHeader: {r: 1.0, g: 1.0, b: 1.0, a: 1.0}
   textColorBody: {r: 0.85, g: 0.88, b: 0.92, a: 1.0}
-  frameBorder: {fileID: 0}
-  buttonBackground: {fileID: 0}
-  headerBanner: {fileID: 0}
-  rivetBulb: {fileID: 0}
+  frameBorder: {fileID: 21300000, guid: 6058cef826f64ee6ba60d09bf2265140, type: 3}
+  buttonBackground: {fileID: 21300000, guid: eb178d54342b4b9099b49e14870938e9, type: 3}
+  headerBanner: {fileID: 21300000, guid: eac191b170f24d24bd57063e5db00fe5, type: 3}
+  rivetBulb: {fileID: 21300000, guid: 02d648245ffa45d589c4335c7f277db0, type: 3}
   cabinetMaterial: {fileID: 0}

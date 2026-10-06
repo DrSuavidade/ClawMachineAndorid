@@ -14,6 +14,7 @@ namespace ClawMachine.UI.Theming
         BodyText,
         FrameBorder,
         ButtonBackground,
+        HeaderBanner,
         RivetBulb
     }
 
@@ -108,6 +109,7 @@ namespace ClawMachine.UI.Theming
                     if (imageComponent != null && theme.frameBorder != null)
                     {
                         imageComponent.sprite = theme.frameBorder;
+                        imageComponent.type = Image.Type.Sliced;
                     }
                     targetColor = theme.primaryColor;
                     break;
@@ -115,13 +117,24 @@ namespace ClawMachine.UI.Theming
                     if (imageComponent != null && theme.buttonBackground != null)
                     {
                         imageComponent.sprite = theme.buttonBackground;
+                        imageComponent.type = Image.Type.Sliced;
                     }
                     targetColor = theme.accentColor;
+                    break;
+                case ThemeTargetType.HeaderBanner:
+                    if (imageComponent != null && theme.headerBanner != null)
+                    {
+                        imageComponent.sprite = theme.headerBanner;
+                        imageComponent.type = Image.Type.Sliced;
+                    }
+                    targetColor = theme.primaryColor;
                     break;
                 case ThemeTargetType.RivetBulb:
                     if (imageComponent != null && theme.rivetBulb != null)
                     {
                         imageComponent.sprite = theme.rivetBulb;
+                        imageComponent.type = Image.Type.Simple;
+                        imageComponent.preserveAspect = true;
                     }
                     targetColor = theme.accentColor;
                     break;

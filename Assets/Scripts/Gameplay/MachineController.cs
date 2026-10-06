@@ -93,6 +93,10 @@ namespace ClawMachine.Gameplay
 
                 ApplyAtmosphereImmediate(machine);
                 ReconnectActiveSlot();
+                if (ServiceLocator.TryGet<ICollectionService>(out var coll))
+                {
+                    coll.SetCurrentMachine(machine);
+                }
                 swipeRoutine = null;
                 yield break;
             }

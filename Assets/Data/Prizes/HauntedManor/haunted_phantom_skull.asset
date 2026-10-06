@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b231937ac317fcd428d6cb526a708495, type: 3}
+  m_Name: haunted_phantom_skull
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.Data.PrizeDefinition
+  id: haunted_phantom_skull
+  displayName: Phantom Skull
+  rarity: 2
+  prefab: {fileID: 7746949476614743275, guid: 92406ee22780d5e01b021e3110a5198f, type: 3}
+  mass: 0.65
+  bounciness: 0.1
+  dynamicFriction: 0.6
+  staticFriction: 0.7
+  duplicateCoinValue: 500
+  sellMultiplier: 1
+  essenceMultiplier: 1

@@ -50,6 +50,8 @@ namespace ClawMachine.UI
                 if (mgr == null) gameObject.AddComponent<ClawMachine.UI.Theming.UIThemeManager>();
             }
 
+            SetupThemedUIElements();
+
             if (prevMachineButton != null)
             {
                 prevMachineButton.onClick.AddListener(OnPrevClicked);
@@ -403,6 +405,65 @@ namespace ClawMachine.UI
                     OnPrevClicked();
                 }
             }
+        }
+
+        private void SetupThemedUIElements()
+        {
+            BindElement(prevMachineButton != null ? prevMachineButton.gameObject : null, Theming.ThemeTargetType.ButtonBackground);
+            BindElement(nextMachineButton != null ? nextMachineButton.gameObject : null, Theming.ThemeTargetType.ButtonBackground);
+            BindElement(unlockConfirmButton != null ? unlockConfirmButton.gameObject : null, Theming.ThemeTargetType.ButtonBackground);
+
+            var images = GetComponentsInChildren<Image>(true);
+            for (int i = 0; i < images.Length; i++)
+            {
+                var img = images[i];
+                if (img == null) continue;
+                string n = img.gameObject.name;
+
+                if (n == "MarqueeRim")
+                {
+                    BindElement(img.gameObject, Theming.ThemeTargetType.FrameBorder);
+                }
+                else if (n == "ConsoleRim")
+                {
+                    BindElement(img.gameObject, Theming.ThemeTargetType.Secondary);
+                }
+                else if (n == "CarouselStrip")
+                {
+                    BindElement(img.gameObject, Theming.ThemeTargetType.Secondary);
+                }
+                else if (n == "Rivet")
+                {
+                    BindElement(img.gameObject, Theming.ThemeTargetType.RivetBulb);
+                }
+                else if (n == "DialogCard")
+                {
+                    BindElement(img.gameObject, Theming.ThemeTargetType.FrameBorder);
+                }
+                else if (n == "Header" && img.transform.parent != null && img.transform.parent.name.EndsWith("Modal"))
+                {
+                    BindElement(img.gameObject, Theming.ThemeTargetType.HeaderBanner);
+                }
+                else if (n == "Btn_Awesome" || n == "Btn_SellDuplicates")
+                {
+                    BindElement(img.gameObject, Theming.ThemeTargetType.ButtonBackground);
+                }
+                else if (n == "UnlockModal" || n == "CollectionModal" || n == "ProgressModal" || n == "SettingsModal" || n == "CelebrationModal")
+                {
+                    BindElement(img.gameObject, Theming.ThemeTargetType.Surface);
+                }
+            }
+        }
+
+        private void BindElement(GameObject go, Theming.ThemeTargetType targetType)
+        {
+            if (go == null) return;
+            var themed = go.GetComponent<Theming.ThemedUIElement>();
+            if (themed == null)
+            {
+                themed = go.AddComponent<Theming.ThemedUIElement>();
+            }
+            themed.TargetType = targetType;
         }
     }
 }
