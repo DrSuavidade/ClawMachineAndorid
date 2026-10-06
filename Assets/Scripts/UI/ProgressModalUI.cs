@@ -112,10 +112,6 @@ namespace ClawMachine.UI
                 rewardsTabBtn.onClick.AddListener(() => SwitchTab(1));
             }
 
-            // Also attach IPointerClickHandler directly to tab gameobjects so clicks never get dropped
-            AttachTabClickTrigger(upgradesTabBtn != null ? upgradesTabBtn.gameObject : null, 0);
-            AttachTabClickTrigger(rewardsTabBtn != null ? rewardsTabBtn.gameObject : null, 1);
-
             if (trolleyBuyBtn != null)
             {
                 trolleyBuyBtn.onClick.RemoveAllListeners();
@@ -259,15 +255,6 @@ namespace ClawMachine.UI
             }
         }
 
-        private void AttachTabClickTrigger(GameObject targetObj, int tabIndex)
-        {
-            if (targetObj == null) return;
-            var trigger = targetObj.GetComponent<TabPointerClicker>();
-            if (trigger == null) trigger = targetObj.AddComponent<TabPointerClicker>();
-            trigger.targetModal = this;
-            trigger.tabIndex = tabIndex;
-        }
-
         public void SwitchTab(int tabIndex)
         {
             activeTabIndex = tabIndex;
@@ -278,6 +265,13 @@ namespace ClawMachine.UI
 
             Color activeColor = new Color(0.24f, 0.42f, 0.70f);
             Color inactiveColor = new Color(0.14f, 0.16f, 0.22f);
+
+            if (ClawMachine.UI.Theming.UIThemeManager.Instance != null && ClawMachine.UI.Theming.UIThemeManager.Instance.CurrentTheme != null)
+            {
+                var curTheme = ClawMachine.UI.Theming.UIThemeManager.Instance.CurrentTheme;
+                activeColor = curTheme.accentColor;
+                inactiveColor = curTheme.secondaryColor;
+            }
 
             if (upgradesTabBg != null) upgradesTabBg.color = tabIndex == 0 ? activeColor : inactiveColor;
             if (rewardsTabBg != null) rewardsTabBg.color = tabIndex == 1 ? activeColor : inactiveColor;
@@ -619,20 +613,5 @@ namespace ClawMachine.UI
         private void HandleCoinsChanged(int newCoins) => RefreshUI();
         private void HandleUpgradePurchased(UpgradeType type, int level) => RefreshUI();
         private void HandleRetentionChanged() => RefreshUI();
-    }
-
-    public class TabPointerClicker : MonoBehaviour, UnityEngine.EventSystems.IPointerClickHandler
-    {
-        public ProgressModalUI targetModal;
-        public int tabIndex;
-
-        public void OnPointerClick(UnityEngine.EventSystems.PointerEventData eventData)
-        {
-            if (targetModal == null) targetModal = UnityEngine.Object.FindFirstObjectByType<ProgressModalUI>();
-            if (targetModal != null)
-            {
-                targetModal.SwitchTab(tabIndex);
-            }
-        }
     }
 }

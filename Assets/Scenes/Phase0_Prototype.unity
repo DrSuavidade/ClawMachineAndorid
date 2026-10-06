@@ -4473,7 +4473,6 @@ GameObject:
   - component: {fileID: 304823470}
   - component: {fileID: 304823469}
   - component: {fileID: 304823468}
-  - component: {fileID: 304823467}
   m_Layer: 0
   m_Name: Tab_Rewards
   m_TagString: Untagged
@@ -4502,20 +4501,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &304823467
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 304823465}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 1046461822}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.UI.TabPointerClicker
-  targetModal: {fileID: 0}
-  tabIndex: 1
 --- !u!114 &304823468
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6059,6 +6044,7 @@ GameObject:
   - component: {fileID: 388992337}
   - component: {fileID: 388992339}
   - component: {fileID: 388992338}
+  - component: {fileID: 388992340}
   m_Layer: 0
   m_Name: ConsoleRim
   m_TagString: Untagged
@@ -6085,6 +6071,21 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &388992340
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 388992336}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f923bc38aec44ddb5ab5dcdf3a92ef3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.UI.Theming.ThemedUIElement
+  targetType: 0
+  overrideAlpha: 0
+  customAlpha: 1
 --- !u!114 &388992338
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14894,7 +14895,6 @@ GameObject:
   - component: {fileID: 960289963}
   - component: {fileID: 960289962}
   - component: {fileID: 960289961}
-  - component: {fileID: 960289960}
   m_Layer: 0
   m_Name: Btn_Collect
   m_TagString: Untagged
@@ -14922,19 +14922,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &960289960
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 960289958}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 1127481092}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.UI.OfflineCollectPointerClicker
-  targetModal: {fileID: 1971734000}
 --- !u!114 &960289961
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -16886,21 +16873,6 @@ MonoBehaviour:
   floorSurfaceY: 0.1
   tipFloorClearance: 0.03
   cabinetRoot: {fileID: 0}
---- !u!115 &1046461822
-MonoScript:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: 
-  serializedVersion: 7
-  m_DefaultReferences: {}
-  m_Icon: {fileID: 0}
-  m_Type: 0
-  m_ExecutionOrder: 0
-  m_ClassName: TabPointerClicker
-  m_Namespace: ClawMachine.UI
-  m_AssemblyName: Assembly-CSharp
 --- !u!1 &1047386945
 GameObject:
   m_ObjectHideFlags: 0
@@ -18293,21 +18265,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1121807978}
   m_CullTransparentMesh: 1
---- !u!115 &1127481092
-MonoScript:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: 
-  serializedVersion: 7
-  m_DefaultReferences: {}
-  m_Icon: {fileID: 0}
-  m_Type: 0
-  m_ExecutionOrder: 0
-  m_ClassName: OfflineCollectPointerClicker
-  m_Namespace: ClawMachine.UI
-  m_AssemblyName: Assembly-CSharp
 --- !u!1 &1132671591
 GameObject:
   m_ObjectHideFlags: 0
@@ -22333,7 +22290,6 @@ GameObject:
   - component: {fileID: 1435841472}
   - component: {fileID: 1435841471}
   - component: {fileID: 1435841470}
-  - component: {fileID: 1435841469}
   m_Layer: 0
   m_Name: Tab_Upgrades
   m_TagString: Untagged
@@ -22361,20 +22317,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1435841469
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1435841467}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 1046461822}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.UI.TabPointerClicker
-  targetModal: {fileID: 0}
-  tabIndex: 0
 --- !u!114 &1435841470
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -27536,6 +27478,7 @@ GameObject:
   - component: {fileID: 1717448000}
   - component: {fileID: 1717447999}
   - component: {fileID: 1717447998}
+  - component: {fileID: 1717447996}
   m_Layer: 0
   m_Name: UI Canvas
   m_TagString: Untagged
@@ -27543,6 +27486,20 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &1717447996
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1717447997}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02a1a018173047479a2208c44d2996d1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.UI.Theming.UIThemeManager
+  fallbackTheme: {fileID: 11400000, guid: fc2e315370fa47df96090012e9bd3155, type: 2}
+  currentTheme: {fileID: 0}
 --- !u!114 &1717447998
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -32921,6 +32878,7 @@ GameObject:
   - component: {fileID: 2078770900}
   - component: {fileID: 2078770902}
   - component: {fileID: 2078770901}
+  - component: {fileID: 2078770903}
   m_Layer: 0
   m_Name: CarouselStrip
   m_TagString: Untagged
@@ -32951,6 +32909,21 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &2078770903
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {{fileID: 0}}
+  m_PrefabInstance: {{fileID: 0}}
+  m_PrefabAsset: {{fileID: 0}}
+  m_GameObject: {{fileID: 2078770899}}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {{fileID: 11500000, guid: 6f923bc38aec44ddb5ab5dcdf3a92ef3, type: 3}}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.UI.Theming.ThemedUIElement
+  targetType: 1
+  overrideAlpha: 1
+  customAlpha: 0.92
 --- !u!114 &2078770901
 MonoBehaviour:
   m_ObjectHideFlags: 0

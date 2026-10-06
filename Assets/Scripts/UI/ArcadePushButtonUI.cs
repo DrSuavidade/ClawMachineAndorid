@@ -44,6 +44,11 @@ namespace ClawMachine.UI
             {
                 machineController.OnStateChanged += HandleStateChanged;
             }
+            ClawMachine.UI.Theming.UIThemeManager.OnThemeChanged += HandleThemeChanged;
+            if (ClawMachine.UI.Theming.UIThemeManager.Instance != null && ClawMachine.UI.Theming.UIThemeManager.Instance.CurrentTheme != null)
+            {
+                HandleThemeChanged(ClawMachine.UI.Theming.UIThemeManager.Instance.CurrentTheme);
+            }
         }
 
         private void OnDisable()
@@ -51,6 +56,19 @@ namespace ClawMachine.UI
             if (machineController != null)
             {
                 machineController.OnStateChanged -= HandleStateChanged;
+            }
+            ClawMachine.UI.Theming.UIThemeManager.OnThemeChanged -= HandleThemeChanged;
+        }
+
+        private void HandleThemeChanged(ClawMachine.Data.CabinetTheme theme)
+        {
+            if (theme == null) return;
+            normalColor = theme.accentColor;
+            pressedColor = theme.accentColor * 0.75f;
+            pressedColor.a = 1f;
+            if (isInteractable && plungerImage != null)
+            {
+                plungerImage.color = normalColor;
             }
         }
 
