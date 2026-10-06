@@ -254,9 +254,9 @@ namespace ClawMachine.UI
 
             Color rarityBorderColor = def.rarity switch
             {
-                PrizeRarity.Normal => new Color(0.4f, 0.45f, 0.55f),
-                PrizeRarity.Rare => new Color(1.0f, 0.82f, 0.15f),
-                PrizeRarity.Secret => new Color(0.95f, 0.25f, 0.90f),
+                PrizeRarity.Normal => new Color(0.25f, 0.85f, 1.0f),
+                PrizeRarity.Rare => new Color(0.85f, 0.35f, 0.95f),
+                PrizeRarity.Secret => new Color(1.0f, 0.82f, 0.15f),
                 _ => Color.gray
             };
 

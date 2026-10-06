@@ -13,7 +13,7 @@ Shader "ClawMachine/ToonOutline"
     }
     SubShader
     {
-        Tags { "RenderType"="Opaque" "Queue"="Geometry" }
+        Tags { "RenderType"="Opaque" "Queue"="Geometry" "RenderPipeline"="UniversalPipeline" }
 
         // PASS 1: OUTLINE (Inverted Hull with View-Space Extrusion)
         Pass
