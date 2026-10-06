@@ -93,10 +93,7 @@ namespace ClawMachine.Gameplay
 
                 ApplyAtmosphereImmediate(machine);
                 ReconnectActiveSlot();
-                if (ServiceLocator.TryGet<ICollectionService>(out var coll))
-                {
-                    coll.SetCurrentMachine(machine);
-                }
+                ServiceLocator.Get<ICollectionService>()?.SetCurrentMachine(machine);
                 swipeRoutine = null;
                 yield break;
             }
@@ -184,10 +181,7 @@ namespace ClawMachine.Gameplay
             ApplyAtmosphereImmediate(machine);
             ReconnectActiveSlot();
 
-            if (ServiceLocator.TryGet<ICollectionService>(out var coll))
-            {
-                coll.SetCurrentMachine(machine);
-            }
+            ServiceLocator.Get<ICollectionService>()?.SetCurrentMachine(machine);
 
             swipeRoutine = null;
         }
