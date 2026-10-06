@@ -16,6 +16,7 @@ namespace ClawMachine.Data
         public int passiveIncomePerMinute = 5;
 
         [Header("Visual Theme")]
+        public CabinetTheme theme;
         public Color cabinetFrameColor = new Color(0.85f, 0.25f, 0.25f);
         public Color cabinetBackdropColor = new Color(0.40f, 0.48f, 0.62f);
 
