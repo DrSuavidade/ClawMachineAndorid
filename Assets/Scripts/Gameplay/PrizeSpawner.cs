@@ -168,26 +168,43 @@ namespace ClawMachine.Gameplay
         {
             EnsurePrizePool();
             if (prizePool == null || prizePool.Length == 0) return null;
-            var valid = new List<PrizeDefinition>();
+
+            var normals = new List<PrizeDefinition>();
+            var rares = new List<PrizeDefinition>();
+            var secrets = new List<PrizeDefinition>();
+
             for (int i = 0; i < prizePool.Length; i++)
             {
-                if (prizePool[i] != null && prizePool[i].prefab != null)
+                var p = prizePool[i];
+                if (p != null && p.prefab != null)
                 {
-                    valid.Add(prizePool[i]);
+                    if (p.rarity == PrizeRarity.Secret) secrets.Add(p);
+                    else if (p.rarity == PrizeRarity.Rare) rares.Add(p);
+                    else normals.Add(p);
                 }
             }
-            if (valid.Count > 0)
+
+            // Weighted roll: Secret = 5%, Rare = 25%, Normal = 70%
+            float roll = Random.value;
+            if (roll < 0.05f && secrets.Count > 0)
             {
-                return valid[Random.Range(0, valid.Count)];
+                return secrets[Random.Range(0, secrets.Count)];
+            }
+            if (roll < 0.30f && rares.Count > 0)
+            {
+                return rares[Random.Range(0, rares.Count)];
+            }
+            if (normals.Count > 0)
+            {
+                return normals[Random.Range(0, normals.Count)];
             }
 
-            // Fallback: any non-null definition
-            for (int i = 0; i < prizePool.Length; i++)
-            {
-                if (prizePool[i] != null) valid.Add(prizePool[i]);
-            }
-            if (valid.Count == 0) return null;
-            return valid[Random.Range(0, valid.Count)];
+            // Fallback to any valid prize
+            var fallback = new List<PrizeDefinition>();
+            fallback.AddRange(normals);
+            fallback.AddRange(rares);
+            fallback.AddRange(secrets);
+            return fallback.Count > 0 ? fallback[Random.Range(0, fallback.Count)] : null;
         }
 
         private Vector3 GetSpawnCenter()
