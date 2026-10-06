@@ -21,7 +21,7 @@ namespace ClawMachine.Gameplay
         [SerializeField] private float swaySmoothSpeed = 10f;
 
         [Header("Debug")]
-        [SerializeField] private bool showDebugGui = true;
+        [SerializeField] private bool showDebugGui = false;
 
         public Prize HeldPrize { get; private set; }
         public bool HasPrize => HeldPrize != null;

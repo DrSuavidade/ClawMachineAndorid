@@ -50,6 +50,17 @@ namespace ClawMachine.Gameplay
         private Quaternion targetRot;
         private float targetFovVal;
 
+        // Camera Shake State
+        private Vector3 shakeOffset;
+        private float shakeTime;
+        private float shakeMag;
+
+        public void TriggerShake(float duration = 0.2f, float magnitude = 0.04f)
+        {
+            shakeTime = duration;
+            shakeMag = magnitude;
+        }
+
         private void Awake()
         {
             if (targetCamera == null)
@@ -138,6 +149,15 @@ namespace ClawMachine.Gameplay
             transform.position = Vector3.Lerp(transform.position, targetPos, dt * positionSmoothSpeed);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, dt * rotationSmoothSpeed);
             targetCamera.fieldOfView = Mathf.Lerp(targetCamera.fieldOfView, targetFovVal, dt * fovSmoothSpeed);
+
+            // Handle Camera Shake additively without drift
+            if (shakeTime > 0f)
+            {
+                shakeTime -= dt;
+                Vector3 randOffset = Random.insideUnitSphere * shakeMag;
+                randOffset.z = 0f;
+                transform.position += randOffset;
+            }
         }
     }
 }

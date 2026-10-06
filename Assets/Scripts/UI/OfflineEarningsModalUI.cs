@@ -83,10 +83,6 @@ namespace ClawMachine.UI
             {
                 collectButton.onClick.RemoveAllListeners();
                 collectButton.onClick.AddListener(OnCollectClicked);
-
-                var clicker = collectButton.GetComponent<OfflineCollectPointerClicker>();
-                if (clicker == null) clicker = collectButton.gameObject.AddComponent<OfflineCollectPointerClicker>();
-                clicker.targetModal = this;
             }
         }
 
@@ -136,20 +132,6 @@ namespace ClawMachine.UI
             if (modalPanel != null)
             {
                 modalPanel.SetActive(false);
-            }
-        }
-    }
-
-    public class OfflineCollectPointerClicker : MonoBehaviour, UnityEngine.EventSystems.IPointerClickHandler
-    {
-        public OfflineEarningsModalUI targetModal;
-
-        public void OnPointerClick(UnityEngine.EventSystems.PointerEventData eventData)
-        {
-            if (targetModal == null) targetModal = UnityEngine.Object.FindFirstObjectByType<OfflineEarningsModalUI>();
-            if (targetModal != null)
-            {
-                targetModal.OnCollectClicked();
             }
         }
     }

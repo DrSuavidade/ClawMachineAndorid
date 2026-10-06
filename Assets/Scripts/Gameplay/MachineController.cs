@@ -436,8 +436,6 @@ namespace ClawMachine.Gameplay
                 retService.RecordPrizeWon(curMach != null ? curMach.machineId : "", prize != null ? (int)prize.Rarity : 0);
             }
 
-            ServiceLocator.Get<IAudioService>()?.PlayWin();
-
             Vector3 winPos = chuteDetector != null ? chuteDetector.transform.position : (prize != null ? prize.transform.position : Vector3.zero);
             ClawJuiceEffects.Instance?.PlayWinCelebration(winPos);
 
@@ -454,7 +452,7 @@ namespace ClawMachine.Gameplay
                 prizeSpawner.SpawnRefill();
             }
 
-            // Only show celebration win modal on first-time discovery; repeat prizes skip modal
+            // Only show celebration win modal on first-time discovery; repeat prizes skip modal but play audio
             if (isFirstDiscovery)
             {
                 var winModal = ClawMachine.UI.PrizeWinModalUI.Instance;
@@ -466,6 +464,11 @@ namespace ClawMachine.Gameplay
                 {
                     winModal.ShowWin(prize);
                 }
+            }
+            else
+            {
+                // Repeat discovery: play sound directly since modal is skipped
+                ServiceLocator.Get<IAudioService>()?.PlayWin();
             }
         }
     }

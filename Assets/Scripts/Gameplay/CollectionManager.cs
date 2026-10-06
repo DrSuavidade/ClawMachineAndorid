@@ -329,9 +329,9 @@ namespace ClawMachine.Gameplay
             }
             else
             {
-                reward = GetDuplicateSellPrice(def);
-                AddCoins(reward);
-                Debug.Log($"[CollectionManager] Duplicate prize {prizeName} (Total Owned: {entry.count}). Awarded +{reward} coins!");
+                // Duplicate prize stored in inventory; coins awarded when sold in Collection menu to prevent double payout
+                reward = 0;
+                Debug.Log($"[CollectionManager] Duplicate prize {prizeName} stored in inventory (Total Owned: {entry.count}).");
             }
 
             OnPrizeAwarded?.Invoke(def, isNew, reward);
@@ -466,21 +466,32 @@ namespace ClawMachine.Gameplay
                 data.unlockedMachineIds.Add("toy_box");
             }
 
-            // Calculate offline passive income if player was away > 5 minutes (never on first launch)
-            if (data.lastPassiveIncomeTimestamp > 0)
+            // Calculate offline passive income if player was away > 5 minutes (only for actually OWNED machines)
+            if (data.lastPassiveIncomeTimestamp > 0 && data.ownedMachineIds != null && data.ownedMachineIds.Count > 0)
             {
                 TimeSpan elapsed = DateTime.UtcNow - new DateTime(data.lastPassiveIncomeTimestamp);
                 if (elapsed.TotalSeconds >= 300) // Away for > 5 minutes
                 {
                     int minutes = Mathf.Clamp((int)elapsed.TotalMinutes, 0, 480); // Cap at 8 hours
-                    int rate = 5;
-                    if (currentMachine != null && currentMachine.passiveIncomePerMinute > 0)
+                    int totalRatePerMin = 0;
+                    if (catalog != null)
                     {
-                        rate = currentMachine.passiveIncomePerMinute;
+                        for (int i = 0; i < data.ownedMachineIds.Count; i++)
+                        {
+                            var ownedDef = catalog.GetMachine(data.ownedMachineIds[i]);
+                            if (ownedDef != null)
+                            {
+                                totalRatePerMin += ownedDef.passiveIncomePerMinute;
+                            }
+                        }
                     }
-                    PendingOfflineCoins = minutes * rate;
-                    PendingOfflineTime = elapsed;
-                    Debug.Log($"[CollectionManager] Player away for {elapsed.TotalMinutes:F1}m. Pending offline earnings: {PendingOfflineCoins} 🪙");
+
+                    if (totalRatePerMin > 0)
+                    {
+                        PendingOfflineCoins = minutes * totalRatePerMin;
+                        PendingOfflineTime = elapsed;
+                        Debug.Log($"[CollectionManager] Player away for {elapsed.TotalMinutes:F1}m. Pending offline earnings from {data.ownedMachineIds.Count} owned machines: {PendingOfflineCoins} 🪙");
+                    }
                 }
             }
 
@@ -608,11 +619,27 @@ namespace ClawMachine.Gameplay
             return true;
         }
 
-        // Trolley Speed: Controlled progression (+10% per level)
-        public float GetTrolleySpeedMultiplier() => 1f + (GetUpgradeLevel(UpgradeType.TrolleySpeed) - 1) * 0.10f;
+        // Trolley Speed: Controlled progression (+10% per level) + 50% Set Bonus if machine is completed/owned
+        public float GetTrolleySpeedMultiplier()
+        {
+            float mult = 1f + (GetUpgradeLevel(UpgradeType.TrolleySpeed) - 1) * 0.10f;
+            if (currentMachine != null && IsMachineOwned(currentMachine.machineId))
+            {
+                mult *= 1.50f; // ★ 50% Set completion bonus
+            }
+            return mult;
+        }
 
-        // Magnet Aura: 10 levels (+1% at Lv.1 up to +10% at Lv.10 as secondary grab range)
-        public float GetGripPowerMultiplier() => 1f + GetUpgradeLevel(UpgradeType.GripPower) * 0.01f;
+        // Magnet Aura: 10 levels (+1% at Lv.1 up to +10% at Lv.10) + 50% Set Bonus if machine is completed/owned
+        public float GetGripPowerMultiplier()
+        {
+            float mult = 1f + GetUpgradeLevel(UpgradeType.GripPower) * 0.01f;
+            if (currentMachine != null && IsMachineOwned(currentMachine.machineId))
+            {
+                mult *= 1.50f; // ★ 50% Set completion bonus
+            }
+            return mult;
+        }
 
         // Aim Grab Range: Level 4 is baseline (1.0x), Level 5 (+10%), Level 3 (-10%), Level 1 (0.70x tiny shadow)
         public float GetDropSpeedMultiplier() => 0.70f + (GetUpgradeLevel(UpgradeType.DropPrecision) - 1) * 0.10f;
@@ -623,6 +650,10 @@ namespace ClawMachine.Gameplay
             saveService.Delete(SAVE_KEY);
             data = new PlayerCollectionData();
             OnCoinsChanged?.Invoke(data.coins);
+            
+            // Reload active scene to completely clear all runtime state cleanly
+            int sceneIndex = UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex;
+            UnityEngine.SceneManagement.SceneManager.LoadScene(sceneIndex);
         }
     }
 }

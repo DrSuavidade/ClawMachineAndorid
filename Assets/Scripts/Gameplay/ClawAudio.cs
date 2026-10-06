@@ -209,8 +209,11 @@ namespace ClawMachine.Gameplay
 
         public void TriggerCameraShake(float duration = 0.2f, float magnitude = 0.04f)
         {
-            shakeTime = duration;
-            shakeMag = magnitude;
+            var cam = FindFirstObjectByType<ClawCameraController>();
+            if (cam != null)
+            {
+                cam.TriggerShake(duration, magnitude);
+            }
         }
 
         public void TriggerShake(float duration, float magnitude) => TriggerCameraShake(duration, magnitude);
@@ -233,28 +236,6 @@ namespace ClawMachine.Gameplay
                 Handheld.Vibrate();
             }
 #endif
-        }
-
-        private void LateUpdate()
-        {
-            if (mainCam == null)
-            {
-                mainCam = Camera.main;
-                if (mainCam == null) return;
-            }
-
-            // Remove last frame's shake offset first
-            mainCam.transform.position -= shakeOffset;
-            shakeOffset = Vector3.zero;
-
-            if (shakeTime > 0f)
-            {
-                shakeTime -= Time.deltaTime;
-                Vector3 offset = Random.insideUnitSphere * shakeMag;
-                offset.z = 0; // maintain camera distance
-                shakeOffset = offset;
-                mainCam.transform.position += shakeOffset;
-            }
         }
 
         private AudioClip CreateMotorTone(int sampleRate, float duration, float freq)
