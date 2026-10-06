@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e43e2d75f55b32447924fcd3fe31ac05, type: 3}
+  m_Name: Neon Casino
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.Data.MachineDefinition
+  machineId: neon_casino
+  displayName: Neon Casino
+  description: High-roller 1970s Vegas casino cabinet gleaming in mirror lacquer, sovereign gold, and jackpot lights.
+  unlockCost: 25000
+  entryCost: 0
+  theme: {fileID: 11400000, guid: 83f0cbfc3e374b289c303174b7e64751, type: 2}
+  passiveIncomePerMinute: 100
+  cabinetFrameColor: {r: 0.2, g: 0.05, b: 0.08, a: 1.0}
+  cabinetBackdropColor: {r: 0.08, g: 0.18, b: 0.1, a: 1.0}
+  environmentPrefab: {fileID: 0}
+  ambientLightColor: {r: 0.25, g: 0.25, b: 0.3, a: 1}
+  directionalLightColor: {r: 1, g: 0.96, b: 0.9, a: 1}
+  cameraFieldOfView: 45
+  cameraPitch: 28
+  prizes:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
