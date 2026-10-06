@@ -81,6 +81,12 @@ namespace ClawMachine.UI
                 HandleScreenTouchMode();
             }
 
+            // Continuous input feed when direct dragging
+            if (isDirectDragging && currentInputVector.sqrMagnitude > 0.001f && machineController != null)
+            {
+                machineController.SetDragInput(currentInputVector * (dragSensitivity * 45f));
+            }
+
             // Return to center when not actively dragging
             if (!isDirectDragging && !isScreenDragging && knobTransform != null)
             {
@@ -138,10 +144,6 @@ namespace ClawMachine.UI
                 if (knobTransform != null) knobTransform.anchoredPosition = clamped;
 
                 currentInputVector = clamped / maxDeflectionRadius;
-                if (machineController != null)
-                {
-                    machineController.SetDragInput(currentInputVector * (dragSensitivity * 45f));
-                }
             }
         }
 

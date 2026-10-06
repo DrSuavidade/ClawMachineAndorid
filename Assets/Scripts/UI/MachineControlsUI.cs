@@ -60,22 +60,6 @@ namespace ClawMachine.UI
                 OnDropClicked();
             }
 
-            // Direct mouse drag fallback
-            if (Input.GetMouseButtonDown(0))
-            {
-                lastPointerPos = Input.mousePosition;
-            }
-            else if (Input.GetMouseButton(0) && (Input.mousePosition.y < Screen.height * 0.65f))
-            {
-                Vector2 currentPos = Input.mousePosition;
-                Vector2 delta = (currentPos - lastPointerPos) * dragSensitivity;
-                lastPointerPos = currentPos;
-                if (delta.sqrMagnitude > 0.0001f && machine != null)
-                {
-                    machine.SetDragInput(delta);
-                }
-            }
-
             if (winBannerTimer > 0f)
             {
                 winBannerTimer -= Time.deltaTime;

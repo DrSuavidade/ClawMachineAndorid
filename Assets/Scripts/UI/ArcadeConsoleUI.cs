@@ -129,17 +129,21 @@ namespace ClawMachine.UI
                 OnNextClicked();
             }
 
-            // Touch / mouse horizontal swipe detection across playfield
+            // Touch / mouse horizontal swipe detection ONLY on top header marquee (prevents mid-aim accidental swipes)
             if (Input.GetMouseButtonDown(0))
             {
-                swipeTouchStart = Input.mousePosition;
-                isTouchSwiping = true;
+                // Only begin swipe if tapping in upper marquee region (>70% screen height) and not over other UI
+                if (Input.mousePosition.y > Screen.height * 0.70f && (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject()))
+                {
+                    swipeTouchStart = Input.mousePosition;
+                    isTouchSwiping = true;
+                }
             }
             else if (Input.GetMouseButtonUp(0) && isTouchSwiping)
             {
                 isTouchSwiping = false;
                 Vector2 delta = (Vector2)Input.mousePosition - swipeTouchStart;
-                if (Mathf.Abs(delta.x) > 85f && Mathf.Abs(delta.y) < Mathf.Abs(delta.x) * 1.2f && Input.mousePosition.y > Screen.height * 0.32f)
+                if (Mathf.Abs(delta.x) > 85f && Mathf.Abs(delta.y) < Mathf.Abs(delta.x) * 1.2f)
                 {
                     if (delta.x < 0) OnNextClicked();
                     else OnPrevClicked();

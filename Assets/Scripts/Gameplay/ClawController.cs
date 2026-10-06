@@ -467,7 +467,8 @@ namespace ClawMachine.Gameplay
                 hoist.position = pos;
                 if (gripAnchor != null && gripAnchor.HasPrize)
                 {
-                    SetState(ClawState.Carrying);
+                    // Real-arcade auto-return flow: claw automatically travels to chute drop point
+                    SetState(ClawState.Returning);
                 }
                 else
                 {
@@ -488,11 +489,15 @@ namespace ClawMachine.Gameplay
                 return;
             }
 
+            AnimateArms();
+            SetAudioMotor(true);
+
             Vector3 target = new Vector3(chuteDropPoint.position.x, trolley.position.y, chuteDropPoint.position.z);
             trolley.position = Vector3.MoveTowards(trolley.position, target, config.returnSpeed * Time.deltaTime);
 
             if (Vector3.Distance(new Vector3(trolley.position.x, 0, trolley.position.z), new Vector3(target.x, 0, target.z)) < 0.05f)
             {
+                SetAudioMotor(false);
                 SetState(ClawState.Releasing);
             }
         }
