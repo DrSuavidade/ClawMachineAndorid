@@ -6023,7 +6023,6 @@ GameObject:
   - component: {fileID: 1890173991079319959}
   - component: {fileID: 7341144981665833164}
   - component: {fileID: 9211069067377692495}
-  - component: {fileID: 5222194344151709086}
   m_Layer: 0
   m_Name: Tab_Rewards
   m_TagString: Untagged
@@ -6134,20 +6133,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &5222194344151709086
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2857456694086362860}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.UI.TabPointerClicker
-  targetModal: {fileID: 0}
-  tabIndex: 1
 --- !u!1 &2857736909499300992
 GameObject:
   m_ObjectHideFlags: 0
@@ -8382,7 +8367,6 @@ GameObject:
   - component: {fileID: 2405205747982973518}
   - component: {fileID: 3951857322429717996}
   - component: {fileID: 3113221343572606899}
-  - component: {fileID: 8374819276918599964}
   m_Layer: 0
   m_Name: Btn_Collect
   m_TagString: Untagged
@@ -8492,19 +8476,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &8374819276918599964
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4017504823752936275}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.UI.OfflineCollectPointerClicker
-  targetModal: {fileID: 1028001321509638562}
 --- !u!1 &4023543795839544682
 GameObject:
   m_ObjectHideFlags: 0
@@ -17526,7 +17497,6 @@ GameObject:
   - component: {fileID: 3352345386899595413}
   - component: {fileID: 4330003749121152786}
   - component: {fileID: 8007173224916574625}
-  - component: {fileID: 5587883572129163076}
   m_Layer: 0
   m_Name: Tab_Upgrades
   m_TagString: Untagged
@@ -17636,20 +17606,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &5587883572129163076
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7921931925755280790}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.UI.TabPointerClicker
-  targetModal: {fileID: 0}
-  tabIndex: 0
 --- !u!1 &7941100864923103382
 GameObject:
   m_ObjectHideFlags: 0
