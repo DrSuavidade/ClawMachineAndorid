@@ -102,7 +102,14 @@ namespace ClawMachine.Gameplay
 
             if (HeldPrize == null) return;
 
-            holdTimer += deltaTime;
+            // Unstable grip delayed slip (authentic arcade tension: prize drops midway during lift or transit)
+            if (!CurrentGrip.isStable && holdTimer >= CurrentGrip.slipDelay)
+            {
+                Debug.Log($"[ClawGripAnchor] Unstable grip slipped after {holdTimer:F1}s! {HeldPrize.name} tumbled!");
+                Release();
+                OnPrizeSlipped?.Invoke();
+                return;
+            }
 
             // Speed & jerk based slip risk when moving
             float horizSpeed = new Vector2(carriageVelocity.x, carriageVelocity.z).magnitude;

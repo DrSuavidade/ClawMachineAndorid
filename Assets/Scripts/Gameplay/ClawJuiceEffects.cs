@@ -11,6 +11,7 @@ namespace ClawMachine.Gameplay
         private ParticleSystem confettiPS;
         private ParticleSystem coinShowerPS;
         private ParticleSystem dustPuffPS;
+        private ParticleSystem strainSparksPS;
 
         private void Awake()
         {
@@ -24,6 +25,7 @@ namespace ClawMachine.Gameplay
             BuildConfettiParticleSystem();
             BuildCoinShowerParticleSystem();
             BuildDustPuffParticleSystem();
+            BuildStrainSparksParticleSystem();
         }
 
         public void PlayWinCelebration(Vector3 position)
@@ -47,6 +49,15 @@ namespace ClawMachine.Gameplay
             {
                 dustPuffPS.transform.position = position;
                 dustPuffPS.Emit(12);
+            }
+        }
+
+        public void PlayStrainSparks(Vector3 position)
+        {
+            if (strainSparksPS != null)
+            {
+                strainSparksPS.transform.position = position;
+                strainSparksPS.Emit(8);
             }
         }
 
@@ -144,6 +155,34 @@ namespace ClawMachine.Gameplay
             var renderer = go.GetComponent<ParticleSystemRenderer>();
             renderer.renderMode = ParticleSystemRenderMode.Billboard;
             renderer.sharedMaterial = CreateParticleMaterial(new Color(0.9f, 0.9f, 0.95f, 0.35f));
+        }
+
+        private void BuildStrainSparksParticleSystem()
+        {
+            GameObject go = new GameObject("StrainSparksFX");
+            go.transform.parent = transform;
+            strainSparksPS = go.AddComponent<ParticleSystem>();
+
+            var main = strainSparksPS.main;
+            main.playOnAwake = false;
+            main.loop = false;
+            main.duration = 0.3f;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.15f, 0.35f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(1.5f, 3.5f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.04f, 0.08f);
+            main.gravityModifier = 0.8f;
+            main.startColor = new Color(1.0f, 0.85f, 0.3f);
+
+            var shape = strainSparksPS.shape;
+            shape.shapeType = ParticleSystemShapeType.Sphere;
+            shape.radius = 0.15f;
+
+            var emission = strainSparksPS.emission;
+            emission.enabled = false;
+
+            var renderer = go.GetComponent<ParticleSystemRenderer>();
+            renderer.renderMode = ParticleSystemRenderMode.Billboard;
+            renderer.sharedMaterial = CreateParticleMaterial(new Color(1f, 0.9f, 0.4f));
         }
 
         private Material CreateParticleMaterial(Color tint)

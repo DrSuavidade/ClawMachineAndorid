@@ -191,17 +191,48 @@ namespace ClawMachine.Gameplay
                     float gripMult = GetGripPowerMultiplier();
                     if (gripAnchor != null && targetedPrize != null)
                     {
+                        float massFactor = (targetedPrize.Definition != null) ? Mathf.Clamp(targetedPrize.Definition.mass, 0.3f, 1.2f) : 0.5f;
+                        float effectiveQuality = Mathf.Clamp01((targetedAccuracy * gripMult) / massFactor);
+
+                        // Skill + Tension: Clean hold requires >= 0.50 quality.
+                        // Between 0.25 and 0.50: Toy is lifted but unstable, teetering and slipping partway!
+                        bool isCleanHold = effectiveQuality >= 0.50f;
+                        float slipDelaySeconds = isCleanHold ? 99f : UnityEngine.Random.Range(1.2f, 2.8f);
+
                         GripEvaluation eval = new GripEvaluation
                         {
                             hasPrize = true,
                             candidate = targetedPrize,
-                            quality = Mathf.Clamp01(targetedAccuracy * gripMult),
-                            isStable = true,
-                            slipDelay = 10f * gripMult
+                            quality = effectiveQuality,
+                            isStable = isCleanHold,
+                            slipDelay = slipDelaySeconds
                         };
-                        if (gripAnchor.TryAcquire(eval, targetHoldOffset))
+
+                        if (effectiveQuality >= 0.25f)
                         {
-                            PlayAudioGrab();
+                            if (gripAnchor.TryAcquire(eval, targetHoldOffset))
+                            {
+                                PlayAudioGrab();
+                            }
+                        }
+                        else
+                        {
+                            // Near-miss nudge: Claw slips right off the toy, nudging it across the pile
+                            ApplyNearMissNudge(targetedPrize);
+                        }
+                    }
+                    else
+                    {
+                        // Broad physical nudge around claw closure zone to tumble nearby toys
+                        Collider[] nearby = Physics.OverlapSphere(hoist != null ? hoist.position : transform.position, 0.45f);
+                        for (int n = 0; n < nearby.Length; n++)
+                        {
+                            Prize np = nearby[n].GetComponentInParent<Prize>();
+                            if (np != null)
+                            {
+                                ApplyNearMissNudge(np);
+                                break;
+                            }
                         }
                     }
                     SetState(ClawState.Lifting);
@@ -720,6 +751,21 @@ namespace ClawMachine.Gameplay
                 return b;
             }
             return new Bounds(prize.transform.position, Vector3.one * 0.4f);
+        }
+
+        private void ApplyNearMissNudge(Prize prize)
+        {
+            if (prize == null) return;
+            Rigidbody rb = prize.Rigidbody;
+            if (rb != null && !rb.isKinematic)
+            {
+                Vector3 clawCenter = hoist != null ? hoist.position : transform.position;
+                Vector3 awayDir = (prize.transform.position - clawCenter).normalized;
+                awayDir.y = 0.35f; // Slight upward pop + outward tumble
+                rb.AddForce(awayDir * UnityEngine.Random.Range(1.4f, 2.6f), ForceMode.Impulse);
+                rb.AddTorque(UnityEngine.Random.insideUnitSphere * 1.5f, ForceMode.Impulse);
+                Debug.Log($"[ClawController] 🎲 NEAR-MISS NUDGE applied to {prize.name}!");
+            }
         }
     }
 }
