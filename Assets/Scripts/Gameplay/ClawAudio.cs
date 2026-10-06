@@ -220,20 +220,57 @@ namespace ClawMachine.Gameplay
 
         public void TriggerHapticLight()
         {
-#if UNITY_ANDROID || UNITY_IOS
-            if (isHapticsEnabled)
-            {
-                Handheld.Vibrate();
-            }
+            if (!isHapticsEnabled) return;
+#if UNITY_ANDROID && !UNITY_EDITOR
+            TriggerAndroidVibrate(20);
+#elif UNITY_IOS && !UNITY_EDITOR
+            Handheld.Vibrate();
 #endif
         }
 
         public void TriggerHapticSuccess()
         {
-#if UNITY_ANDROID || UNITY_IOS
-            if (isHapticsEnabled)
+            if (!isHapticsEnabled) return;
+#if UNITY_ANDROID && !UNITY_EDITOR
+            TriggerAndroidVibrate(50);
+#elif UNITY_IOS && !UNITY_EDITOR
+            Handheld.Vibrate();
+#endif
+        }
+
+        private void TriggerAndroidVibrate(long milliseconds)
+        {
+#if UNITY_ANDROID && !UNITY_EDITOR
+            try
             {
-                Handheld.Vibrate();
+                using (var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+                using (var currentActivity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity"))
+                using (var vibrator = currentActivity.Call<AndroidJavaObject>("getSystemService", "vibrator"))
+                {
+                    if (vibrator != null)
+                    {
+                        using (var version = new AndroidJavaClass("android.os.Build$VERSION"))
+                        {
+                            int sdkInt = version.GetStatic<int>("SDK_INT");
+                            if (sdkInt >= 26)
+                            {
+                                using (var vibrationEffect = new AndroidJavaClass("android.os.VibrationEffect"))
+                                using (var effect = vibrationEffect.CallStatic<AndroidJavaObject>("createOneShot", milliseconds, -1)) // DEFAULT_AMPLITUDE = -1
+                                {
+                                    vibrator.Call("vibrate", effect);
+                                }
+                            }
+                            else
+                            {
+                                vibrator.Call("vibrate", milliseconds);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogWarning($"[ClawAudio] Android haptics fallback: {ex.Message}");
             }
 #endif
         }
