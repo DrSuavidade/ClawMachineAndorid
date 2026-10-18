@@ -5,6 +5,7 @@ using ClawMachine.Core.Services;
 
 namespace ClawMachine.Gameplay
 {
+    [DefaultExecutionOrder(-90)]
     public class RetentionService : MonoBehaviour, IRetentionService
     {
         private static readonly int[] StreakRewards = { 50, 75, 100, 150, 200, 300, 500 };
@@ -119,7 +120,7 @@ namespace ClawMachine.Gameplay
             d.dailyStreak = (d.dailyStreak % 7) + 1;
             d.lastDailyClaimUtc = DateTime.UtcNow.ToString("O");
 
-            // Award currency
+            // Award currency (automatically saves)
             if (ServiceLocator.TryGet<IEconomyService>(out var eco))
             {
                 eco.AwardCoins(coinsAwarded);
@@ -129,7 +130,6 @@ namespace ClawMachine.Gameplay
                 collectionManager.AddCoins(coinsAwarded);
             }
 
-            collectionManager?.ForceSave();
             OnRetentionStateChanged?.Invoke();
             return true;
         }
@@ -162,7 +162,6 @@ namespace ClawMachine.Gameplay
                 collectionManager.AddCoins(coinsAwarded);
             }
 
-            collectionManager?.ForceSave();
             OnRetentionStateChanged?.Invoke();
             return true;
         }
@@ -404,7 +403,6 @@ namespace ClawMachine.Gameplay
             if (collectionManager != null)
             {
                 collectionManager.AwardCoins(coinsAwarded);
-                collectionManager.ForceSave();
             }
 
             OnRetentionStateChanged?.Invoke();

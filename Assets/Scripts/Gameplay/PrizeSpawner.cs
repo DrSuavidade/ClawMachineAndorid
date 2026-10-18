@@ -23,7 +23,10 @@ namespace ClawMachine.Gameplay
         [SerializeField] private float chuteSafetyMargin = 0.20f;
 
         private readonly List<Prize> activePrizes = new List<Prize>();
-        private PhysicsMaterial runtimePhysMat;
+        private readonly Dictionary<string, Stack<Prize>> inactivePool = new Dictionary<string, Stack<Prize>>();
+        private readonly List<PrizeDefinition> normals = new List<PrizeDefinition>();
+        private readonly List<PrizeDefinition> rares = new List<PrizeDefinition>();
+        private readonly List<PrizeDefinition> secrets = new List<PrizeDefinition>();
 
         private void EnsureChuteReferences()
         {
@@ -40,15 +43,6 @@ namespace ClawMachine.Gameplay
         private void Awake()
         {
             EnsureChuteReferences();
-            runtimePhysMat = new PhysicsMaterial("RuntimeToyMat")
-            {
-                dynamicFriction = 0.65f,
-                staticFriction = 0.75f,
-                bounciness = 0.12f,
-                frictionCombine = PhysicsMaterialCombine.Maximum,
-                bounceCombine = PhysicsMaterialCombine.Average
-            };
-
             EnsurePrizePool();
         }
 
@@ -145,23 +139,49 @@ namespace ClawMachine.Gameplay
                 return;
             }
 
-            GameObject go = Instantiate(def.prefab, position, rotation, transform);
-            if (!go.TryGetComponent<Prize>(out var prize))
-            {
-                prize = go.AddComponent<Prize>();
-            }
-            prize.Initialize(def);
-            activePrizes.Add(prize);
+            string poolKey = !string.IsNullOrEmpty(def.id) ? def.id : def.prefab.name;
+            Prize prize = null;
 
-            int prizeLayer = LayerMask.NameToLayer("Prize");
-            if (prizeLayer >= 0)
+            if (inactivePool.TryGetValue(poolKey, out var stack))
             {
-                prize.gameObject.layer = prizeLayer;
-                foreach (Transform child in prize.transform)
+                while (stack.Count > 0 && prize == null)
                 {
-                    child.gameObject.layer = prizeLayer;
+                    prize = stack.Pop();
                 }
             }
+
+            if (prize != null)
+            {
+                prize.transform.SetParent(transform, false);
+                prize.transform.SetPositionAndRotation(position, rotation);
+                prize.gameObject.SetActive(true);
+                if (prize.Rigidbody != null)
+                {
+                    prize.Rigidbody.isKinematic = false;
+                    prize.Rigidbody.linearVelocity = Vector3.zero;
+                    prize.Rigidbody.angularVelocity = Vector3.zero;
+                }
+            }
+            else
+            {
+                GameObject go = Instantiate(def.prefab, position, rotation, transform);
+                if (!go.TryGetComponent<Prize>(out prize))
+                {
+                    prize = go.AddComponent<Prize>();
+                }
+                int prizeLayer = LayerMask.NameToLayer("Prize");
+                if (prizeLayer >= 0)
+                {
+                    prize.gameObject.layer = prizeLayer;
+                    foreach (Transform child in prize.transform)
+                    {
+                        child.gameObject.layer = prizeLayer;
+                    }
+                }
+            }
+
+            prize.Initialize(def);
+            activePrizes.Add(prize);
         }
 
         private PrizeDefinition GetRandomDefinition()
@@ -169,9 +189,9 @@ namespace ClawMachine.Gameplay
             EnsurePrizePool();
             if (prizePool == null || prizePool.Length == 0) return null;
 
-            var normals = new List<PrizeDefinition>();
-            var rares = new List<PrizeDefinition>();
-            var secrets = new List<PrizeDefinition>();
+            normals.Clear();
+            rares.Clear();
+            secrets.Clear();
 
             for (int i = 0; i < prizePool.Length; i++)
             {
@@ -186,25 +206,12 @@ namespace ClawMachine.Gameplay
 
             // Weighted roll: Secret = 5%, Rare = 25%, Normal = 70%
             float roll = Random.value;
-            if (roll < 0.05f && secrets.Count > 0)
-            {
-                return secrets[Random.Range(0, secrets.Count)];
-            }
-            if (roll < 0.30f && rares.Count > 0)
-            {
-                return rares[Random.Range(0, rares.Count)];
-            }
-            if (normals.Count > 0)
-            {
-                return normals[Random.Range(0, normals.Count)];
-            }
-
-            // Fallback to any valid prize
-            var fallback = new List<PrizeDefinition>();
-            fallback.AddRange(normals);
-            fallback.AddRange(rares);
-            fallback.AddRange(secrets);
-            return fallback.Count > 0 ? fallback[Random.Range(0, fallback.Count)] : null;
+            if (roll < 0.05f && secrets.Count > 0) return secrets[Random.Range(0, secrets.Count)];
+            if (roll < 0.30f && rares.Count > 0) return rares[Random.Range(0, rares.Count)];
+            if (normals.Count > 0) return normals[Random.Range(0, normals.Count)];
+            if (rares.Count > 0) return rares[Random.Range(0, rares.Count)];
+            if (secrets.Count > 0) return secrets[Random.Range(0, secrets.Count)];
+            return null;
         }
 
         private Vector3 GetSpawnCenter()
@@ -247,13 +254,37 @@ namespace ClawMachine.Gameplay
             return center + new Vector3(safeRx, heightOffset + 0.15f, safeRz);
         }
 
+        public void ReturnToPool(Prize prize)
+        {
+            if (prize == null) return;
+            activePrizes.Remove(prize);
+
+            string poolKey = (prize.Definition != null && !string.IsNullOrEmpty(prize.Definition.id))
+                ? prize.Definition.id
+                : prize.name.Replace("(Clone)", "").Trim();
+
+            prize.gameObject.SetActive(false);
+            prize.transform.SetParent(transform, false);
+
+            if (!inactivePool.TryGetValue(poolKey, out var stack))
+            {
+                stack = new Stack<Prize>();
+                inactivePool[poolKey] = stack;
+            }
+            if (!stack.Contains(prize))
+            {
+                stack.Push(prize);
+            }
+        }
+
         public void ClearExistingPrizes()
         {
             for (int i = activePrizes.Count - 1; i >= 0; i--)
             {
-                if (activePrizes[i] != null)
+                Prize p = activePrizes[i];
+                if (p != null)
                 {
-                    Destroy(activePrizes[i].gameObject);
+                    ReturnToPool(p);
                 }
             }
             activePrizes.Clear();

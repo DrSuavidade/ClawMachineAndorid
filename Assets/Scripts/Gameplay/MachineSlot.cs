@@ -47,22 +47,28 @@ namespace ClawMachine.Gameplay
 
             gameObject.SetActive(true);
 
-            // 1. Recolor cabinet frame
+            // 1. Recolor cabinet frame & backdrop without leaking material instances
+            var propBlock = new MaterialPropertyBlock();
             if (frameRenderers != null)
             {
                 for (int i = 0; i < frameRenderers.Length; i++)
                 {
                     if (frameRenderers[i] != null)
                     {
-                        frameRenderers[i].material.color = def.cabinetFrameColor;
+                        frameRenderers[i].GetPropertyBlock(propBlock);
+                        propBlock.SetColor("_BaseColor", def.cabinetFrameColor);
+                        propBlock.SetColor("_Color", def.cabinetFrameColor);
+                        frameRenderers[i].SetPropertyBlock(propBlock);
                     }
                 }
             }
 
-            // 2. Recolor backdrop
             if (backdropRenderer != null)
             {
-                backdropRenderer.material.color = def.cabinetBackdropColor;
+                backdropRenderer.GetPropertyBlock(propBlock);
+                propBlock.SetColor("_BaseColor", def.cabinetBackdropColor);
+                propBlock.SetColor("_Color", def.cabinetBackdropColor);
+                backdropRenderer.SetPropertyBlock(propBlock);
             }
 
             // 3. Swap environment prefab if changed
@@ -80,6 +86,16 @@ namespace ClawMachine.Gameplay
                 environmentInstance.name = expectedEnvName;
                 environmentInstance.transform.localPosition = Vector3.zero;
                 environmentInstance.transform.localRotation = Quaternion.identity;
+
+                int envLayer = LayerMask.NameToLayer("Environment");
+                if (envLayer >= 0)
+                {
+                    Transform[] allChildren = environmentInstance.GetComponentsInChildren<Transform>(true);
+                    for (int i = 0; i < allChildren.Length; i++)
+                    {
+                        allChildren[i].gameObject.layer = envLayer;
+                    }
+                }
             }
 
             // 4. Setup prize spawner

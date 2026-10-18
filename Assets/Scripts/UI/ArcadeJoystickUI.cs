@@ -25,6 +25,7 @@ namespace ClawMachine.UI
         private bool isDirectDragging = false;
         private Vector2 screenAnchorPos;
         private Vector2 currentInputVector;
+        private readonly System.Collections.Generic.List<RaycastResult> raycastResults = new System.Collections.Generic.List<RaycastResult>();
 
         public bool IsArmed => isArmed;
 
@@ -33,6 +34,19 @@ namespace ClawMachine.UI
             if (machineController == null)
             {
                 machineController = FindFirstObjectByType<MachineController>();
+            }
+
+            Image baseImg = GetComponent<Image>();
+            if (baseImg != null)
+            {
+                baseImg.sprite = UIStyleHelper.ArcadeJoystickBaseSprite;
+                baseImg.color = Color.white;
+            }
+
+            if (ballKnobImage != null)
+            {
+                ballKnobImage.sprite = UIStyleHelper.ArcadeJoystickBallSprite;
+                ballKnobImage.color = Color.white;
             }
 
             if (outlineRing != null)
@@ -56,7 +70,19 @@ namespace ClawMachine.UI
 
         private void Update()
         {
-            // Keyboard visual feedback - use direct key checks to avoid phantom controller/joystick axis drift
+            if (ArcadeConsoleUI.IsAnyModalOpen())
+            {
+                isDirectDragging = false;
+                isScreenDragging = false;
+                currentInputVector = Vector2.zero;
+                if (knobTransform != null)
+                {
+                    knobTransform.anchoredPosition = Vector2.Lerp(knobTransform.anchoredPosition, Vector2.zero, Time.deltaTime * returnSpeed);
+                }
+                return;
+            }
+
+            // Keyboard input - use direct key checks to avoid phantom controller/joystick axis drift
             float h = 0f;
             if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) h -= 1f;
             if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) h += 1f;
@@ -71,6 +97,10 @@ namespace ClawMachine.UI
                 if (knobTransform != null)
                 {
                     knobTransform.anchoredPosition = Vector2.Lerp(knobTransform.anchoredPosition, currentInputVector * maxDeflectionRadius, Time.deltaTime * returnSpeed);
+                }
+                if (machineController != null)
+                {
+                    machineController.SetDragInput(currentInputVector * (dragSensitivity * 45f));
                 }
                 return;
             }
@@ -103,6 +133,7 @@ namespace ClawMachine.UI
 
         public void OnPointerClick(PointerEventData eventData)
         {
+            if (eventData.dragging || ArcadeConsoleUI.IsAnyModalOpen()) return;
             // Toggle armed state
             isArmed = !isArmed;
             if (outlineRing != null)
@@ -117,6 +148,7 @@ namespace ClawMachine.UI
                 knobTransform.anchoredPosition = Vector2.zero;
             }
 
+            Core.Services.ServiceLocator.Get<Core.Services.IAudioService>()?.PlayUIClick();
             Debug.Log($"[ArcadeJoystickUI] Joystick Armed: {isArmed}");
         }
 
@@ -131,12 +163,15 @@ namespace ClawMachine.UI
         // Direct drag on joystick
         public void OnBeginDrag(PointerEventData eventData)
         {
+            if (ArcadeConsoleUI.IsAnyModalOpen()) return;
             isDirectDragging = true;
+            Core.Services.ServiceLocator.Get<Core.Services.IAudioService>()?.PlayUIClick();
             if (knobTransform != null) knobTransform.localScale = Vector3.one * 1.08f;
         }
 
         public void OnDrag(PointerEventData eventData)
         {
+            if (ArcadeConsoleUI.IsAnyModalOpen()) return;
             if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
                 transform as RectTransform, eventData.position, eventData.pressEventCamera, out Vector2 localPos))
             {
@@ -203,9 +238,9 @@ namespace ClawMachine.UI
         private GameObject eventDataRaycast()
         {
             PointerEventData ped = new PointerEventData(EventSystem.current) { position = Input.mousePosition };
-            var results = new System.Collections.Generic.List<RaycastResult>();
-            EventSystem.current.RaycastAll(ped, results);
-            return results.Count > 0 ? results[0].gameObject : null;
+            raycastResults.Clear();
+            EventSystem.current.RaycastAll(ped, raycastResults);
+            return raycastResults.Count > 0 ? raycastResults[0].gameObject : null;
         }
     }
 }

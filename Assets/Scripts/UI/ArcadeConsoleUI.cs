@@ -36,12 +36,22 @@ namespace ClawMachine.UI
         private MachineDefinition pendingUnlockMachine;
         private Vector2 dragStartPos;
         private const float SWIPE_THRESHOLD = 70f;
+        private ArcadePushButtonUI cachedPushButton;
+        private ArcadeJoystickUI cachedJoystick;
+        private Transform coinBadgeTransform;
+        private Text coinBadgeText;
+        private int lastDisplayedCoins = -1;
 
         private void Awake()
         {
             if (machineController == null)
             {
                 machineController = FindFirstObjectByType<MachineController>();
+            }
+
+            if (cachedModalLayer == null)
+            {
+                cachedModalLayer = transform.Find("ModalLayer") ?? transform.root.Find("ModalLayer");
             }
 
             if (ClawMachine.UI.Theming.UIThemeManager.Instance == null)
@@ -51,6 +61,8 @@ namespace ClawMachine.UI
             }
 
             SetupThemedUIElements();
+            UIStyleHelper.ApplyAll(gameObject);
+            EnsureStatusTextBackingPill();
 
             if (prevMachineButton != null)
             {
@@ -76,6 +88,51 @@ namespace ClawMachine.UI
             }
         }
 
+        private void OnEnable()
+        {
+            if (ServiceLocator.TryGet<ICollectionService>(out var coll))
+            {
+                coll.OnMachineCompleted -= HandleMachineStateUpdated;
+                coll.OnMachineCompleted += HandleMachineStateUpdated;
+                coll.OnMachineUnlocked -= HandleMachineStateUpdated;
+                coll.OnMachineUnlocked += HandleMachineStateUpdated;
+            }
+            if (ServiceLocator.TryGet<IEconomyService>(out var econ))
+            {
+                econ.OnCoinsChanged -= HandleCoinsChanged;
+                econ.OnCoinsChanged += HandleCoinsChanged;
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (ServiceLocator.TryGet<ICollectionService>(out var coll))
+            {
+                coll.OnMachineCompleted -= HandleMachineStateUpdated;
+                coll.OnMachineUnlocked -= HandleMachineStateUpdated;
+            }
+            if (ServiceLocator.TryGet<IEconomyService>(out var econ))
+            {
+                econ.OnCoinsChanged -= HandleCoinsChanged;
+            }
+        }
+
+        private void HandleMachineStateUpdated(MachineDefinition _) => UpdateCarouselDisplay();
+
+        private void HandleCoinsChanged(int newCoins)
+        {
+            if (coinBadgeText != null)
+            {
+                int from = lastDisplayedCoins >= 0 ? lastDisplayedCoins : newCoins;
+                UIStyleHelper.AnimateNumberRoll(this, coinBadgeText, from, newCoins, 0.35f, "", " COINS");
+                if (coinBadgeTransform != null)
+                {
+                    UIStyleHelper.AnimateScalePunch(this, coinBadgeTransform, 1.18f, 0.22f);
+                }
+            }
+            lastDisplayedCoins = newCoins;
+        }
+
         private void Start()
         {
             ICollectionService collService = ServiceLocator.Get<ICollectionService>();
@@ -95,7 +152,7 @@ namespace ClawMachine.UI
             }
 
             // Sync index with current machine
-            if (collService != null && collService.CurrentMachine != null)
+            if (collService != null && collService.CurrentMachine != null && availableMachines != null)
             {
                 for (int i = 0; i < availableMachines.Length; i++)
                 {
@@ -107,14 +164,199 @@ namespace ClawMachine.UI
                 }
             }
 
+            // Centralize Coin Badge in bottom console CarouselStrip (coin door style)
+            var coinBadge = transform.Find("SafeAreaContainer/MachineMarqueeCanopy/Badge_Coins");
+            Transform carouselStrip = machineNameText != null ? machineNameText.transform.parent : transform.Find("SafeAreaContainer/ConsoleDeck/CarouselStrip");
+            if (carouselStrip != null)
+            {
+                Image stripImg = carouselStrip.GetComponent<Image>();
+                if (stripImg != null)
+                {
+                    stripImg.sprite = UIStyleHelper.RoundedCardSprite;
+                    stripImg.type = Image.Type.Sliced;
+                    stripImg.color = new Color(0.09f, 0.11f, 0.16f, 0.95f);
+                }
+
+                if (coinBadge != null)
+                {
+                    coinBadge.SetParent(carouselStrip, false);
+                    RectTransform cbrt = coinBadge.GetComponent<RectTransform>();
+                    cbrt.anchorMin = new Vector2(0.18f, 0.05f);
+                    cbrt.anchorMax = new Vector2(0.82f, 0.35f);
+                    cbrt.offsetMin = Vector2.zero;
+                    cbrt.offsetMax = Vector2.zero;
+                }
+
+                if (machineNameText != null)
+                {
+                    machineNameText.rectTransform.anchorMin = new Vector2(0.16f, 0.65f);
+                    machineNameText.rectTransform.anchorMax = new Vector2(0.84f, 0.96f);
+                }
+                if (machineStatusText != null)
+                {
+                    machineStatusText.rectTransform.anchorMin = new Vector2(0.16f, 0.36f);
+                    machineStatusText.rectTransform.anchorMax = new Vector2(0.84f, 0.64f);
+                }
+            }
+
+            if (coinBadge == null && carouselStrip != null) coinBadge = carouselStrip.Find("Badge_Coins");
+
+            if (coinBadge != null)
+            {
+                coinBadgeTransform = coinBadge;
+                coinBadgeText = coinBadge.GetComponentInChildren<Text>();
+                Button coinBtn = coinBadge.GetComponent<Button>();
+                if (coinBtn == null) coinBtn = coinBadge.gameObject.AddComponent<Button>();
+                coinBtn.onClick.RemoveAllListeners();
+                coinBtn.onClick.AddListener(() =>
+                {
+                    var adSvc = AdService.Instance ?? FindFirstObjectByType<AdService>();
+                    if (adSvc != null) adSvc.ShowOutOfCoinsPrompt();
+                });
+
+                if (ServiceLocator.TryGet<IEconomyService>(out var econ))
+                {
+                    lastDisplayedCoins = econ.Coins;
+                    if (coinBadgeText != null) coinBadgeText.text = $"{lastDisplayedCoins:N0} COINS";
+                }
+            }
+
+            EnsureStatusTextBackingPill();
+            EnsureGameplayHintBanner();
             UpdateCarouselDisplay();
         }
 
+        private void EnsureStatusTextBackingPill()
+        {
+            if (machineStatusText == null || machineStatusText.transform.parent == null) return;
+            Transform existing = machineStatusText.transform.parent.Find("Pill_MachineStatus");
+            if (existing == null)
+            {
+                var pillGo = new GameObject("Pill_MachineStatus", typeof(RectTransform), typeof(Image));
+                pillGo.transform.SetParent(machineStatusText.transform.parent, false);
+                pillGo.transform.SetSiblingIndex(machineStatusText.transform.GetSiblingIndex());
+
+                RectTransform rt = pillGo.GetComponent<RectTransform>();
+                RectTransform src = machineStatusText.rectTransform;
+                rt.anchorMin = src.anchorMin;
+                rt.anchorMax = src.anchorMax;
+                rt.anchoredPosition = src.anchoredPosition;
+                rt.sizeDelta = src.sizeDelta;
+
+                Image img = pillGo.GetComponent<Image>();
+                img.sprite = UIStyleHelper.BadgePillSprite;
+                img.type = Image.Type.Sliced;
+                img.color = new Color(0.05f, 0.07f, 0.12f, 0.85f);
+                img.raycastTarget = false;
+            }
+        }
+
+        private GameObject hintBannerObj;
+        private Text hintBannerText;
+        private bool hasDroppedThisSession;
+        private float aimIdleTimer = 0f;
         private Vector2 swipeTouchStart;
         private bool isTouchSwiping;
 
+        private void EnsureGameplayHintBanner()
+        {
+            if (hintBannerObj != null) return;
+            Transform parent = transform.Find("SafeAreaContainer") ?? transform;
+            hintBannerObj = new GameObject("GameplayHintBanner", typeof(RectTransform), typeof(Image));
+            hintBannerObj.transform.SetParent(parent, false);
+            RectTransform rt = hintBannerObj.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0.5f, 0.27f);
+            rt.anchorMax = new Vector2(0.5f, 0.27f);
+            rt.anchoredPosition = Vector2.zero;
+            rt.sizeDelta = new Vector2(780f, 54f);
+
+            Image bg = hintBannerObj.GetComponent<Image>();
+            bg.sprite = UIStyleHelper.BadgePillSprite;
+            bg.type = Image.Type.Sliced;
+            bg.color = new Color(0.05f, 0.07f, 0.12f, 0.84f);
+            bg.raycastTarget = false;
+
+            GameObject txtGo = new GameObject("HintText", typeof(RectTransform), typeof(Text));
+            txtGo.transform.SetParent(hintBannerObj.transform, false);
+            RectTransform txtRt = txtGo.GetComponent<RectTransform>();
+            txtRt.anchorMin = Vector2.zero;
+            txtRt.anchorMax = Vector2.one;
+            txtRt.offsetMin = new Vector2(16f, 0f);
+            txtRt.offsetMax = new Vector2(-16f, 0f);
+
+            hintBannerText = txtGo.GetComponent<Text>();
+            hintBannerText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
+            hintBannerText.fontSize = 23;
+            hintBannerText.fontStyle = FontStyle.Bold;
+            hintBannerText.alignment = TextAnchor.MiddleCenter;
+            hintBannerText.raycastTarget = false;
+        }
+
+        private void UpdateGameplayHintBanner()
+        {
+            if (hintBannerObj == null || machineController == null || machineController.Claw == null) return;
+
+            var claw = machineController.Claw;
+            var state = claw.CurrentState;
+            if (state == ClawState.Descending)
+            {
+                hasDroppedThisSession = true;
+            }
+
+            if (state == ClawState.Carrying)
+            {
+                if (!hintBannerObj.activeSelf) hintBannerObj.SetActive(true);
+                bool overChute = claw.IsOverChute;
+                hintBannerText.text = overChute
+                    ? "[!] OVER CHUTE! TAP DROP PRIZE NOW!"
+                    : "<< STEER TO FRONT-LEFT CHUTE & TAP DROP!";
+                hintBannerText.color = overChute
+                    ? new Color(0.25f, 1.0f, 0.45f, 1f)
+                    : new Color(1.0f, 0.86f, 0.22f, 1f);
+                float pulse = 1f + Mathf.Sin(Time.time * 6.5f) * 0.035f;
+                hintBannerObj.transform.localScale = new Vector3(pulse, pulse, 1f);
+            }
+            else if (state == ClawState.Aiming && !hasDroppedThisSession && aimIdleTimer >= 10.0f)
+            {
+                if (!hintBannerObj.activeSelf) hintBannerObj.SetActive(true);
+                hintBannerText.text = "DRAG JOYSTICK TO AIM  •  TAP DROP TO GRAB";
+                float alpha = 0.78f + Mathf.Sin(Time.time * 3.5f) * 0.20f;
+                hintBannerText.color = new Color(0.92f, 0.96f, 1.0f, alpha);
+                hintBannerObj.transform.localScale = Vector3.one;
+            }
+            else if (hintBannerObj.activeSelf)
+            {
+                hintBannerObj.SetActive(false);
+            }
+        }
+
         private void Update()
         {
+            // Reset aim idle timer whenever user provides any input
+            bool userActive = Input.anyKeyDown || Input.touchCount > 0 || Input.GetMouseButton(0) ||
+                             Mathf.Abs(Input.GetAxisRaw("Horizontal")) > 0.05f || Mathf.Abs(Input.GetAxisRaw("Vertical")) > 0.05f;
+            if (userActive)
+            {
+                aimIdleTimer = 0f;
+            }
+            else
+            {
+                aimIdleTimer += Time.deltaTime;
+            }
+            // Android Hardware Back / Escape key: close active modal
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                if (TryCloseTopModal()) return;
+            }
+
+            if (IsAnyModalOpen())
+            {
+                if (hintBannerObj != null && hintBannerObj.activeSelf) hintBannerObj.SetActive(false);
+                return;
+            }
+
+            UpdateGameplayHintBanner();
+
             bool canSwitch = machineController == null || machineController.CanSwitchMachine;
             if (prevMachineButton != null && prevMachineButton.interactable != canSwitch)
             {
@@ -157,6 +399,53 @@ namespace ClawMachine.UI
                     else OnPrevClicked();
                 }
             }
+        }
+
+        private static Transform cachedModalLayer;
+
+        public static bool IsAnyModalOpen()
+        {
+            if (AdService.Instance != null && !AdService.Instance.IsAdReady) return true;
+
+            if (cachedModalLayer != null)
+            {
+                for (int i = 0; i < cachedModalLayer.childCount; i++)
+                {
+                    if (cachedModalLayer.GetChild(i).gameObject.activeInHierarchy) return true;
+                }
+            }
+            return false;
+        }
+
+        private bool TryCloseTopModal()
+        {
+            if (unlockModal != null && unlockModal.activeSelf)
+            {
+                CloseUnlockModal();
+                return true;
+            }
+
+            Transform modalLayer = cachedModalLayer != null ? cachedModalLayer : transform.Find("ModalLayer");
+            if (modalLayer != null)
+            {
+                for (int i = modalLayer.childCount - 1; i >= 0; i--)
+                {
+                    GameObject child = modalLayer.GetChild(i).gameObject;
+                    if (child.activeSelf)
+                    {
+                        if (PrizeWinModalUI.Instance != null && child.name == "PrizeWinModal")
+                        {
+                            PrizeWinModalUI.Instance.Dismiss();
+                        }
+                        else
+                        {
+                            child.SetActive(false);
+                        }
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
         public void SetCatalog(MachineDefinition[] machines)
@@ -252,7 +541,7 @@ namespace ClawMachine.UI
             var audioSvc = ServiceLocator.Get<IAudioService>();
             if (audioSvc != null)
             {
-                audioSvc.PlayClamp();
+                audioSvc.PlayCarouselSwipe();
                 audioSvc.TriggerHapticLight();
             }
 
@@ -277,26 +566,26 @@ namespace ClawMachine.UI
             {
                 if (collService != null && collService.IsMachineOwned(cur.machineId))
                 {
-                    machineStatusText.text = "★ OWNED (FREE PLAYS)";
+                    machineStatusText.text = "[OWNED] FREE PLAYS";
                     machineStatusText.color = new Color(0.3f, 0.95f, 0.45f);
                 }
                 else if (collService != null && !collService.IsMachineUnlocked(cur.machineId))
                 {
-                    machineStatusText.text = $"🔒 LOCKED (UNLOCK: {cur.unlockCost} 🪙)";
+                    machineStatusText.text = $"[LOCKED] UNLOCK: {cur.unlockCost} COINS";
                     machineStatusText.color = new Color(1f, 0.45f, 0.45f);
                 }
                 else
                 {
-                    machineStatusText.text = cur.entryCost > 0 ? $"ENTRY: {cur.entryCost} 🪙" : "FREE ENTRY";
+                    machineStatusText.text = cur.entryCost > 0 ? $"ENTRY: {cur.entryCost} COINS" : "FREE ENTRY";
                     machineStatusText.color = new Color(0.85f, 0.88f, 0.95f);
                 }
             }
 
-            var btn = GetComponentInChildren<ArcadePushButtonUI>() ?? FindFirstObjectByType<ArcadePushButtonUI>();
-            if (btn != null) btn.SetThemeColor(cur.cabinetFrameColor);
+            if (cachedPushButton == null) cachedPushButton = GetComponentInChildren<ArcadePushButtonUI>() ?? FindFirstObjectByType<ArcadePushButtonUI>();
+            if (cachedPushButton != null) cachedPushButton.SetThemeColor(cur.cabinetFrameColor);
 
-            var joy = GetComponentInChildren<ArcadeJoystickUI>() ?? FindFirstObjectByType<ArcadeJoystickUI>();
-            if (joy != null) joy.SetThemeColor(cur.cabinetFrameColor);
+            if (cachedJoystick == null) cachedJoystick = GetComponentInChildren<ArcadeJoystickUI>() ?? FindFirstObjectByType<ArcadeJoystickUI>();
+            if (cachedJoystick != null) cachedJoystick.SetThemeColor(cur.cabinetFrameColor);
         }
 
         private void OpenUnlockModal(MachineDefinition machine, int targetIndex)
@@ -322,7 +611,7 @@ namespace ClawMachine.UI
             }
             if (unlockCoinsBalanceText != null)
             {
-                unlockCoinsBalanceText.text = $"Cost: {machine.unlockCost} 🪙  |  Your Balance: {currentCoins} 🪙";
+                unlockCoinsBalanceText.text = $"Cost: {machine.unlockCost} Coins  |  Balance: {currentCoins} Coins";
                 unlockCoinsBalanceText.color = canAfford ? new Color(1f, 0.85f, 0.2f) : new Color(0.95f, 0.35f, 0.35f);
             }
             if (unlockConfirmButton != null)
@@ -331,10 +620,13 @@ namespace ClawMachine.UI
             }
             if (unlockConfirmButtonText != null)
             {
-                unlockConfirmButtonText.text = canAfford ? $"UNLOCK ({machine.unlockCost} 🪙)" : "NOT ENOUGH COINS";
+                unlockConfirmButtonText.text = canAfford ? $"UNLOCK ({machine.unlockCost} COINS)" : "NOT ENOUGH COINS";
             }
 
             unlockModal.SetActive(true);
+            Transform card = unlockModal.transform.Find("DialogCard") ?? unlockModal.transform;
+            UIStyleHelper.AnimatePopIn(this, card);
+            ServiceLocator.Get<IAudioService>()?.PlayModalOpen();
         }
 
         private void OnConfirmUnlockClicked()
@@ -349,6 +641,7 @@ namespace ClawMachine.UI
 
             if (success)
             {
+                ServiceLocator.Get<IAudioService>()?.PlayUnlockFanfare();
                 CloseUnlockModal();
                 // Find index and switch
                 for (int i = 0; i < availableMachines.Length; i++)
@@ -362,6 +655,7 @@ namespace ClawMachine.UI
             }
             else
             {
+                ServiceLocator.Get<IAudioService>()?.PlayErrorBuzz();
                 if (unlockConfirmButtonText != null)
                 {
                     unlockConfirmButtonText.text = "NOT ENOUGH COINS!";

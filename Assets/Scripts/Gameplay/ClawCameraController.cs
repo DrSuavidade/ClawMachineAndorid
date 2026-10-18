@@ -35,13 +35,16 @@ namespace ClawMachine.Gameplay
 
         public Camera TargetCamera => targetCamera;
 
+        private float basePitch = 28f;
+
         public void SetThemePreset(float fov, float pitchOffset = 0f)
         {
             defaultFov = fov;
-            defaultRotationEuler.x = 28f + pitchOffset;
-            if (clawController == null || clawController.IsIdle)
+            defaultRotationEuler.x = basePitch + pitchOffset;
+            if (clawController == null || !IsGrabZoomState(clawController.CurrentState))
             {
-                targetFovVal = fov;
+                targetPos = defaultPosition;
+                targetFovVal = defaultFov;
                 targetRot = Quaternion.Euler(defaultRotationEuler);
             }
         }
@@ -67,13 +70,53 @@ namespace ClawMachine.Gameplay
             {
                 targetCamera = GetComponent<Camera>() ?? Camera.main;
             }
+            if (clawController == null)
+            {
+                clawController = FindFirstObjectByType<ClawController>();
+            }
+            if (clawTarget == null && clawController != null)
+            {
+                clawTarget = clawController.GripSocket != null ? clawController.GripSocket : clawController.transform;
+            }
+
+            // Capture exact scene starting position & rotation as baseline default
+            defaultPosition = transform.position;
+            defaultRotationEuler = transform.eulerAngles;
+            basePitch = defaultRotationEuler.x;
+            if (targetCamera != null)
+            {
+                defaultFov = targetCamera.fieldOfView;
+            }
+
             targetPos = defaultPosition;
             targetRot = Quaternion.Euler(defaultRotationEuler);
             targetFovVal = defaultFov;
         }
 
+        private void OnEnable()
+        {
+            if (clawController != null)
+            {
+                clawController.OnStateChanged -= HandleClawStateChanged;
+                clawController.OnStateChanged += HandleClawStateChanged;
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (clawController != null)
+            {
+                clawController.OnStateChanged -= HandleClawStateChanged;
+            }
+        }
+
         public void Initialize(ClawController claw, Transform clawSocket, Transform chute)
         {
+            if (clawController != null)
+            {
+                clawController.OnStateChanged -= HandleClawStateChanged;
+            }
+
             clawController = claw;
             clawTarget = clawSocket;
             chuteTarget = chute;
@@ -92,57 +135,60 @@ namespace ClawMachine.Gameplay
             }
         }
 
+        private static bool IsGrabZoomState(ClawState state)
+        {
+            return state == ClawState.Descending
+                || state == ClawState.Closing
+                || state == ClawState.EvaluatingGrip;
+        }
+
         private void HandleClawStateChanged(ClawState state)
         {
-            switch (state)
+            if (IsGrabZoomState(state))
             {
-                case ClawState.Aiming:
-                    targetPos = defaultPosition;
-                    targetRot = Quaternion.Euler(defaultRotationEuler);
-                    targetFovVal = defaultFov;
-                    break;
-
-                case ClawState.Descending:
-                case ClawState.Closing:
-                case ClawState.EvaluatingGrip:
-                    // Zoom in on target prize zone under claw
-                    float clawX = clawTarget != null ? clawTarget.position.x : 0f;
-                    float clawZ = clawTarget != null ? clawTarget.position.z : 0f;
-                    targetPos = new Vector3(clawX * 0.40f, grabHeight, grabZDistance + clawZ * 0.25f);
-                    targetRot = Quaternion.Euler(27f, clawX * 3.5f, 0f);
-                    targetFovVal = grabFov;
-                    break;
-
-                case ClawState.Lifting:
-                case ClawState.Carrying:
-                    // Follow claw transit with medium framing
-                    float liftX = clawTarget != null ? clawTarget.position.x : 0f;
-                    float liftY = clawTarget != null ? Mathf.Max(3.8f, clawTarget.position.y + 1.2f) : 4.8f;
-                    targetPos = new Vector3(liftX * 0.30f, liftY, -6.3f);
-                    targetRot = Quaternion.Euler(26f, liftX * 2.5f, 0f);
-                    targetFovVal = 40f;
-                    break;
-
-                case ClawState.Returning:
-                case ClawState.Releasing:
-                    // Focus on chute drop zone
-                    targetPos = chuteCameraOffset;
-                    targetRot = Quaternion.Euler(25f, -6f, 0f);
-                    targetFovVal = chuteFov;
-                    break;
-
-                case ClawState.Resolving:
-                    // Return back to default
-                    targetPos = defaultPosition;
-                    targetRot = Quaternion.Euler(defaultRotationEuler);
-                    targetFovVal = defaultFov;
-                    break;
+                UpdateGrabFollowTarget();
+                targetFovVal = grabFov;
             }
+            else
+            {
+                // As soon as item is grabbed and claw lifts (Lifting, Carrying, Releasing, Returning, Resolving, Aiming),
+                // return smoothly to original starting camera position
+                targetPos = defaultPosition;
+                targetRot = Quaternion.Euler(defaultRotationEuler);
+                targetFovVal = defaultFov;
+            }
+        }
+
+        private void UpdateGrabFollowTarget()
+        {
+            float clawX = clawTarget != null ? clawTarget.position.x : 0f;
+            float clawZ = clawTarget != null ? clawTarget.position.z : 0f;
+            float clawY = clawTarget != null ? clawTarget.position.y : 2.0f;
+
+            // Follow claw downward and horizontally to frame the prize being grabbed
+            float dynamicY = Mathf.Clamp(clawY + 2.2f, 3.2f, defaultPosition.y);
+            targetPos = new Vector3(clawX * 0.45f, dynamicY, grabZDistance + clawZ * 0.25f);
+            targetRot = Quaternion.Euler(27f, clawX * 3.5f, 0f);
         }
 
         private void LateUpdate()
         {
             if (targetCamera == null) return;
+
+            if (clawController != null)
+            {
+                if (IsGrabZoomState(clawController.CurrentState))
+                {
+                    UpdateGrabFollowTarget();
+                    targetFovVal = grabFov;
+                }
+                else
+                {
+                    targetPos = defaultPosition;
+                    targetRot = Quaternion.Euler(defaultRotationEuler);
+                    targetFovVal = defaultFov;
+                }
+            }
 
             float dt = Time.deltaTime;
             // Smoothly move towards target framing

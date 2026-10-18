@@ -46,8 +46,10 @@ namespace ClawMachine.Gameplay
         public List<DailyQuestData> activeQuests = new List<DailyQuestData>();
         public List<string> claimedMilestoneIds = new List<string>();
         public long lastPassiveIncomeTimestamp;
+        public string lastSelectedMachineId = "toy_box";
     }
 
+    [DefaultExecutionOrder(-100)]
     public class CollectionManager : MonoBehaviour, IEconomyService, ICollectionService
     {
         private const string SAVE_KEY = "ProjectClaw_SaveData";
@@ -101,6 +103,10 @@ namespace ClawMachine.Gameplay
             }
             instance = this;
 
+            // Android & Mobile Production Settings: 60 FPS + prevent screen dimming mid-grab
+            Application.targetFrameRate = 60;
+            Screen.sleepTimeout = SleepTimeout.NeverSleep;
+
             if (saveService == null)
             {
                 saveService = new JsonFileSaveService();
@@ -110,21 +116,42 @@ namespace ClawMachine.Gameplay
             ServiceLocator.Register<ICollectionService>(this);
             ServiceLocator.Register<ISaveService>(saveService);
 
+            if (GetComponent<AdService>() == null && FindFirstObjectByType<AdService>() == null)
+            {
+                gameObject.AddComponent<AdService>();
+            }
+
             if (catalog == null)
             {
                 Debug.LogWarning("[CollectionManager] MachineCatalog not assigned! Please assign it in inspector.");
             }
 
-            if (currentMachine == null && catalog != null && catalog.Count > 0)
+            LoadData();
+
+            if (catalog != null && catalog.Count > 0)
             {
-                currentMachine = catalog.GetMachine(0);
+                MachineDefinition savedMachine = (!string.IsNullOrEmpty(data.lastSelectedMachineId) && IsMachineUnlocked(data.lastSelectedMachineId))
+                    ? catalog.GetMachine(data.lastSelectedMachineId)
+                    : null;
+                currentMachine = savedMachine != null ? savedMachine : catalog.GetMachine(0);
             }
             else if (currentMachine == null)
             {
                 Debug.LogWarning("[CollectionManager] No currentMachine and no catalog assigned! Please assign MachineCatalog in inspector.");
             }
+        }
 
-            LoadData();
+        private void OnApplicationPause(bool pauseStatus)
+        {
+            if (pauseStatus)
+            {
+                SaveData();
+            }
+        }
+
+        private void OnApplicationQuit()
+        {
+            SaveData();
         }
 
         private void Start()
@@ -158,22 +185,34 @@ namespace ClawMachine.Gameplay
 
         private void Update()
         {
-            // Passive income tick for owned machines
-            if (data.ownedMachineIds.Count > 0)
+            // Passive income tick across all owned machines
+            if (data.ownedMachineIds != null && data.ownedMachineIds.Count > 0)
             {
                 passiveTimer += Time.deltaTime;
                 if (passiveTimer >= 60f)
                 {
                     passiveTimer = 0f;
                     int income = 0;
-                    if (currentMachine != null && IsMachineOwned(currentMachine.machineId))
+                    if (catalog != null)
+                    {
+                        for (int i = 0; i < data.ownedMachineIds.Count; i++)
+                        {
+                            var ownedDef = catalog.GetMachine(data.ownedMachineIds[i]);
+                            if (ownedDef != null)
+                            {
+                                income += ownedDef.passiveIncomePerMinute;
+                            }
+                        }
+                    }
+                    else if (currentMachine != null && IsMachineOwned(currentMachine.machineId))
                     {
                         income += currentMachine.passiveIncomePerMinute;
                     }
+
                     if (income > 0)
                     {
                         AddCoins(income);
-                        Debug.Log($"[CollectionManager] Generated {income} passive coins from owned machines!");
+                        Debug.Log($"[CollectionManager] Generated {income} passive coins from {data.ownedMachineIds.Count} owned machines!");
                     }
                 }
             }
@@ -183,6 +222,11 @@ namespace ClawMachine.Gameplay
         {
             if (currentMachine == def) return;
             currentMachine = def;
+            if (def != null && !string.IsNullOrEmpty(def.machineId))
+            {
+                data.lastSelectedMachineId = def.machineId;
+                SaveData();
+            }
             OnCurrentMachineChanged?.Invoke(def);
         }
 
@@ -216,12 +260,12 @@ namespace ClawMachine.Gameplay
 
         public bool IsPrizeDiscovered(string prizeId)
         {
-            return data.discoveredPrizeIds.Contains(prizeId);
+            return data.discoveredPrizeIds != null && data.discoveredPrizeIds.Contains(prizeId);
         }
 
         public bool IsMachineOwned(string machineId)
         {
-            return data.ownedMachineIds.Contains(machineId);
+            return data.ownedMachineIds != null && data.ownedMachineIds.Contains(machineId);
         }
 
         public int GetDiscoveredCount(MachineDefinition machine)
@@ -241,6 +285,7 @@ namespace ClawMachine.Gameplay
         public bool CanPlayMachine(MachineDefinition machine)
         {
             if (machine == null) return true;
+            if (!IsMachineUnlocked(machine.machineId)) return false;
             if (IsMachineOwned(machine.machineId)) return true;
             return data.coins >= machine.entryCost;
         }
@@ -248,6 +293,7 @@ namespace ClawMachine.Gameplay
         public bool TryDeductPlayCost(MachineDefinition machine)
         {
             if (machine == null) return true;
+            if (!IsMachineUnlocked(machine.machineId)) return false;
             if (IsMachineOwned(machine.machineId)) return true; // Free plays once owned!
 
             if (data.coins >= machine.entryCost)
@@ -260,11 +306,11 @@ namespace ClawMachine.Gameplay
             return false;
         }
 
-        public void AddCoins(int amount)
+        public void AddCoins(int amount, bool save = true)
         {
             data.coins += amount;
             OnCoinsChanged?.Invoke(data.coins);
-            SaveData();
+            if (save) SaveData();
         }
 
         public void RegisterCollectedPrize(Prize prize)
@@ -293,7 +339,7 @@ namespace ClawMachine.Gameplay
             string prizeId = def != null ? def.id : prize.name;
             string prizeName = def != null ? def.displayName : prize.name;
 
-            // 1. Track inventory quantity
+            // 1. Track lifetime catch quantity (duplicates auto-sold below, count used for milestones & stats)
             if (data.inventory == null) data.inventory = new List<PrizeInventoryEntry>();
             var entry = data.inventory.Find(e => e.prizeId == prizeId);
             if (entry == null)
@@ -313,8 +359,8 @@ namespace ClawMachine.Gameplay
             {
                 data.discoveredPrizeIds.Add(prizeId);
                 reward = GetDiscoveryReward(def);
-                AddCoins(reward);
-                Debug.Log($"[CollectionManager] ★ NEW PRIZE DISCOVERED: {prizeName} (ID: {prizeId})! Awarded +{reward} coins!");
+                AddCoins(reward, save: false);
+                Debug.Log($"[CollectionManager] NEW PRIZE DISCOVERED: {prizeName} (ID: {prizeId})! Awarded +{reward} coins!");
 
                 if (currentMachine != null && !IsMachineOwned(currentMachine.machineId))
                 {
@@ -322,16 +368,17 @@ namespace ClawMachine.Gameplay
                     if (totalDiscovered >= currentMachine.prizes.Length)
                     {
                         data.ownedMachineIds.Add(currentMachine.machineId);
-                        Debug.Log($"[CollectionManager] ★ MACHINE OWNED! {currentMachine.displayName} collection complete! ★");
+                        Debug.Log($"[CollectionManager] MACHINE OWNED! {currentMachine.displayName} collection complete!");
                         OnMachineCompleted?.Invoke(currentMachine);
                     }
                 }
             }
             else
             {
-                // Duplicate prize stored in inventory; coins awarded when sold in Collection menu to prevent double payout
-                reward = 0;
-                Debug.Log($"[CollectionManager] Duplicate prize {prizeName} stored in inventory (Total Owned: {entry.count}).");
+                // Auto-sell duplicate prize on win
+                reward = GetDuplicateSellPrice(def);
+                AddCoins(reward, save: false);
+                Debug.Log($"[CollectionManager] Duplicate prize {prizeName} auto-sold for +{reward} coins!");
             }
 
             OnPrizeAwarded?.Invoke(def, isNew, reward);
@@ -349,19 +396,21 @@ namespace ClawMachine.Gameplay
 
         public int GetDiscoveryReward(PrizeDefinition def)
         {
-            if (def == null) return 30;
-            return def.rarity switch
+            int entry = currentMachine != null ? Mathf.Max(5, currentMachine.entryCost) : 5;
+            int baseReward = def == null ? 30 : def.rarity switch
             {
                 PrizeRarity.Secret => 250,
                 PrizeRarity.Rare => 75,
                 _ => 30
             };
+            return baseReward * (entry / 5);
         }
 
         public int GetDuplicateSellPrice(PrizeDefinition def)
         {
-            if (def == null) return 15;
-            return Mathf.Max(10, (int)(def.duplicateCoinValue * def.sellMultiplier));
+            int minPrice = currentMachine != null ? Mathf.Max(10, currentMachine.entryCost * 2) : 15;
+            if (def == null) return minPrice;
+            return Mathf.Max(minPrice, (int)(def.duplicateCoinValue * def.sellMultiplier));
         }
 
         public int GetTotalDuplicateValue()
@@ -402,7 +451,7 @@ namespace ClawMachine.Gameplay
 
             if (totalEarned > 0)
             {
-                AddCoins(totalEarned);
+                AddCoins(totalEarned, save: false);
                 OnDuplicatesSold?.Invoke(totalEarned);
                 Debug.Log($"[CollectionManager] Sold {itemsSold} duplicates for +{totalEarned} coins!");
                 SaveData();
@@ -420,7 +469,7 @@ namespace ClawMachine.Gameplay
             entry.count -= count;
             PrizeDefinition def = FindPrizeDefinition(prizeId);
             int earned = GetDuplicateSellPrice(def) * count;
-            AddCoins(earned);
+            AddCoins(earned, save: false);
             OnDuplicatesSold?.Invoke(earned);
             SaveData();
             return true;
@@ -457,10 +506,14 @@ namespace ClawMachine.Gameplay
             if (saveService == null) saveService = new JsonFileSaveService();
             data = saveService.Load<PlayerCollectionData>(SAVE_KEY, CURRENT_SAVE_VERSION, MigrateSaveDataPayload) ?? new PlayerCollectionData();
 
-            if (data.unlockedMachineIds == null)
-            {
-                data.unlockedMachineIds = new List<string>();
-            }
+            data.discoveredPrizeIds ??= new List<string>();
+            data.unlockedMachineIds ??= new List<string>();
+            data.ownedMachineIds ??= new List<string>();
+            data.machineUpgrades ??= new List<MachineUpgradeData>();
+            data.inventory ??= new List<PrizeInventoryEntry>();
+            data.activeQuests ??= new List<DailyQuestData>();
+            data.claimedMilestoneIds ??= new List<string>();
+
             if (!data.unlockedMachineIds.Contains("toy_box"))
             {
                 data.unlockedMachineIds.Add("toy_box");
@@ -490,7 +543,7 @@ namespace ClawMachine.Gameplay
                     {
                         PendingOfflineCoins = minutes * totalRatePerMin;
                         PendingOfflineTime = elapsed;
-                        Debug.Log($"[CollectionManager] Player away for {elapsed.TotalMinutes:F1}m. Pending offline earnings from {data.ownedMachineIds.Count} owned machines: {PendingOfflineCoins} 🪙");
+                        Debug.Log($"[CollectionManager] Player away for {elapsed.TotalMinutes:F1}m. Pending offline earnings from {data.ownedMachineIds.Count} owned machines: {PendingOfflineCoins} coins");
                     }
                 }
             }
@@ -641,8 +694,8 @@ namespace ClawMachine.Gameplay
             return mult;
         }
 
-        // Aim Grab Range: Level 4 is baseline (1.0x), Level 5 (+10%), Level 3 (-10%), Level 1 (0.70x tiny shadow)
-        public float GetDropSpeedMultiplier() => 0.70f + (GetUpgradeLevel(UpgradeType.DropPrecision) - 1) * 0.10f;
+        // Aim Grab Range: Level 1 is baseline (1.0x), up to 1.4x at Level 5 (+10% per level)
+        public float GetDropSpeedMultiplier() => 1.0f + (GetUpgradeLevel(UpgradeType.DropPrecision) - 1) * 0.10f;
 
         public void ResetProgress()
         {

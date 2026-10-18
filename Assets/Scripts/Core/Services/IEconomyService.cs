@@ -16,5 +16,6 @@ namespace ClawMachine.Core.Services
         float GetTrolleySpeedMultiplier();
         float GetGripPowerMultiplier();
         float GetDropSpeedMultiplier();
+        int GetDuplicateSellPrice(Data.PrizeDefinition def);
     }
 }

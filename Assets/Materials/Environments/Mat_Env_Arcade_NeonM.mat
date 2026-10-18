@@ -29,13 +29,24 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _AmbientBoost: 0.42
-    - _CelSoftness: 0.035
-    - _CelThreshold: 0.4
-    - _OutlineWidth: 0.02
-    - _SpecThreshold: 0.94
+    - _AmbientBoost: 0.5
+    - _CelSoftness: 0.045
+    - _CelThreshold: 0.42
+    - _Glossiness: 0.25
+    - _Metallic: 0.04
+    - _OutlineColorTint: 0.55
+    - _OutlineWidth: 0.008
+    - _RimIntensity: 0.08
+    - _RimPower: 3.2
+    - _Smoothness: 0.25
+    - _SpecIntensity: 0.15
+    - _SpecThreshold: 0.93
     m_Colors:
-    - _Color: {r: 1, g: 0.11999995, b: 0.65, a: 1}
-    - _OutlineColor: {r: 0.1, g: 0.1, b: 0.14, a: 1}
+    - _BaseColor: {r: 1, g: 0.11999983, b: 0.65, a: 1}
+    - _Color: {r: 1, g: 0.11999983, b: 0.65, a: 1}
+    - _EmissionColor: {r: 1.45, g: 0.17399989, b: 0.9425, a: 1.45}
+    - _OutlineColor: {r: 0.1, g: 0.09, b: 0.14, a: 1}
+    - _RimColor: {r: 1, g: 1, b: 1, a: 1}
+    - _ShadowTint: {r: 0.72, g: 0.68, b: 0.86, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

@@ -676,7 +676,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "DAY 6\n50 \U0001FA99"
+  m_Text: "DAY 6\n50 COINS"
 --- !u!222 &43927674
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1116,7 +1116,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &72245992
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2165,7 +2165,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "DAY 7\n50 \U0001FA99"
+  m_Text: "DAY 7\n50 COINS"
 --- !u!222 &144795126
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -2965,7 +2965,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "+100 \U0001FA99"
+  m_Text: "+100 COINS"
 --- !u!222 &207848400
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -3043,7 +3043,7 @@ MonoBehaviour:
   gripSocket: {fileID: 72017636}
   maxSwayAngle: 20
   swaySmoothSpeed: 10
-  showDebugGui: 1
+  showDebugGui: 0
 --- !u!1 &216723047
 GameObject:
   m_ObjectHideFlags: 0
@@ -3973,7 +3973,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "SELL EXTRA DUPLICATES (+0 \U0001FA99)"
+  m_Text: "SELL EXTRA DUPLICATES (+0 COINS)"
 --- !u!222 &281883495
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -5350,7 +5350,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "+0 \U0001FA99"
+  m_Text: "+0 COINS"
 --- !u!222 &361639908
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -6307,7 +6307,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "Cost: 150 \U0001FA99  |  Your Coins: 100 \U0001FA99"
+  m_Text: "Cost: 150 COINS  |  Your Coins: 100 COINS"
 --- !u!1 &395944458
 GameObject:
   m_ObjectHideFlags: 0
@@ -6690,7 +6690,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &405616413
 RectTransform:
   m_ObjectHideFlags: 0
@@ -6993,7 +6993,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "DAY 5\n50 \U0001FA99"
+  m_Text: "DAY 5\n50 COINS"
 --- !u!222 &427489156
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -7379,7 +7379,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "\U0001F9F2 MAGNET AURA"
+  m_Text: "MAGNET AURA"
 --- !u!222 &460942702
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -7803,7 +7803,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "100 \U0001FA99"
+  m_Text: "100 COINS"
 --- !u!222 &477357340
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -13045,7 +13045,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "45 \U0001FA99"
+  m_Text: "45 COINS"
 --- !u!222 &806628705
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -14145,7 +14145,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "45 \U0001FA99"
+  m_Text: "45 COINS"
 --- !u!222 &889527342
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -15179,7 +15179,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "DAY 4\n50 \U0001FA99"
+  m_Text: "DAY 4\n50 COINS"
 --- !u!222 &967300200
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -15632,7 +15632,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "+100 \U0001FA99"
+  m_Text: "+100 COINS"
 --- !u!222 &990601748
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -16786,7 +16786,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "+100 \U0001FA99"
+  m_Text: "+100 COINS"
 --- !u!222 &1024643324
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -18577,7 +18577,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "+100 \U0001FA99"
+  m_Text: "+100 COINS"
 --- !u!222 &1144823556
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -19349,7 +19349,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "DAY 1\n50 \U0001FA99"
+  m_Text: "DAY 1\n50 COINS"
 --- !u!222 &1191376157
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -19586,7 +19586,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "45 \U0001FA99"
+  m_Text: "45 COINS"
 --- !u!222 &1200586391
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -19744,7 +19744,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "DAY 2\n50 \U0001FA99"
+  m_Text: "DAY 2\n50 COINS"
 --- !u!222 &1213309035
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -21457,7 +21457,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "DAY 3\n50 \U0001FA99"
+  m_Text: "DAY 3\n50 COINS"
 --- !u!222 &1363197851
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -21536,7 +21536,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "+100 \U0001FA99"
+  m_Text: "+100 COINS"
 --- !u!222 &1370525017
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -21615,7 +21615,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "\u2605 CLAIM DAILY REWARD (+50 \U0001FA99) \u2605"
+  m_Text: "CLAIM DAILY REWARD (+50 COINS)"
 --- !u!222 &1372719610
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -23307,7 +23307,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "\U0001F381 REWARDS & QUESTS"
+  m_Text: "REWARDS & QUESTS"
 --- !u!222 &1488827459
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -25479,7 +25479,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1606658243
 RectTransform:
   m_ObjectHideFlags: 0
@@ -31595,7 +31595,6 @@ GameObject:
   m_Component:
   - component: {fileID: 2029110168}
   - component: {fileID: 2029110164}
-  - component: {fileID: 2029110167}
   - component: {fileID: 2029110166}
   - component: {fileID: 2029110165}
   m_Layer: 0
@@ -31678,18 +31677,88 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c939df3529361b2418cb679f3c05a8e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.Gameplay.RetentionService
+--- !u!1 &2029110200
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2029110201}
+  - component: {fileID: 2029110167}
+  m_Layer: 0
+  m_Name: SoundManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2029110201
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2029110200}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2029110167
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2029110163}
+  m_GameObject: {fileID: 2029110200}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0cfe5665eabf5d2419afc36775210d6c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.Gameplay.ClawAudio
+  bgmLoopClip: {fileID: 8300000, guid: 990209f834c5f5c26a42edaafe393fd7, type: 3}
+  motorLoopClip: {fileID: 8300000, guid: 257c034c55a283d74aaae93b6900b4b2, type: 3}
+  clawClampClip: {fileID: 8300000, guid: e685ac7e4286cb1c4bea0b14a7d18c8d, type: 3}
+  grabSuccessClip: {fileID: 8300000, guid: 527247d67ef9baf48a95eab8ae6a5131, type: 3}
+  dropReleaseClip: {fileID: 8300000, guid: 80cd17cf8c8db06b2b4b5d85040e5dfa, type: 3}
+  prizeWinClip: {fileID: 8300000, guid: af853096d0db5d5d992ec53945f0060e, type: 3}
+  uiClickClip: {fileID: 8300000, guid: 2a6e49fd01e03dccbb96d453e0bb1db8, type: 3}
+  coinInsertClip: {fileID: 8300000, guid: 02df803ffdecff7aaab61a9fbd6beaff, type: 3}
+  prizeSlipClip: {fileID: 8300000, guid: 03aaadaa5cc67d201bf6115403174cbb, type: 3}
+  carouselSwipeClip: {fileID: 8300000, guid: a2f57d39885a29be98edaaf97c8705f7, type: 3}
+  swooshClips:
+  - {fileID: 8300000, guid: a2f57d39885a29be98edaaf97c8705f7, type: 3}
+  - {fileID: 8300000, guid: 80657565fa7079822a8c201e542086d1, type: 3}
+  - {fileID: 8300000, guid: 6f0f361fa0b39516b9aabe699a8eccbc, type: 3}
+  countdownTickClip: {fileID: 8300000, guid: 3f5bbfb45630b2211b2c120e088a3ba6, type: 3}
+  modalOpenClip: {fileID: 8300000, guid: 80657565fa7079822a8c201e542086d1, type: 3}
+  errorBuzzClip: {fileID: 8300000, guid: e28f63dd8d6b3153ca2e090ce9dc740c, type: 3}
+  coinRewardClip: {fileID: 8300000, guid: 02df803ffdecff7aaab61a9fbd6beaff, type: 3}
+  unlockFanfareClip: {fileID: 8300000, guid: 66556c52fbbbfed8ba36f9641b24abae, type: 3}
+  masterVolume: 1
+  musicVolume: 0.28
+  sfxVolume: 1
+  motorVolume: 0.22
+  clawCloseEmptyVolume: 0.7
+  clawCloseFullVolume: 0.85
+  dropFloorVolume: 0.75
+  prizeWinVolume: 1
+  uiClickVolume: 0.55
+  coinInsertVolume: 0.85
+  coinRewardVolume: 0.85
+  prizeSlipVolume: 0.8
+  swooshVolume: 0.65
+  countdownVolume: 0.75
+  modalOpenVolume: 0.55
+  errorBuzzVolume: 0.7
+  unlockFanfareVolume: 1
+  duckedMusicVolume: 0.15
+  pauseMusicOnPrioritySFX: 0
 --- !u!4 &2029110168
 Transform:
   m_ObjectHideFlags: 0
@@ -31854,7 +31923,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "\U0001F3AF AIM SHADOW"
+  m_Text: "AIM SHADOW"
 --- !u!222 &2030571885
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -32322,8 +32391,8 @@ RectTransform:
   - {fileID: 174477550}
   m_Father: {fileID: 1731797319}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.06, y: 0.15}
-  m_AnchorMax: {x: 0.94, y: 0.8}
+  m_AnchorMin: {x: 0.06, y: 0.06}
+  m_AnchorMax: {x: 0.94, y: 0.83}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -32985,7 +33054,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "+100 \U0001FA99"
+  m_Text: "+100 COINS"
 --- !u!222 &2080801557
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -33727,6 +33796,7 @@ CanvasRenderer:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
+  - {fileID: 2029110201}
   - {fileID: 528074036}
   - {fileID: 559067714}
   - {fileID: 1464409701}

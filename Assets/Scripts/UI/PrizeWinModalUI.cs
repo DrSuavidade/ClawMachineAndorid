@@ -20,7 +20,6 @@ namespace ClawMachine.UI
         [SerializeField] private Text rewardDetailText;
         [SerializeField] private Button claimButton;
 
-        private Coroutine autoDismissRoutine;
         private Coroutine bounceRoutine;
         private Coroutine dropRoutine;
         private bool isDropAnimationDone = false;
@@ -50,6 +49,22 @@ namespace ClawMachine.UI
             if (Instance == null) Instance = this;
         }
 
+        private void OnDisable()
+        {
+            if (previewCamera != null) previewCamera.enabled = false;
+            if (currentPreviewModel != null)
+            {
+                Destroy(currentPreviewModel);
+                currentPreviewModel = null;
+            }
+            if (currentPreviewRoot != null)
+            {
+                Destroy(currentPreviewRoot);
+                currentPreviewRoot = null;
+            }
+            if (previewRigRoot != null) previewRigRoot.SetActive(false);
+        }
+
         private void OnDestroy()
         {
             if (previewRenderTexture != null)
@@ -61,33 +76,45 @@ namespace ClawMachine.UI
             {
                 Destroy(previewRigRoot);
             }
+            if (Instance == this) Instance = null;
         }
 
         public void ShowWin(Prize prize)
         {
             if (prize == null) return;
+            ShowWinDefinition(prize.Definition, prize.name, prize.Rarity, isInspectOnly: false);
+        }
+
+        public void ShowWinDefinition(PrizeDefinition def, string fallbackName = "PRIZE", PrizeRarity fallbackRarity = PrizeRarity.Normal, bool isInspectOnly = false)
+        {
             AutoFindRefsIfNull();
             if (modalPanel == null) return;
 
-            string pName = (prize.Definition != null && !string.IsNullOrEmpty(prize.Definition.displayName)) 
-                ? prize.Definition.displayName 
-                : prize.name;
-            string pId = (prize.Definition != null && !string.IsNullOrEmpty(prize.Definition.id)) 
-                ? prize.Definition.id 
-                : prize.name;
-            PrizeRarity rarity = prize.Rarity;
-            
+            string pName = (def != null && !string.IsNullOrEmpty(def.displayName))
+                ? def.displayName
+                : fallbackName;
+            string pId = (def != null && !string.IsNullOrEmpty(def.id))
+                ? def.id
+                : fallbackName;
+            PrizeRarity rarity = def != null ? def.rarity : fallbackRarity;
+
             bool isNew = true;
-            int dupVal = prize.Definition != null ? prize.Definition.duplicateCoinValue : 20;
+            int dupVal = ServiceLocator.TryGet<IEconomyService>(out var econ) && def != null
+                ? econ.GetDuplicateSellPrice(def)
+                : (def != null ? Mathf.Max(10, (int)(def.duplicateCoinValue * def.sellMultiplier)) : 20);
 
             if (ServiceLocator.TryGet<ICollectionService>(out var coll))
             {
                 isNew = coll.GetPrizeCount(pId) <= 1;
             }
 
+            if (titleText != null)
+            {
+                titleText.text = isInspectOnly ? "PRIZE SHOWCASE" : "PRIZE WON!";
+            }
             if (prizeNameText != null) prizeNameText.text = pName.ToUpper();
             if (rarityBadgeText != null) rarityBadgeText.text = rarity.ToString().ToUpper();
-            
+
             Color rarityColor = rarity switch
             {
                 PrizeRarity.Secret => new Color(1.0f, 0.82f, 0.15f),
@@ -100,9 +127,16 @@ namespace ClawMachine.UI
 
             if (rewardDetailText != null)
             {
-                rewardDetailText.text = isNew 
-                    ? "★ NEW DISCOVERY ADDED TO COLLECTION! ★" 
-                    : $"DUPLICATE PRIZE SOLD (+{dupVal} 🪙)";
+                if (isInspectOnly)
+                {
+                    rewardDetailText.text = $"COLLECTION VALUE: {dupVal} COINS";
+                }
+                else
+                {
+                    rewardDetailText.text = isNew
+                        ? "NEW DISCOVERY ADDED TO COLLECTION!"
+                        : $"DUPLICATE PRIZE SOLD (+{dupVal} COINS)";
+                }
             }
 
             modalPanel.SetActive(true);
@@ -111,10 +145,17 @@ namespace ClawMachine.UI
             var audio = ServiceLocator.Get<IAudioService>();
             if (audio != null)
             {
-                audio.PlayWin();
-                audio.TriggerHapticSuccess();
+                if (isInspectOnly) audio.PlayUIClick();
+                else
+                {
+                    audio.PlayWin();
+                    audio.TriggerHapticSuccess();
+                }
             }
-            ClawJuiceEffects.Instance?.PlayWinCelebration(Vector3.up * 1.5f);
+            if (!isInspectOnly)
+            {
+                ClawJuiceEffects.Instance?.PlayWinCelebration(Vector3.up * 1.5f);
+            }
 
             // 2. Punch Scale Bounce Animation
             if (bounceRoutine != null) StopCoroutine(bounceRoutine);
@@ -123,7 +164,7 @@ namespace ClawMachine.UI
             if (previewRigRoot != null) previewRigRoot.SetActive(true);
 
             // 3. 3D Animated Prize Chute Drop via RenderTexture
-            SpawnPreviewModel(prize.Definition != null ? prize.Definition.prefab : null);
+            SpawnPreviewModel(def != null ? def.prefab : null);
         }
 
         private void Update()
@@ -135,7 +176,7 @@ namespace ClawMachine.UI
 
 #if UNITY_EDITOR
             // Debug hotkey: Press 'P' in Play Mode to test the 3D rotating preview modal anytime
-            if (Input.GetKeyDown(KeyCode.P))
+            if (Input.GetKeyDown(KeyCode.P) && !ArcadeConsoleUI.IsAnyModalOpen())
             {
                 var prize = FindFirstObjectByType<Prize>();
                 if (prize != null)
@@ -159,9 +200,10 @@ namespace ClawMachine.UI
             previewRigRoot = new GameObject("PrizePreviewRig");
             previewRigRoot.transform.position = rigPos;
 
-            previewRenderTexture = new RenderTexture(384, 384, 16, RenderTextureFormat.ARGB32)
+            previewRenderTexture = new RenderTexture(512, 512, 24, RenderTextureFormat.ARGB32)
             {
-                name = "RT_PrizeWinPreview"
+                name = "RT_PrizeWinPreview",
+                antiAliasing = 4
             };
 
             GameObject camObj = new GameObject("PreviewCamera");
@@ -173,6 +215,7 @@ namespace ClawMachine.UI
             previewCamera.clearFlags = CameraClearFlags.SolidColor;
             previewCamera.backgroundColor = new Color(0.04f, 0.06f, 0.10f, 0f); // Transparent
             previewCamera.fieldOfView = 32f;
+            previewCamera.aspect = 1.0f;
             previewCamera.nearClipPlane = 0.1f;
             previewCamera.farClipPlane = 10f;
             previewCamera.targetTexture = previewRenderTexture;
@@ -333,13 +376,17 @@ namespace ClawMachine.UI
             if (aperture == null) aperture = modalPanel.transform.Find("ShowcaseAperture");
             if (aperture == null) aperture = modalPanel.transform;
 
-            GameObject rawObj = new GameObject("RawImage_PrizePreview", typeof(RectTransform));
+            GameObject rawObj = new GameObject("RawImage_PrizePreview", typeof(RectTransform), typeof(AspectRatioFitter));
             rawObj.transform.SetParent(aperture, false);
             RectTransform rt = rawObj.GetComponent<RectTransform>();
             rt.anchorMin = Vector2.zero;
             rt.anchorMax = Vector2.one;
             rt.offsetMin = Vector2.zero;
             rt.offsetMax = Vector2.zero;
+
+            var fitter = rawObj.GetComponent<AspectRatioFitter>();
+            fitter.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+            fitter.aspectRatio = 1.0f;
 
             previewRawImage = rawObj.AddComponent<RawImage>();
             previewRawImage.raycastTarget = false;
@@ -366,23 +413,12 @@ namespace ClawMachine.UI
             bounceRoutine = null;
         }
 
-        private System.Collections.IEnumerator AutoDismissAfterSeconds(float seconds)
-        {
-            yield return new WaitForSeconds(seconds);
-            Dismiss();
-        }
-
         public void Dismiss()
         {
             if (dropRoutine != null)
             {
                 StopCoroutine(dropRoutine);
                 dropRoutine = null;
-            }
-            if (autoDismissRoutine != null)
-            {
-                StopCoroutine(autoDismissRoutine);
-                autoDismissRoutine = null;
             }
             if (previewCamera != null)
             {
@@ -441,12 +477,16 @@ namespace ClawMachine.UI
 
             if (modalPanel != null)
             {
+                UIStyleHelper.ApplyStyleToHierarchy(modalPanel);
                 if (titleText == null) titleText = modalPanel.transform.Find("DialogCard/Title")?.GetComponent<Text>() ?? modalPanel.transform.Find("Title")?.GetComponent<Text>();
                 if (prizeNameText == null) prizeNameText = modalPanel.transform.Find("DialogCard/PrizeName")?.GetComponent<Text>() ?? modalPanel.transform.Find("PrizeName")?.GetComponent<Text>();
                 if (rarityBadgeText == null) rarityBadgeText = modalPanel.transform.Find("DialogCard/RarityBadge/RarityText")?.GetComponent<Text>() ?? modalPanel.transform.Find("RarityBadge/RarityText")?.GetComponent<Text>();
                 if (rarityBadgeBg == null) rarityBadgeBg = modalPanel.transform.Find("DialogCard/RarityBadge")?.GetComponent<Image>() ?? modalPanel.transform.Find("RarityBadge")?.GetComponent<Image>();
                 if (rewardDetailText == null) rewardDetailText = modalPanel.transform.Find("DialogCard/RewardDetail")?.GetComponent<Text>() ?? modalPanel.transform.Find("RewardDetail")?.GetComponent<Text>();
                 if (claimButton == null) claimButton = modalPanel.transform.Find("DialogCard/Btn_Claim")?.GetComponent<Button>() ?? modalPanel.transform.Find("Btn_Claim")?.GetComponent<Button>();
+
+                if (rarityBadgeBg != null) UIStyleHelper.StyleBadge(rarityBadgeBg);
+                if (claimButton != null) UIStyleHelper.StyleButton(claimButton);
             }
         }
     }

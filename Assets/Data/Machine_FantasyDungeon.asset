@@ -16,12 +16,13 @@ MonoBehaviour:
   displayName: Fantasy Dungeon
   description: Explore legendary medieval treasures, wizard relics, and mythic weapons.
   unlockCost: 8000
-  entryCost: 55
+  entryCost: 85
   theme: {fileID: 11400000, guid: 8f87673849944a6588e2213cb9cceb63, type: 2}
   passiveIncomePerMinute: 45
   cabinetFrameColor: {r: 0.76, g: 0.54, b: 0.18, a: 1}
   cabinetBackdropColor: {r: 0.11, g: 0.12, b: 0.15, a: 1}
   environmentPrefab: {fileID: 29549755685888035, guid: 561d27085d72a4c498cb241fc57e4c5d, type: 3}
+  bgmClip: {fileID: 8300000, guid: ee32aee678d957b849876ff424277fd3, type: 3}
   ambientLightColor: {r: 0.18, g: 0.14, b: 0.12, a: 1}
   directionalLightColor: {r: 1, g: 0.65, b: 0.35, a: 1}
   cameraFieldOfView: 44

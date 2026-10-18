@@ -52,7 +52,8 @@ namespace ClawMachine.Core.Services
                     {
                         if (envelope.version < currentVersion && migrationHandler != null)
                         {
-                            T migrated = migrationHandler(json, envelope.version);
+                            string payloadJson = JsonUtility.ToJson(envelope.payload);
+                            T migrated = migrationHandler(payloadJson, envelope.version);
                             Save(key, migrated, currentVersion);
                             return migrated;
                         }

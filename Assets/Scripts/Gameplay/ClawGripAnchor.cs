@@ -72,18 +72,7 @@ namespace ClawMachine.Gameplay
             grabLerpTime = 0f;
 
             // Ignore collisions between prize and claw assembly so kinematic hold doesn't glitch joints
-            Collider[] prizeCols = HeldPrize.GetComponentsInChildren<Collider>();
-            Collider[] clawCols = transform.root.GetComponentsInChildren<Collider>();
-            for (int p = 0; p < prizeCols.Length; p++)
-            {
-                for (int c = 0; c < clawCols.Length; c++)
-                {
-                    if (prizeCols[p] != null && clawCols[c] != null && prizeCols[p] != clawCols[c])
-                    {
-                        Physics.IgnoreCollision(prizeCols[p], clawCols[c], true);
-                    }
-                }
-            }
+            SetIgnoreClawCollisions(HeldPrize, true);
 
             Debug.Log($"[ClawGripAnchor] Secured {HeldPrize.name} in basket | Quality: {eval.quality:P0} | Stable: {eval.isStable}");
             return true;
@@ -103,6 +92,7 @@ namespace ClawMachine.Gameplay
             if (HeldPrize == null) return;
 
             // Unstable grip delayed slip (authentic arcade tension: prize drops midway during lift or transit)
+            holdTimer += deltaTime;
             if (!CurrentGrip.isStable && holdTimer >= CurrentGrip.slipDelay)
             {
                 Debug.Log($"[ClawGripAnchor] Unstable grip slipped after {holdTimer:F1}s! {HeldPrize.name} tumbled!");
@@ -160,19 +150,7 @@ namespace ClawMachine.Gameplay
             rb.isKinematic = false;
             rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
 
-            // Restore collisions
-            Collider[] prizeCols = HeldPrize.GetComponentsInChildren<Collider>();
-            Collider[] clawCols = transform.root.GetComponentsInChildren<Collider>();
-            for (int p = 0; p < prizeCols.Length; p++)
-            {
-                for (int c = 0; c < clawCols.Length; c++)
-                {
-                    if (prizeCols[p] != null && clawCols[c] != null && prizeCols[p] != clawCols[c])
-                    {
-                        Physics.IgnoreCollision(prizeCols[p], clawCols[c], false);
-                    }
-                }
-            }
+            SetIgnoreClawCollisions(HeldPrize, false);
 
             // Gentle release: zero tumble spin, minimal horizontal carry momentum, gentle downward drop
             Vector3 horizVel = Vector3.ClampMagnitude(new Vector3(carriageVelocity.x, 0f, carriageVelocity.z) * 0.20f, 0.4f);
@@ -183,6 +161,23 @@ namespace ClawMachine.Gameplay
             HeldPrize = null;
             CurrentGrip = default;
             grabLerpTime = 1f;
+        }
+
+        private void SetIgnoreClawCollisions(Prize prize, bool ignore)
+        {
+            if (prize == null) return;
+            Collider[] prizeCols = prize.GetComponentsInChildren<Collider>();
+            Collider[] clawCols = GetComponentsInChildren<Collider>();
+            for (int p = 0; p < prizeCols.Length; p++)
+            {
+                for (int c = 0; c < clawCols.Length; c++)
+                {
+                    if (prizeCols[p] != null && clawCols[c] != null && prizeCols[p] != clawCols[c])
+                    {
+                        Physics.IgnoreCollision(prizeCols[p], clawCols[c], ignore);
+                    }
+                }
+            }
         }
 
         private void OnGUI()

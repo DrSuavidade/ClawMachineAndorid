@@ -37,8 +37,14 @@ namespace ClawMachine.Gameplay
         public ClawConfiguration Config => config;
         public ClawGripAnchor GripAnchor => gripAnchor;
         public Transform GripSocket => gripSocket;
+        public float CarryRemainingSeconds => carryTimer;
 
         public event Action<ClawState> OnStateChanged;
+        public event Action<float> OnCarryTimerUpdated;
+
+        private const float MaxCarryDuration = 10.0f;
+        private float carryTimer;
+        private int lastCarryTickSecond = -1;
 
         private Vector3 targetTrolleyPos;
         private float targetArmAngle;
@@ -50,6 +56,20 @@ namespace ClawMachine.Gameplay
         private float targetDropY;
         private Prize targetedPrize;
         private float targetedAccuracy;
+        private Material magnetRingMat;
+        private Material markerMat;
+        private Material chuteBeaconMat;
+        private Renderer markerRend;
+        private Transform magnetRing;
+        private Transform chuteBeacon;
+        private Transform gantryCrossRail;
+        private Transform clawStatusLed;
+        private Material ledMaterial;
+        private Material railMat;
+        private Renderer[] chuteRimRenderers;
+        private Material chuteRimMat;
+
+        public bool IsOverChute { get; private set; }
 
         public void Setup(ClawConfiguration cfg, Transform trolleyTr, Transform hoistTr, ClawArm[] clawArms, Transform chutePoint, Transform marker, Transform socket, ClawGripAnchor anchor, ClawPendulumSway sway = null)
         {
@@ -59,6 +79,8 @@ namespace ClawMachine.Gameplay
             arms = clawArms;
             chuteDropPoint = chutePoint;
             clawMarker = marker;
+            markerRend = null;
+            magnetRing = null;
             gripSocket = socket;
             gripAnchor = anchor;
             pendulumSway = sway;
@@ -103,10 +125,35 @@ namespace ClawMachine.Gameplay
             {
                 gripAnchor.OnPrizeSlipped -= HandlePrizeSlipped;
             }
+            if (magnetRingMat != null)
+            {
+                Destroy(magnetRingMat);
+            }
+            if (markerMat != null)
+            {
+                Destroy(markerMat);
+            }
+            if (chuteBeaconMat != null)
+            {
+                Destroy(chuteBeaconMat);
+            }
+            if (ledMaterial != null)
+            {
+                Destroy(ledMaterial);
+            }
+            if (railMat != null)
+            {
+                Destroy(railMat);
+            }
+            if (chuteRimMat != null)
+            {
+                Destroy(chuteRimMat);
+            }
         }
 
         private void HandlePrizeSlipped()
         {
+            ServiceLocator.Get<IAudioService>()?.PlayPrizeSlip();
             if (CurrentState == ClawState.Carrying)
             {
                 SetState(ClawState.Aiming);
@@ -118,6 +165,7 @@ namespace ClawMachine.Gameplay
             IgnoreEnvironmentCollisions();
             SetState(ClawState.Aiming);
             ApplyArmAngles(true);
+            EnsureVisualJuice();
         }
 
         public void SetInputDelta(Vector2 inputDelta)
@@ -152,10 +200,16 @@ namespace ClawMachine.Gameplay
         private void Update()
         {
             UpdateReticle();
+            UpdateVisualJuice();
 
             if (gripAnchor != null)
             {
                 gripAnchor.UpdateMotion(Time.deltaTime);
+            }
+
+            if (pendulumSway != null && hoist != null)
+            {
+                pendulumSway.CableLength = Mathf.Max(0.4f, (config.homeY - hoist.position.y) + 0.5f);
             }
 
             switch (CurrentState)
@@ -214,15 +268,21 @@ namespace ClawMachine.Gameplay
                             {
                                 PlayAudioGrab();
                             }
+                            else
+                            {
+                                PlayAudioClamp();
+                            }
                         }
                         else
                         {
                             // Near-miss nudge: Claw slips right off the toy, nudging it across the pile
+                            PlayAudioClamp();
                             ApplyNearMissNudge(targetedPrize);
                         }
                     }
                     else
                     {
+                        PlayAudioClamp();
                         // Broad physical nudge around claw closure zone to tumble nearby toys
                         Collider[] nearby = Physics.OverlapSphere(hoist != null ? hoist.position : transform.position, 0.45f);
                         for (int n = 0; n < nearby.Length; n++)
@@ -245,6 +305,18 @@ namespace ClawMachine.Gameplay
                 case ClawState.Carrying:
                     SmoothMoveTrolley();
                     AnimateArms();
+                    carryTimer -= Time.deltaTime;
+                    OnCarryTimerUpdated?.Invoke(Mathf.Max(0f, carryTimer));
+                    if (carryTimer <= 5.0f && lastCarryTickSecond != 1)
+                    {
+                        lastCarryTickSecond = 1;
+                        ServiceLocator.Get<IAudioService>()?.PlayCountdownTick();
+                    }
+                    if (carryTimer <= 0f)
+                    {
+                        ServiceLocator.Get<IAudioService>()?.PlayPrizeSlip();
+                        SetState(ClawState.Releasing);
+                    }
                     break;
 
                 case ClawState.Returning:
@@ -269,25 +341,20 @@ namespace ClawMachine.Gameplay
                     break;
             }
 
-            // Cable tension wobble when carrying or lifting prize
-            if (hoist != null)
+            // Reset hoist rotation if pendulum sway is not handling it
+            if (hoist != null && pendulumSway == null)
             {
-                if ((CurrentState == ClawState.Lifting || CurrentState == ClawState.Carrying) && gripAnchor != null && gripAnchor.HasPrize)
-                {
-                    float weight = (targetedPrize != null && targetedPrize.Definition != null) ? targetedPrize.Definition.mass : 0.5f;
-                    float swayX = Mathf.Sin(Time.time * 8.5f) * 2.8f * weight;
-                    float swayZ = Mathf.Cos(Time.time * 7.2f) * 2.4f * weight;
-                    hoist.localRotation = Quaternion.Euler(swayX, 0f, swayZ);
-                }
-                else
-                {
-                    hoist.localRotation = Quaternion.Lerp(hoist.localRotation, Quaternion.identity, Time.deltaTime * 8f);
-                }
+                hoist.localRotation = Quaternion.Lerp(hoist.localRotation, Quaternion.identity, Time.deltaTime * 8f);
             }
         }
 
         private void SetState(ClawState newState)
         {
+            if (CurrentState == ClawState.Carrying && newState != ClawState.Carrying)
+            {
+                ServiceLocator.Get<IAudioService>()?.StopCountdown();
+            }
+
             CurrentState = newState;
 
             switch (newState)
@@ -403,7 +470,6 @@ namespace ClawMachine.Gameplay
                 case ClawState.Closing:
                     closingTimer = 0f;
                     targetArmAngle = (targetedPrize != null) ? targetClosedAngle : 2f;
-                    PlayAudioClamp();
                     break;
 
                 case ClawState.EvaluatingGrip:
@@ -413,6 +479,9 @@ namespace ClawMachine.Gameplay
                     break;
 
                 case ClawState.Carrying:
+                    carryTimer = MaxCarryDuration;
+                    lastCarryTickSecond = 0;
+                    OnCarryTimerUpdated?.Invoke(carryTimer);
                     break;
 
                 case ClawState.Returning:
@@ -430,7 +499,7 @@ namespace ClawMachine.Gameplay
                     break;
             }
 
-            if (newState != ClawState.Aiming && newState != ClawState.Carrying)
+            if (newState != ClawState.Aiming && newState != ClawState.Carrying && newState != ClawState.Descending && newState != ClawState.Lifting)
             {
                 SetAudioMotor(false);
             }
@@ -451,8 +520,8 @@ namespace ClawMachine.Gameplay
         {
             if (hoist == null) return;
 
-            float dropMult = GetDropSpeedMultiplier();
-            float speed = (config != null ? config.dropSpeed : 1.8f) * dropMult;
+            SetAudioMotor(true);
+            float speed = config != null ? config.dropSpeed : 1.8f;
             Vector3 pos = hoist.position;
             pos.y -= speed * Time.deltaTime;
 
@@ -460,7 +529,7 @@ namespace ClawMachine.Gameplay
             {
                 pos.y = targetDropY;
                 hoist.position = pos;
-                PlayAudioDrop();
+                SetAudioMotor(false);
                 ClawJuiceEffects.Instance?.PlayDustPuff(hoist.position);
                 SetState(ClawState.Closing);
             }
@@ -470,39 +539,27 @@ namespace ClawMachine.Gameplay
             }
         }
 
-        private float GetLowestTipY()
-        {
-            if (arms == null || arms.Length == 0 || hoist == null) return 0f;
-            float lowest = float.MaxValue;
-            for (int i = 0; i < arms.Length; i++)
-            {
-                if (arms[i] != null && arms[i].Tip != null)
-                {
-                    lowest = Mathf.Min(lowest, arms[i].Tip.position.y);
-                }
-            }
-            return (lowest == float.MaxValue) ? hoist.position.y - 1.25f : lowest;
-        }
-
         private void AscendHoist()
         {
             if (hoist == null || config == null) return;
 
-            float liftMult = GetDropSpeedMultiplier();
+            SetAudioMotor(true);
             Vector3 pos = hoist.position;
-            pos.y += (config.liftSpeed * liftMult) * Time.deltaTime;
+            pos.y += config.liftSpeed * Time.deltaTime;
 
             if (pos.y >= config.homeY)
             {
                 pos.y = config.homeY;
                 hoist.position = pos;
+                SetAudioMotor(false);
                 if (gripAnchor != null && gripAnchor.HasPrize)
                 {
-                    // Real-arcade auto-return flow: claw automatically travels to chute drop point
-                    SetState(ClawState.Returning);
+                    // Manual carry flow: player steers claw to chute and triggers drop
+                    SetState(ClawState.Carrying);
                 }
                 else
                 {
+                    ServiceLocator.Get<IAudioService>()?.PlayFail();
                     SetState(ClawState.Aiming);
                 }
             }
@@ -595,8 +652,22 @@ namespace ClawMachine.Gameplay
             float currentTolerance = baseTolerance * GetDropSpeedMultiplier();
             clawMarker.localScale = new Vector3(currentTolerance * 2f, 0.005f, currentTolerance * 2f);
 
+            // Highlight reticle green when carrying prize over the chute zone
+            IsOverChute = CurrentState == ClawState.Carrying && markerPos.x < -0.35f && markerPos.z < -0.35f;
+            if (markerRend == null) markerRend = clawMarker.GetComponent<Renderer>();
+            if (markerRend != null)
+            {
+                Color targetCol = IsOverChute ? new Color(0.2f, 1.0f, 0.35f, 0.75f) : new Color(1.0f, 0.9f, 0.2f, 0.45f);
+                if (markerMat == null)
+                {
+                    markerMat = new Material(markerRend.sharedMaterial);
+                    markerRend.sharedMaterial = markerMat;
+                }
+                markerMat.color = targetCol;
+            }
+
             // Magnet Ring Aura (2nd grab area slightly bigger than grab area: +1% to +10%)
-            Transform magnetRing = clawMarker.Find("MagnetRing");
+            if (magnetRing == null) magnetRing = clawMarker.Find("MagnetRing");
             float magnetBonus = GetGripPowerMultiplier() - 1f;
             if (magnetBonus > 0.001f)
             {
@@ -607,9 +678,11 @@ namespace ClawMachine.Gameplay
                     ringObj.transform.parent = clawMarker;
                     ringObj.transform.localPosition = new Vector3(0f, 0.001f, 0f);
                     ringObj.GetComponent<Collider>().enabled = false;
-                    Material mat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Unlit/Color"));
-                    mat.color = new Color(0.18f, 0.85f, 1.0f, 0.35f);
-                    ringObj.GetComponent<Renderer>().sharedMaterial = mat;
+                    magnetRingMat = markerMat != null
+                        ? new Material(markerMat)
+                        : new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
+                    magnetRingMat.color = new Color(0.18f, 0.85f, 1.0f, 0.35f);
+                    ringObj.GetComponent<Renderer>().sharedMaterial = magnetRingMat;
                     magnetRing = ringObj.transform;
                 }
                 magnetRing.gameObject.SetActive(true);
@@ -620,12 +693,184 @@ namespace ClawMachine.Gameplay
             {
                 magnetRing.gameObject.SetActive(false);
             }
+
+            // Pulsing Chute Target Indicator during Carrying state
+            if (CurrentState == ClawState.Carrying && chuteDropPoint != null)
+            {
+                if (chuteBeacon == null)
+                {
+                    GameObject beaconObj = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                    beaconObj.name = "ChuteDropBeacon";
+                    beaconObj.transform.SetParent( clawMarker.parent, false);
+                    beaconObj.GetComponent<Collider>().enabled = false;
+                    chuteBeaconMat = markerMat != null
+                        ? new Material(markerMat)
+                        : new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
+                    beaconObj.GetComponent<Renderer>().sharedMaterial = chuteBeaconMat;
+                    chuteBeacon = beaconObj.transform;
+                }
+                chuteBeacon.gameObject.SetActive(true);
+                chuteBeacon.position = new Vector3(chuteDropPoint.position.x, 0.115f, chuteDropPoint.position.z);
+                float pulse = 1f + Mathf.Sin(Time.time * 7f) * 0.12f;
+                chuteBeacon.localScale = new Vector3(0.68f * pulse, 0.006f, 0.68f * pulse);
+                if (chuteBeaconMat != null)
+                {
+                    float alpha = 0.45f + Mathf.Sin(Time.time * 7f) * 0.20f;
+                    chuteBeaconMat.color = IsOverChute
+                        ? new Color(0.2f, 1.0f, 0.4f, alpha + 0.15f)
+                        : new Color(1.0f, 0.78f, 0.15f, alpha);
+                }
+            }
+            else if (chuteBeacon != null && chuteBeacon.gameObject.activeSelf)
+            {
+                chuteBeacon.gameObject.SetActive(false);
+            }
         }
 
-        private void IgnoreEnvironmentCollisions()
+        private void EnsureVisualJuice()
         {
-            // Only ignore environment collisions on finger prongs, allowing fingers to phase through glass to reach edge toys,
-            // while the central hub/carriage remains physically restricted within cabinet bounds.
+            if (clawStatusLed == null && hoist != null)
+            {
+                Transform hub = hoist.Find("ClawSuspensionHub/ClawHub") ?? hoist;
+                GameObject ledGo = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                ledGo.name = "ClawStatusLED";
+                ledGo.transform.SetParent(hub, false);
+                ledGo.transform.localPosition = new Vector3(0f, 0.12f, 0f);
+                ledGo.transform.localScale = new Vector3(0.12f, 0.08f, 0.12f);
+                if (ledGo.TryGetComponent<Collider>(out var col)) Destroy(col);
+
+                var rend = ledGo.GetComponent<Renderer>();
+                Shader sh = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default") ?? Shader.Find("Standard");
+                ledMaterial = new Material(sh);
+                ledMaterial.color = new Color(0.2f, 0.85f, 1.0f);
+                rend.sharedMaterial = ledMaterial;
+                clawStatusLed = ledGo.transform;
+            }
+
+            if (gantryCrossRail == null && trolley != null && trolley.parent != null)
+            {
+                // Gantry cross carriage rail beam spanning X across the ceiling
+                GameObject railGo = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                railGo.name = "GantryCrossRail";
+                railGo.transform.SetParent(trolley.parent, false);
+                railGo.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+                railGo.transform.localScale = new Vector3(0.06f, 1.25f, 0.06f); // 2.5m span across X
+                railGo.transform.localPosition = new Vector3(0f, trolley.localPosition.y, trolley.localPosition.z);
+                if (railGo.TryGetComponent<Collider>(out var rcol)) Destroy(rcol);
+
+                var rRend = railGo.GetComponent<Renderer>();
+                Shader rsh = Shader.Find("Standard") ?? Shader.Find("Universal Render Pipeline/Lit");
+                railMat = new Material(rsh);
+                railMat.color = new Color(0.45f, 0.48f, 0.52f);
+                if (railMat.HasProperty("_Metallic")) railMat.SetFloat("_Metallic", 0.85f);
+                if (railMat.HasProperty("_Glossiness")) railMat.SetFloat("_Glossiness", 0.75f);
+                if (railMat.HasProperty("_Smoothness")) railMat.SetFloat("_Smoothness", 0.75f);
+                rRend.sharedMaterial = railMat;
+                gantryCrossRail = railGo.transform;
+            }
+
+            if (chuteRimMat == null)
+            {
+                var rims = FindObjectsByType<MeshRenderer>(FindObjectsSortMode.None);
+                List<Renderer> found = new List<Renderer>();
+                for (int i = 0; i < rims.Length; i++)
+                {
+                    if (rims[i].name.Contains("ChuteDivider_") && rims[i].name.Contains("_Rim"))
+                    {
+                        found.Add(rims[i]);
+                    }
+                }
+                if (found.Count > 0)
+                {
+                    chuteRimRenderers = found.ToArray();
+                    Shader sh = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default") ?? Shader.Find("Standard");
+                    chuteRimMat = new Material(sh);
+                    chuteRimMat.color = new Color(0.18f, 0.85f, 1.0f, 0.95f);
+                    for (int i = 0; i < chuteRimRenderers.Length; i++)
+                    {
+                        chuteRimRenderers[i].sharedMaterial = chuteRimMat;
+                    }
+                }
+            }
+        }
+
+        private void UpdateVisualJuice()
+        {
+            if (gantryCrossRail != null && trolley != null)
+            {
+                Vector3 rPos = gantryCrossRail.localPosition;
+                rPos.z = trolley.localPosition.z;
+                gantryCrossRail.localPosition = rPos;
+            }
+
+            if (ledMaterial != null)
+            {
+                Color ledCol;
+                if (CurrentState == ClawState.Aiming)
+                {
+                    float breath = 0.75f + Mathf.Sin(Time.time * 4f) * 0.25f;
+                    ledCol = new Color(0.15f * breath, 0.85f * breath, 1.0f * breath);
+                }
+                else if (CurrentState == ClawState.Descending || CurrentState == ClawState.Lifting)
+                {
+                    bool on = (Mathf.FloorToInt(Time.time * 8f) % 2) == 0;
+                    ledCol = on ? new Color(1.0f, 0.65f, 0.1f) : new Color(0.3f, 0.15f, 0.02f);
+                }
+                else if (CurrentState == ClawState.Carrying)
+                {
+                    if (HasPrize)
+                    {
+                        if (IsOverChute)
+                        {
+                            bool on = (Mathf.FloorToInt(Time.time * 12f) % 2) == 0;
+                            ledCol = on ? new Color(0.25f, 1.0f, 0.45f) : new Color(0.05f, 0.35f, 0.1f);
+                        }
+                        else
+                        {
+                            ledCol = new Color(0.2f, 1.0f, 0.35f);
+                        }
+                    }
+                    else
+                    {
+                        ledCol = new Color(1.0f, 0.2f, 0.2f);
+                    }
+                }
+                else
+                {
+                    ledCol = new Color(0.4f, 0.5f, 0.6f);
+                }
+                ledMaterial.color = ledCol;
+            }
+
+            if (chuteRimMat != null)
+            {
+                if (CurrentState == ClawState.Carrying && HasPrize)
+                {
+                    float pulse = 0.65f + Mathf.Sin(Time.time * 8f) * 0.35f;
+                    Color rimCol = IsOverChute
+                        ? new Color(0.2f * pulse, 1.0f * pulse, 0.4f * pulse)
+                        : new Color(0.18f * pulse, 0.85f * pulse, 1.0f * pulse);
+                    chuteRimMat.color = rimCol;
+                }
+                else
+                {
+                    chuteRimMat.color = new Color(0.18f, 0.85f, 1.0f, 0.75f);
+                }
+            }
+        }
+
+        public void IgnoreEnvironmentCollisions()
+        {
+            int clawLayer = LayerMask.NameToLayer("Claw");
+            int envLayer = LayerMask.NameToLayer("Environment");
+            int chuteLayer = LayerMask.NameToLayer("Chute");
+
+            if (clawLayer >= 0)
+            {
+                if (envLayer >= 0) Physics.IgnoreLayerCollision(clawLayer, envLayer, true);
+                if (chuteLayer >= 0) Physics.IgnoreLayerCollision(clawLayer, chuteLayer, true);
+            }
+
             List<Collider> fingerCols = new List<Collider>();
             if (arms != null)
             {
@@ -633,7 +878,12 @@ namespace ClawMachine.Gameplay
                 {
                     if (arms[i] != null)
                     {
-                        fingerCols.AddRange(arms[i].GetComponentsInChildren<Collider>(true));
+                        var cols = arms[i].GetComponentsInChildren<Collider>(true);
+                        fingerCols.AddRange(cols);
+                        if (clawLayer >= 0)
+                        {
+                            for (int c = 0; c < cols.Length; c++) cols[c].gameObject.layer = clawLayer;
+                        }
                     }
                 }
             }
@@ -650,31 +900,6 @@ namespace ClawMachine.Gameplay
                 }
             }
 
-            if (cabinetRoot == null)
-            {
-                GameObject cabinet = GameObject.Find("Cabinet");
-                if (cabinet != null) cabinetRoot = cabinet.transform;
-            }
-
-            if (cabinetRoot != null)
-            {
-                Collider[] envCols = cabinetRoot.GetComponentsInChildren<Collider>(true);
-                for (int c = 0; c < fingerCols.Count; c++)
-                {
-                    for (int e = 0; e < envCols.Length; e++)
-                    {
-                        if (fingerCols[c] != null && envCols[e] != null && !envCols[e].isTrigger)
-                        {
-                            if (envCols[e].GetComponentInParent<Prize>() == null)
-                            {
-                                Physics.IgnoreCollision(fingerCols[c], envCols[e], true);
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Also ignore any barriers under MachineController
             MachineController mc = FindFirstObjectByType<MachineController>();
             if (mc != null)
             {
@@ -683,7 +908,7 @@ namespace ClawMachine.Gameplay
                 {
                     for (int e = 0; e < mcCols.Length; e++)
                     {
-                        if (fingerCols[c] != null && mcCols[e] != null && !mcCols[e].isTrigger)
+                        if (fingerCols[c] != null && mcCols[e] != null && !mcCols[e].isTrigger && mcCols[e].GetComponentInParent<Prize>() == null)
                         {
                             Physics.IgnoreCollision(fingerCols[c], mcCols[e], true);
                         }

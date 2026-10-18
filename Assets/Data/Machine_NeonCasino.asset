@@ -10,14 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e43e2d75f55b32447924fcd3fe31ac05, type: 3}
-  m_Name: Neon Casino
+  m_Name: Machine_NeonCasino
   m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.Data.MachineDefinition
   machineId: neon_casino
   displayName: Neon Casino
   description: High-roller 1970s Vegas casino cabinet gleaming in mirror lacquer,
     sovereign gold, and jackpot lights.
   unlockCost: 25000
-  entryCost: 0
+  entryCost: 175
   passiveIncomePerMinute: 110
   theme: {fileID: 11400000, guid: 83f0cbfc3e374b289c303174b7e64751, type: 2}
   cabinetFrameColor: {r: 0.2, g: 0.05, b: 0.08, a: 1}

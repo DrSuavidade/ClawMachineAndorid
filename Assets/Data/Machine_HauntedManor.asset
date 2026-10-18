@@ -10,14 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e43e2d75f55b32447924fcd3fe31ac05, type: 3}
-  m_Name: Haunted Manor
+  m_Name: Machine_HauntedManor
   m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.Data.MachineDefinition
   machineId: haunted_manor
   displayName: Haunted Manor
   description: "Gothic s\xE9ance parlor cabinet illuminated by eerie green ectoplasm
     and candlelit spirits."
   unlockCost: 16000
-  entryCost: 0
+  entryCost: 120
   passiveIncomePerMinute: 75
   theme: {fileID: 11400000, guid: 91fb2d66ed9e40f29659764026f6707c, type: 2}
   cabinetFrameColor: {r: 0.24, g: 0.16, b: 0.32, a: 1}

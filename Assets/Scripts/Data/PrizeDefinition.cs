@@ -18,6 +18,7 @@ namespace ClawMachine.Data
         public PrizeRarity rarity = PrizeRarity.Normal;
 
         [Header("Visuals & Physics")]
+        public Sprite icon;
         public GameObject prefab;
         public float mass = 0.5f;
         public float bounciness = 0.1f;

@@ -16,12 +16,13 @@ MonoBehaviour:
   displayName: Sweet Candy
   description: Indulge in sugary confectioneries, pastries, and crystalline desserts.
   unlockCost: 1500
-  entryCost: 35
+  entryCost: 20
   theme: {fileID: 11400000, guid: 8e97e3348e5747b6b89de0211d081fad, type: 2}
   passiveIncomePerMinute: 18
   cabinetFrameColor: {r: 0.96, g: 0.36, b: 0.62, a: 1}
   cabinetBackdropColor: {r: 0.18, g: 0.38, b: 0.34, a: 1}
   environmentPrefab: {fileID: 2276124567081969334, guid: b35a6ea9f71ffe345a4cce41df108cb4, type: 3}
+  bgmClip: {fileID: 8300000, guid: 020e9637a471205a89ce2aef8847f2f1, type: 3}
   ambientLightColor: {r: 0.32, g: 0.25, b: 0.28, a: 1}
   directionalLightColor: {r: 1, g: 0.85, b: 0.9, a: 1}
   cameraFieldOfView: 45

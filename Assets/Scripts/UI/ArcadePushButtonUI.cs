@@ -31,6 +31,18 @@ namespace ClawMachine.UI
                 machineController = FindFirstObjectByType<MachineController>();
             }
 
+            Image baseImg = GetComponent<Image>();
+            if (baseImg != null)
+            {
+                baseImg.sprite = UIStyleHelper.ArcadeButtonBezelSprite;
+                baseImg.color = Color.white;
+            }
+
+            if (plungerImage != null)
+            {
+                plungerImage.sprite = UIStyleHelper.ArcadeButtonCapSprite;
+            }
+
             if (plungerTransform != null)
             {
                 plungerTransform.anchoredPosition = Vector2.zero;
@@ -43,6 +55,10 @@ namespace ClawMachine.UI
             if (machineController != null)
             {
                 machineController.OnStateChanged += HandleStateChanged;
+                if (machineController.Claw != null)
+                {
+                    machineController.Claw.OnCarryTimerUpdated += HandleCarryTimerUpdated;
+                }
             }
             ClawMachine.UI.Theming.UIThemeManager.OnThemeChanged += HandleThemeChanged;
             if (ClawMachine.UI.Theming.UIThemeManager.Instance != null && ClawMachine.UI.Theming.UIThemeManager.Instance.CurrentTheme != null)
@@ -56,8 +72,20 @@ namespace ClawMachine.UI
             if (machineController != null)
             {
                 machineController.OnStateChanged -= HandleStateChanged;
+                if (machineController.Claw != null)
+                {
+                    machineController.Claw.OnCarryTimerUpdated -= HandleCarryTimerUpdated;
+                }
             }
             ClawMachine.UI.Theming.UIThemeManager.OnThemeChanged -= HandleThemeChanged;
+        }
+
+        private void HandleCarryTimerUpdated(float remainingSeconds)
+        {
+            if (labelText != null && machineController != null && machineController.Claw != null && machineController.Claw.CurrentState == ClawState.Carrying)
+            {
+                labelText.text = $"DROP ({Mathf.CeilToInt(remainingSeconds)}s)";
+            }
         }
 
         private void HandleThemeChanged(ClawMachine.Data.CabinetTheme theme)
@@ -74,7 +102,7 @@ namespace ClawMachine.UI
 
         public void OnPointerDown(PointerEventData eventData)
         {
-            if (!isInteractable) return;
+            if (!isInteractable || ArcadeConsoleUI.IsAnyModalOpen()) return;
             if (plungerTransform != null)
             {
                 plungerTransform.anchoredPosition = initialPlungerPos + new Vector2(0f, -plungeOffset);
@@ -111,9 +139,24 @@ namespace ClawMachine.UI
             }
         }
 
+        private void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return))
+            {
+                TriggerPress();
+            }
+        }
+
         public void OnPointerClick(PointerEventData eventData)
         {
-            if (!isInteractable) return;
+            TriggerPress();
+        }
+
+        private void TriggerPress()
+        {
+            if (!isInteractable || ArcadeConsoleUI.IsAnyModalOpen()) return;
+
+            Core.Services.ServiceLocator.Get<Core.Services.IAudioService>()?.PlayUIClick();
 
             if (punchRoutine != null) StopCoroutine(punchRoutine);
             punchRoutine = StartCoroutine(PunchRoutine());

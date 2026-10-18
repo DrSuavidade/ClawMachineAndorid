@@ -1482,6 +1482,7 @@ GameObject:
   - component: {fileID: 8454262672802353534}
   - component: {fileID: 3317174751649319018}
   - component: {fileID: 6976455171724182785}
+  - component: {fileID: 1087039759590611264}
   m_Layer: 0
   m_Name: CollectionModal
   m_TagString: Untagged
@@ -1550,6 +1551,21 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &1087039759590611264
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 694593096084654478}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f923bc38aec44ddb5ab5dcdf3a92ef3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.UI.Theming.ThemedUIElement
+  targetType: 3
+  overrideAlpha: 0
+  customAlpha: 1
 --- !u!1 &765031017698526237
 GameObject:
   m_ObjectHideFlags: 0
@@ -1718,6 +1734,7 @@ GameObject:
   - component: {fileID: 8448516292172026614}
   - component: {fileID: 2406942875111525656}
   - component: {fileID: 6186599793505704916}
+  - component: {fileID: 5187853705698575125}
   m_Layer: 0
   m_Name: Rivet
   m_TagString: Untagged
@@ -1782,6 +1799,21 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &5187853705698575125
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 829260169582890475}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f923bc38aec44ddb5ab5dcdf3a92ef3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.UI.Theming.ThemedUIElement
+  targetType: 9
+  overrideAlpha: 0
+  customAlpha: 1
 --- !u!1 &843208696847872820
 GameObject:
   m_ObjectHideFlags: 0
@@ -2461,6 +2493,7 @@ GameObject:
   - component: {fileID: 3547225526486271771}
   - component: {fileID: 2830494231849679950}
   - component: {fileID: 4602394925983069299}
+  - component: {fileID: 2212050355590002206}
   m_Layer: 0
   m_Name: ProgressModal
   m_TagString: Untagged
@@ -2530,6 +2563,21 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &2212050355590002206
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1163729028224033517}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f923bc38aec44ddb5ab5dcdf3a92ef3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.UI.Theming.ThemedUIElement
+  targetType: 3
+  overrideAlpha: 0
+  customAlpha: 1
 --- !u!1 &1170820993421023523
 GameObject:
   m_ObjectHideFlags: 0
@@ -2936,6 +2984,7 @@ GameObject:
   - component: {fileID: 7405332063131722075}
   - component: {fileID: 3863833051027606715}
   - component: {fileID: 8346237144726118766}
+  - component: {fileID: 8487110280468683380}
   m_Layer: 0
   m_Name: DialogCard
   m_TagString: Untagged
@@ -3020,6 +3069,21 @@ MonoBehaviour:
   m_EffectColor: {r: 1, g: 0.82, b: 0.2, a: 0.8}
   m_EffectDistance: {x: 4, y: -4}
   m_UseGraphicAlpha: 1
+--- !u!114 &8487110280468683380
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1414149183958199393}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f923bc38aec44ddb5ab5dcdf3a92ef3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.UI.Theming.ThemedUIElement
+  targetType: 6
+  overrideAlpha: 0
+  customAlpha: 1
 --- !u!1 &1444747772391593723
 GameObject:
   m_ObjectHideFlags: 0
@@ -3486,6 +3550,7 @@ GameObject:
   - component: {fileID: 218030998704458971}
   - component: {fileID: 258328339564798965}
   - component: {fileID: 2615524082171039309}
+  - component: {fileID: 7166979417287203541}
   m_Layer: 0
   m_Name: Btn_SellDuplicates
   m_TagString: Untagged
@@ -3595,6 +3660,21 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &7166979417287203541
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1572985714325484863}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f923bc38aec44ddb5ab5dcdf3a92ef3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.UI.Theming.ThemedUIElement
+  targetType: 7
+  overrideAlpha: 0
+  customAlpha: 1
 --- !u!1 &1603962792788517523
 GameObject:
   m_ObjectHideFlags: 0
@@ -4064,6 +4144,7 @@ GameObject:
   - component: {fileID: 3446086971189738110}
   - component: {fileID: 896413576642849721}
   - component: {fileID: 4604467549647870239}
+  - component: {fileID: 4366492734470209129}
   m_Layer: 0
   m_Name: Rivet
   m_TagString: Untagged
@@ -4128,6 +4209,21 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &4366492734470209129
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1770008042647816273}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f923bc38aec44ddb5ab5dcdf3a92ef3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.UI.Theming.ThemedUIElement
+  targetType: 9
+  overrideAlpha: 0
+  customAlpha: 1
 --- !u!1 &1809647140391304000
 GameObject:
   m_ObjectHideFlags: 0
@@ -4334,6 +4430,7 @@ GameObject:
   - component: {fileID: 4486346393503717655}
   - component: {fileID: 1996704702981577223}
   - component: {fileID: 421925594929063642}
+  - component: {fileID: 855676366391031835}
   m_Layer: 0
   m_Name: Btn_NextMachine
   m_TagString: Untagged
@@ -4443,6 +4540,21 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &855676366391031835
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1942111953792970319}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f923bc38aec44ddb5ab5dcdf3a92ef3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.UI.Theming.ThemedUIElement
+  targetType: 7
+  overrideAlpha: 0
+  customAlpha: 1
 --- !u!1 &2028847246550914941
 GameObject:
   m_ObjectHideFlags: 0
@@ -8881,6 +8993,7 @@ GameObject:
   - component: {fileID: 2062493803804414059}
   - component: {fileID: 1639717215423855057}
   - component: {fileID: 5336591117058131962}
+  - component: {fileID: 1721063336604949864}
   m_Layer: 0
   m_Name: Btn_ConfirmUnlock
   m_TagString: Untagged
@@ -8990,6 +9103,21 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1721063336604949864
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4205230831178621071}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f923bc38aec44ddb5ab5dcdf3a92ef3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.UI.Theming.ThemedUIElement
+  targetType: 7
+  overrideAlpha: 0
+  customAlpha: 1
 --- !u!1 &4219805856253060160
 GameObject:
   m_ObjectHideFlags: 0
@@ -9834,6 +9962,7 @@ GameObject:
   - component: {fileID: 3005553562052534834}
   - component: {fileID: 6429005434592309947}
   - component: {fileID: 7216169871652081223}
+  - component: {fileID: 4600142365369295062}
   m_Layer: 0
   m_Name: SettingsModal
   m_TagString: Untagged
@@ -9901,6 +10030,21 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &4600142365369295062
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4508248266157502274}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f923bc38aec44ddb5ab5dcdf3a92ef3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.UI.Theming.ThemedUIElement
+  targetType: 3
+  overrideAlpha: 0
+  customAlpha: 1
 --- !u!1 &4509410112209424910
 GameObject:
   m_ObjectHideFlags: 0
@@ -10184,6 +10328,7 @@ GameObject:
   - component: {fileID: 4627285819640613696}
   - component: {fileID: 3045719408584126745}
   - component: {fileID: 3582617491396765020}
+  - component: {fileID: 5248138304103077409}
   m_Layer: 0
   m_Name: CarouselStrip
   m_TagString: Untagged
@@ -10252,6 +10397,21 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &5248138304103077409
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4587651358271693329}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f923bc38aec44ddb5ab5dcdf3a92ef3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.UI.Theming.ThemedUIElement
+  targetType: 1
+  overrideAlpha: 0
+  customAlpha: 1
 --- !u!1 &4609137553254596458
 GameObject:
   m_ObjectHideFlags: 0
@@ -10579,6 +10739,7 @@ GameObject:
   - component: {fileID: 6232943664721489853}
   - component: {fileID: 2496110647923673795}
   - component: {fileID: 7039461546192664694}
+  - component: {fileID: 89218046717352024}
   m_Layer: 0
   m_Name: Rivet
   m_TagString: Untagged
@@ -10643,6 +10804,21 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &89218046717352024
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4811539023899240145}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f923bc38aec44ddb5ab5dcdf3a92ef3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.UI.Theming.ThemedUIElement
+  targetType: 9
+  overrideAlpha: 0
+  customAlpha: 1
 --- !u!1 &4833449169957589680
 GameObject:
   m_ObjectHideFlags: 0
@@ -10733,6 +10909,7 @@ GameObject:
   - component: {fileID: 1204010495073520866}
   - component: {fileID: 6116796657464600814}
   - component: {fileID: 7492052968590396027}
+  - component: {fileID: 318058010410481936}
   m_Layer: 0
   m_Name: MarqueeRim
   m_TagString: Untagged
@@ -10797,6 +10974,21 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &318058010410481936
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4833457486960366985}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f923bc38aec44ddb5ab5dcdf3a92ef3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.UI.Theming.ThemedUIElement
+  targetType: 6
+  overrideAlpha: 0
+  customAlpha: 1
 --- !u!1 &4901039542958867494
 GameObject:
   m_ObjectHideFlags: 0
@@ -11196,6 +11388,7 @@ GameObject:
   - component: {fileID: 108603586565127799}
   - component: {fileID: 7059745618805282368}
   - component: {fileID: 8808948874780035810}
+  - component: {fileID: 3206315130298472496}
   m_Layer: 0
   m_Name: Rivet
   m_TagString: Untagged
@@ -11260,6 +11453,21 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &3206315130298472496
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5024410906676612151}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f923bc38aec44ddb5ab5dcdf3a92ef3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.UI.Theming.ThemedUIElement
+  targetType: 9
+  overrideAlpha: 0
+  customAlpha: 1
 --- !u!1 &5029550414709761956
 GameObject:
   m_ObjectHideFlags: 0
@@ -12164,6 +12372,7 @@ GameObject:
   - component: {fileID: 3346604024380788546}
   - component: {fileID: 2555392169457735838}
   - component: {fileID: 4085048518127550384}
+  - component: {fileID: 3881407333903073426}
   m_Layer: 0
   m_Name: Rivet
   m_TagString: Untagged
@@ -12228,6 +12437,21 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &3881407333903073426
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5389824808062084884}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f923bc38aec44ddb5ab5dcdf3a92ef3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.UI.Theming.ThemedUIElement
+  targetType: 9
+  overrideAlpha: 0
+  customAlpha: 1
 --- !u!1 &5403490240252312406
 GameObject:
   m_ObjectHideFlags: 0
@@ -12792,6 +13016,7 @@ GameObject:
   - component: {fileID: 6064085740074063264}
   - component: {fileID: 5682513472070942382}
   - component: {fileID: 3263520474491852744}
+  - component: {fileID: 3101127568106824735}
   m_Layer: 0
   m_Name: Rivet
   m_TagString: Untagged
@@ -12856,6 +13081,21 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &3101127568106824735
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5616403701533654220}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f923bc38aec44ddb5ab5dcdf3a92ef3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.UI.Theming.ThemedUIElement
+  targetType: 9
+  overrideAlpha: 0
+  customAlpha: 1
 --- !u!1 &5629144314926684963
 GameObject:
   m_ObjectHideFlags: 0
@@ -13584,6 +13824,7 @@ GameObject:
   - component: {fileID: 2882045872291923791}
   - component: {fileID: 6951637494565325512}
   - component: {fileID: 1283977715090377383}
+  - component: {fileID: 7476767087756497004}
   m_Layer: 0
   m_Name: CelebrationModal
   m_TagString: Untagged
@@ -13650,6 +13891,21 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &7476767087756497004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5803318486192832201}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f923bc38aec44ddb5ab5dcdf3a92ef3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.UI.Theming.ThemedUIElement
+  targetType: 3
+  overrideAlpha: 0
+  customAlpha: 1
 --- !u!1 &5908384016434191159
 GameObject:
   m_ObjectHideFlags: 0
@@ -13939,6 +14195,7 @@ GameObject:
   - component: {fileID: 8715600762005158727}
   - component: {fileID: 8559037596218086312}
   - component: {fileID: 5594526366968160294}
+  - component: {fileID: 1994847848213172255}
   m_Layer: 0
   m_Name: DialogCard
   m_TagString: Untagged
@@ -14008,6 +14265,21 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &1994847848213172255
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6058376946726489156}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f923bc38aec44ddb5ab5dcdf3a92ef3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.UI.Theming.ThemedUIElement
+  targetType: 6
+  overrideAlpha: 0
+  customAlpha: 1
 --- !u!1 &6064575597115095470
 GameObject:
   m_ObjectHideFlags: 0
@@ -17025,6 +17297,7 @@ GameObject:
   - component: {fileID: 5655789557068981122}
   - component: {fileID: 6749079599088335461}
   - component: {fileID: 401876717727402621}
+  - component: {fileID: 1939378578814033044}
   m_Layer: 0
   m_Name: Rivet
   m_TagString: Untagged
@@ -17089,6 +17362,21 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &1939378578814033044
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7744204602804266932}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f923bc38aec44ddb5ab5dcdf3a92ef3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.UI.Theming.ThemedUIElement
+  targetType: 9
+  overrideAlpha: 0
+  customAlpha: 1
 --- !u!1 &7786512904174901241
 GameObject:
   m_ObjectHideFlags: 0
@@ -17100,6 +17388,7 @@ GameObject:
   - component: {fileID: 5846930276728700561}
   - component: {fileID: 3205295673858018759}
   - component: {fileID: 3094274691481953993}
+  - component: {fileID: 8886532089994197646}
   m_Layer: 0
   m_Name: UnlockModal
   m_TagString: Untagged
@@ -17169,6 +17458,21 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &8886532089994197646
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7786512904174901241}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f923bc38aec44ddb5ab5dcdf3a92ef3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.UI.Theming.ThemedUIElement
+  targetType: 3
+  overrideAlpha: 0
+  customAlpha: 1
 --- !u!1 &7794571246460346355
 GameObject:
   m_ObjectHideFlags: 0
@@ -17853,6 +18157,7 @@ GameObject:
   - component: {fileID: 8432079324151386467}
   - component: {fileID: 3474350020831890403}
   - component: {fileID: 8233217531707501083}
+  - component: {fileID: 6008264070133892493}
   m_Layer: 0
   m_Name: ArcadeConsole_UI
   m_TagString: Untagged
@@ -17978,6 +18283,20 @@ MonoBehaviour:
   unlockConfirmButton: {fileID: 5336591117058131962}
   unlockConfirmButtonText: {fileID: 3486347132620230338}
   unlockCancelButton: {fileID: 2871460278841298083}
+--- !u!114 &6008264070133892493
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8079270266159707942}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02a1a018173047479a2208c44d2996d1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.UI.Theming.UIThemeManager
+  fallbackTheme: {fileID: 0}
+  currentTheme: {fileID: 0}
 --- !u!1 &8126200718960812347
 GameObject:
   m_ObjectHideFlags: 0
@@ -18382,6 +18701,7 @@ GameObject:
   - component: {fileID: 2639657228844577238}
   - component: {fileID: 8140095573809285213}
   - component: {fileID: 8194592683485727040}
+  - component: {fileID: 7726298749540288321}
   m_Layer: 0
   m_Name: Btn_PrevMachine
   m_TagString: Untagged
@@ -18491,6 +18811,21 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &7726298749540288321
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8217137127507048015}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f923bc38aec44ddb5ab5dcdf3a92ef3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.UI.Theming.ThemedUIElement
+  targetType: 7
+  overrideAlpha: 0
+  customAlpha: 1
 --- !u!1 &8391077302399397687
 GameObject:
   m_ObjectHideFlags: 0
@@ -19900,6 +20235,7 @@ GameObject:
   - component: {fileID: 6870906397847798669}
   - component: {fileID: 4607235449399461533}
   - component: {fileID: 3114972859541820558}
+  - component: {fileID: 6511232203612116881}
   m_Layer: 0
   m_Name: ConsoleRim
   m_TagString: Untagged
@@ -19964,6 +20300,21 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &6511232203612116881
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8785328980337447642}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f923bc38aec44ddb5ab5dcdf3a92ef3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.UI.Theming.ThemedUIElement
+  targetType: 1
+  overrideAlpha: 0
+  customAlpha: 1
 --- !u!1 &8803341497609582959
 GameObject:
   m_ObjectHideFlags: 0
@@ -20133,6 +20484,7 @@ GameObject:
   - component: {fileID: 2793010864490126963}
   - component: {fileID: 3913429204572008654}
   - component: {fileID: 2950395636343419992}
+  - component: {fileID: 7429538900180593957}
   m_Layer: 0
   m_Name: Rivet
   m_TagString: Untagged
@@ -20197,6 +20549,21 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &7429538900180593957
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8894696622854507340}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f923bc38aec44ddb5ab5dcdf3a92ef3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.UI.Theming.ThemedUIElement
+  targetType: 9
+  overrideAlpha: 0
+  customAlpha: 1
 --- !u!1 &8894966975668634895
 GameObject:
   m_ObjectHideFlags: 0
@@ -20209,6 +20576,7 @@ GameObject:
   - component: {fileID: 7592783928368983000}
   - component: {fileID: 7482367224201836543}
   - component: {fileID: 4878841474225563517}
+  - component: {fileID: 3234761192153104209}
   m_Layer: 0
   m_Name: Btn_Awesome
   m_TagString: Untagged
@@ -20318,6 +20686,21 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &3234761192153104209
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8894966975668634895}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f923bc38aec44ddb5ab5dcdf3a92ef3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ClawMachine.UI.Theming.ThemedUIElement
+  targetType: 7
+  overrideAlpha: 0
+  customAlpha: 1
 --- !u!1 &8931750388004117625
 GameObject:
   m_ObjectHideFlags: 0

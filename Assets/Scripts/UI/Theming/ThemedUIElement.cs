@@ -106,33 +106,38 @@ namespace ClawMachine.UI.Theming
                     targetColor = theme.textColorBody;
                     break;
                 case ThemeTargetType.FrameBorder:
-                    if (imageComponent != null && theme.frameBorder != null)
+                    if (imageComponent != null)
                     {
-                        imageComponent.sprite = theme.frameBorder;
+                        imageComponent.sprite = theme.frameBorder != null ? theme.frameBorder : UIStyleHelper.RoundedCardSprite;
                         imageComponent.type = Image.Type.Sliced;
                     }
                     targetColor = theme.primaryColor;
                     break;
                 case ThemeTargetType.ButtonBackground:
-                    if (imageComponent != null && theme.buttonBackground != null)
+                    if (imageComponent != null)
                     {
-                        imageComponent.sprite = theme.buttonBackground;
+                        imageComponent.sprite = theme.buttonBackground != null ? theme.buttonBackground : UIStyleHelper.PillButtonGlossSprite;
                         imageComponent.type = Image.Type.Sliced;
+                    }
+                    Button btn = GetComponent<Button>();
+                    if (btn != null)
+                    {
+                        UIStyleHelper.StyleButton(btn);
                     }
                     targetColor = theme.accentColor;
                     break;
                 case ThemeTargetType.HeaderBanner:
-                    if (imageComponent != null && theme.headerBanner != null)
+                    if (imageComponent != null)
                     {
-                        imageComponent.sprite = theme.headerBanner;
+                        imageComponent.sprite = theme.headerBanner != null ? theme.headerBanner : UIStyleHelper.RoundedCardSprite;
                         imageComponent.type = Image.Type.Sliced;
                     }
                     targetColor = theme.primaryColor;
                     break;
                 case ThemeTargetType.RivetBulb:
-                    if (imageComponent != null && theme.rivetBulb != null)
+                    if (imageComponent != null)
                     {
-                        imageComponent.sprite = theme.rivetBulb;
+                        imageComponent.sprite = theme.rivetBulb != null ? theme.rivetBulb : UIStyleHelper.BadgePillSprite;
                         imageComponent.type = Image.Type.Simple;
                         imageComponent.preserveAspect = true;
                     }
@@ -147,6 +152,11 @@ namespace ClawMachine.UI.Theming
                     targetColor.a = customAlpha;
                 }
                 graphicComponent.color = targetColor;
+            }
+
+            if (textComponent != null && (targetType == ThemeTargetType.HeaderText || targetType == ThemeTargetType.ButtonBackground))
+            {
+                UIStyleHelper.AddDropShadow(textComponent, new Color(0f, 0f, 0f, 0.60f), new Vector2(1f, -1.5f));
             }
         }
     }

@@ -22,6 +22,7 @@ namespace ClawMachine.Data
 
         [Header("Atmosphere & Environment")]
         public GameObject environmentPrefab;
+        public AudioClip bgmClip;
         public Color ambientLightColor = new Color(0.25f, 0.25f, 0.30f);
         public Color directionalLightColor = new Color(1.0f, 0.96f, 0.90f);
         public float cameraFieldOfView = 45f;

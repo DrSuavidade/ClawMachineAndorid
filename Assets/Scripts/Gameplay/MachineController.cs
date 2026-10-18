@@ -44,6 +44,10 @@ namespace ClawMachine.Gameplay
         public void SwipeToMachine(int targetIndex, MachineDefinition machine, float duration = 0.40f)
         {
             if (machine == null || !CanSwitchMachine) return;
+            if (ServiceLocator.TryGet<ICollectionService>(out var coll) && !coll.IsMachineUnlocked(machine.machineId))
+            {
+                return;
+            }
             if (carouselContainer == null || slotCurr == null)
             {
                 ApplyMachine(machine);
@@ -51,6 +55,7 @@ namespace ClawMachine.Gameplay
             }
 
             if (swipeRoutine != null) StopCoroutine(swipeRoutine);
+            ServiceLocator.Get<IAudioService>()?.PlayCarouselSwipe();
             swipeRoutine = StartCoroutine(SwipeRoutine(targetIndex, machine, duration));
         }
 
@@ -209,14 +214,23 @@ namespace ClawMachine.Gameplay
 
         private void ReconnectActiveSlot()
         {
+            if (chuteDetector != null)
+            {
+                chuteDetector.OnPrizeCollected -= HandlePrizeCollected;
+            }
             if (slotCurr != null)
             {
                 chuteDetector = slotCurr.ChuteDetector;
                 prizeSpawner = slotCurr.PrizeSpawner;
-                if (chuteDetector != null)
-                {
-                    chuteDetector.OnPrizeCollected += HandlePrizeCollected;
-                }
+            }
+            if (chuteDetector != null)
+            {
+                chuteDetector.OnPrizeCollected -= HandlePrizeCollected;
+                chuteDetector.OnPrizeCollected += HandlePrizeCollected;
+            }
+            if (claw != null)
+            {
+                claw.IgnoreEnvironmentCollisions();
             }
         }
 
@@ -238,20 +252,27 @@ namespace ClawMachine.Gameplay
         {
             if (machine == null) return;
 
-            // Re-skin cabinet materials
+            // Re-skin cabinet materials without leaking Material instances
+            var propBlock = new MaterialPropertyBlock();
             if (cabinetFrameRenderers != null)
             {
                 for (int i = 0; i < cabinetFrameRenderers.Length; i++)
                 {
                     if (cabinetFrameRenderers[i] != null)
                     {
-                        cabinetFrameRenderers[i].material.color = machine.cabinetFrameColor;
+                        cabinetFrameRenderers[i].GetPropertyBlock(propBlock);
+                        propBlock.SetColor("_BaseColor", machine.cabinetFrameColor);
+                        propBlock.SetColor("_Color", machine.cabinetFrameColor);
+                        cabinetFrameRenderers[i].SetPropertyBlock(propBlock);
                     }
                 }
             }
             if (cabinetBackdropRenderer != null)
             {
-                cabinetBackdropRenderer.material.color = machine.cabinetBackdropColor;
+                cabinetBackdropRenderer.GetPropertyBlock(propBlock);
+                propBlock.SetColor("_BaseColor", machine.cabinetBackdropColor);
+                propBlock.SetColor("_Color", machine.cabinetBackdropColor);
+                cabinetBackdropRenderer.SetPropertyBlock(propBlock);
             }
 
             // Suppress chute detection during switch/settling
@@ -352,6 +373,12 @@ namespace ClawMachine.Gameplay
         {
             if (slotCurr != null && catalog != null)
             {
+                if (ServiceLocator.TryGet<ICollectionService>(out var coll) && coll.CurrentMachine != null)
+                {
+                    int savedIdx = catalog.IndexOf(coll.CurrentMachine);
+                    if (savedIdx >= 0) currentSlotIndex = savedIdx;
+                }
+
                 slotCurr.transform.localPosition = Vector3.zero;
                 slotCurr.Bind(catalog.GetMachine(currentSlotIndex), currentSlotIndex, spawnPrizes: true);
 
@@ -388,11 +415,19 @@ namespace ClawMachine.Gameplay
                     var currentMach = ServiceLocator.TryGet<ICollectionService>(out var col) ? col.CurrentMachine : null;
                     if (!econService.TryDeductPlayCost(currentMach))
                     {
-                        Debug.Log("[MachineController] Not enough coins to play!");
+                        ServiceLocator.Get<IAudioService>()?.PlayErrorBuzz();
+                        Debug.Log("[MachineController] Not enough coins to play! Showing Watch Ad prompt.");
+                        var adSvc = AdService.Instance ?? FindFirstObjectByType<AdService>();
+                        if (adSvc == null)
+                        {
+                            adSvc = gameObject.AddComponent<AdService>();
+                        }
+                        adSvc.ShowOutOfCoinsPrompt();
                         return;
                     }
                 }
 
+                ServiceLocator.Get<IAudioService>()?.PlayCoinInsert();
                 totalAttempts++;
                 if (ServiceLocator.TryGet<IRetentionService>(out var retService))
                 {

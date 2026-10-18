@@ -107,16 +107,14 @@ namespace ClawMachine.Editor
         {
             string path = $"Assets/Materials/RetroArcade/{name}.mat";
             Material mat = AssetDatabase.LoadAssetAtPath<Material>(path);
+            Shader toonShader = Shader.Find("ClawMachine/ToonOutline") ?? Shader.Find("Universal Render Pipeline/Lit");
             if (mat == null)
             {
-                mat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-                mat.color = color;
+                mat = new Material(toonShader);
                 AssetDatabase.CreateAsset(mat, path);
             }
-            else
-            {
-                mat.color = color;
-            }
+            mat.color = color;
+            MaterialStylizer.StyleMaterialWithToon(mat, toonShader);
             return mat;
         }
 
@@ -124,14 +122,17 @@ namespace ClawMachine.Editor
         {
             string path = $"Assets/Materials/RetroArcade/{name}.mat";
             Material mat = AssetDatabase.LoadAssetAtPath<Material>(path);
+            Shader toonShader = Shader.Find("ClawMachine/ToonOutline") ?? Shader.Find("Universal Render Pipeline/Lit");
             if (mat == null)
             {
-                mat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-                mat.color = color;
-                mat.SetFloat("_Metallic", metallic);
-                mat.SetFloat("_Smoothness", smoothness);
+                mat = new Material(toonShader);
                 AssetDatabase.CreateAsset(mat, path);
             }
+            mat.color = color;
+            mat.SetFloat("_Metallic", metallic);
+            mat.SetFloat("_Smoothness", smoothness);
+            mat.SetFloat("_Glossiness", smoothness);
+            MaterialStylizer.StyleMaterialWithToon(mat, toonShader);
             return mat;
         }
 

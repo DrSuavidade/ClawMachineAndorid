@@ -91,7 +91,12 @@ namespace ClawMachine.UI
             AutoFindRefsIfNull();
             SetupCollectButton();
 
-            if (modalPanel != null) modalPanel.SetActive(true);
+            if (modalPanel != null)
+            {
+                modalPanel.SetActive(true);
+                Transform card = modalPanel.transform.Find("DialogCard") ?? modalPanel.transform;
+                UIStyleHelper.AnimatePopIn(this, card);
+            }
 
             string timeStr;
             if (awayTime.TotalHours >= 1.0)
@@ -110,7 +115,7 @@ namespace ClawMachine.UI
 
             if (earnedCoinsText != null)
             {
-                earnedCoinsText.text = $"+{coins:N0} 🪙";
+                earnedCoinsText.text = $"+{coins:N0} COINS";
             }
         }
 
@@ -124,7 +129,7 @@ namespace ClawMachine.UI
 
             if (ServiceLocator.TryGet<IAudioService>(out var audio))
             {
-                audio.PlayWin();
+                audio.PlayCoinReward();
             }
 
             ClawJuiceEffects.Instance?.PlayWinCelebration(transform.position);

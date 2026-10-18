@@ -28,8 +28,6 @@ namespace ClawMachine.UI
         [SerializeField] private Text completionText;
         [SerializeField] private Button completionCloseButton;
 
-        private readonly List<GameObject> cardObjects = new List<GameObject>();
-
         private void Awake()
         {
             if (toggleButton != null)
@@ -42,7 +40,7 @@ namespace ClawMachine.UI
             }
             if (sellDuplicatesButton != null)
             {
-                sellDuplicatesButton.onClick.AddListener(OnSellDuplicatesClicked);
+                sellDuplicatesButton.gameObject.SetActive(false);
             }
             if (completionCloseButton != null)
             {
@@ -71,25 +69,29 @@ namespace ClawMachine.UI
         {
             if (isSubscribed) return;
 
-            if (ServiceLocator.TryGet<IEconomyService>(out var econ))
+            bool hasEcon = ServiceLocator.TryGet<IEconomyService>(out var econ);
+            if (hasEcon)
             {
+                econ.OnCoinsChanged -= HandleCoinsChanged;
                 econ.OnCoinsChanged += HandleCoinsChanged;
             }
 
-            if (ServiceLocator.TryGet<ICollectionService>(out var coll))
+            bool hasColl = ServiceLocator.TryGet<ICollectionService>(out var coll);
+            if (hasColl)
             {
+                coll.OnPrizeRegistered -= HandlePrizeRegistered;
                 coll.OnPrizeRegistered += HandlePrizeRegistered;
+                coll.OnMachineCompleted -= HandleMachineCompleted;
                 coll.OnMachineCompleted += HandleMachineCompleted;
+                coll.OnCurrentMachineChanged -= HandleCurrentMachineChanged;
                 coll.OnCurrentMachineChanged += HandleCurrentMachineChanged;
             }
 
-            isSubscribed = true;
+            isSubscribed = hasEcon && hasColl;
         }
 
         private void UnsubscribeFromManager()
         {
-            if (!isSubscribed) return;
-
             if (ServiceLocator.TryGet<IEconomyService>(out var econ))
             {
                 econ.OnCoinsChanged -= HandleCoinsChanged;
@@ -124,6 +126,9 @@ namespace ClawMachine.UI
             modalPanel.SetActive(active);
             if (active)
             {
+                Transform card = modalPanel.transform.Find("DialogCard") ?? modalPanel.transform;
+                UIStyleHelper.AnimatePopIn(this, card);
+                ServiceLocator.Get<IAudioService>()?.PlayModalOpen();
                 RefreshCollectionGrid();
             }
         }
@@ -150,13 +155,16 @@ namespace ClawMachine.UI
         private void HandleMachineCompleted(MachineDefinition machine)
         {
             RefreshCollectionGrid();
+            ServiceLocator.Get<IAudioService>()?.PlayUnlockFanfare();
             if (completionModal != null)
             {
                 if (completionText != null)
                 {
-                    completionText.text = $"★ CONGRATULATIONS! ★\n\nYOU COMPLETED {machine.displayName.ToUpper()}!\n\n• Machine is now permanently YOURS!\n• Free plays unlocked forever!\n• Passive income: +{machine.passiveIncomePerMinute} coins/min!";
+                    completionText.text = $"CONGRATULATIONS!\n\nYOU COMPLETED {machine.displayName.ToUpper()}!\n\n• Machine is now permanently YOURS!\n• Free plays unlocked forever!\n• Passive income: +{machine.passiveIncomePerMinute} coins/min!";
                 }
                 completionModal.SetActive(true);
+                Transform compCard = completionModal.transform.Find("DialogCard") ?? completionModal.transform;
+                UIStyleHelper.AnimatePopIn(this, compCard);
             }
         }
 
@@ -168,7 +176,7 @@ namespace ClawMachine.UI
             {
                 coins = econ.Coins;
             }
-            coinsText.text = $"{coins} 🪙";
+            coinsText.text = $"{coins:N0} COINS";
         }
 
         public void RefreshCollectionGrid()
@@ -194,28 +202,16 @@ namespace ClawMachine.UI
             }
             if (ownershipText != null)
             {
-                ownershipText.text = isOwned ? "★ OWNED (FREE PLAYS + PASSIVE INCOME)" : $"UNOWNED (ENTRY: {machine.entryCost} COINS)";
+                ownershipText.text = isOwned ? "[OWNED] FREE PLAYS + PASSIVE INCOME" : $"UNOWNED (ENTRY: {machine.entryCost} COINS)";
                 ownershipText.color = isOwned ? new Color(0.3f, 0.9f, 0.4f) : new Color(0.85f, 0.85f, 0.9f);
             }
 
-            // Update Sell Duplicates Button
-            if (sellDuplicatesButton != null)
+            if (sellDuplicatesButton != null && sellDuplicatesButton.gameObject.activeSelf)
             {
-                int dupVal = collService.GetTotalDuplicateValue();
-                sellDuplicatesButton.interactable = dupVal > 0;
-                if (sellDuplicatesText != null)
-                {
-                    sellDuplicatesText.text = dupVal > 0 ? $"SELL EXTRA DUPLICATES (+{dupVal} 🪙)" : "NO DUPLICATES TO SELL";
-                    sellDuplicatesText.color = dupVal > 0 ? Color.white : new Color(0.7f, 0.7f, 0.75f);
-                }
-                var btnImg = sellDuplicatesButton.GetComponent<Image>();
-                if (btnImg != null)
-                {
-                    btnImg.color = dupVal > 0 ? new Color(0.18f, 0.65f, 0.32f) : new Color(0.30f, 0.33f, 0.40f);
-                }
+                sellDuplicatesButton.gameObject.SetActive(false);
             }
 
-            // Populate cards
+            // Populate cards dynamically
             if (gridContainer == null || machine.prizes == null) return;
 
             for (int i = 0; i < machine.prizes.Length; i++)
@@ -224,71 +220,270 @@ namespace ClawMachine.UI
                 if (def == null) continue;
 
                 Transform cardTr = gridContainer.childCount > i ? gridContainer.GetChild(i) : null;
+                if (cardTr == null && gridContainer.childCount > 0)
+                {
+                    GameObject clone = Instantiate(gridContainer.GetChild(0).gameObject, gridContainer);
+                    clone.name = $"Card_{i}";
+                    cardTr = clone.transform;
+                }
                 if (cardTr == null) continue;
 
+                cardTr.gameObject.SetActive(true);
                 bool hasFound = collService.IsPrizeDiscovered(def.id);
                 int count = collService.GetPrizeCount(def.id);
                 UpdateCard(cardTr.gameObject, def, hasFound, count);
             }
+
+            for (int i = machine.prizes.Length; i < gridContainer.childCount; i++)
+            {
+                gridContainer.GetChild(i).gameObject.SetActive(false);
+            }
         }
 
-        private void OnSellDuplicatesClicked()
+        private readonly Dictionary<string, Sprite> generatedIcons = new Dictionary<string, Sprite>();
+
+        private void OnDestroy()
         {
-            ICollectionService collService = ServiceLocator.Get<ICollectionService>();
-            if (collService == null) return;
-
-            int earned = collService.SellAllDuplicates();
-            if (earned > 0)
+            foreach (var kvp in generatedIcons)
             {
-                ServiceLocator.Get<IAudioService>()?.PlayWin();
-
-                UpdateCoinsUI();
-                RefreshCollectionGrid();
+                if (kvp.Value != null)
+                {
+                    if (kvp.Value.texture != null) Destroy(kvp.Value.texture);
+                    Destroy(kvp.Value);
+                }
             }
+            generatedIcons.Clear();
         }
 
         private void UpdateCard(GameObject card, PrizeDefinition def, bool discovered, int count = 1)
         {
             Image bg = card.GetComponent<Image>();
-            Text[] texts = card.GetComponentsInChildren<Text>();
-
-            Color rarityBorderColor = def.rarity switch
+            if (bg != null)
             {
-                PrizeRarity.Normal => new Color(0.25f, 0.85f, 1.0f),
-                PrizeRarity.Rare => new Color(0.85f, 0.35f, 0.95f),
-                PrizeRarity.Secret => new Color(1.0f, 0.82f, 0.15f),
+                bg.sprite = UIStyleHelper.ShelfPedestalSprite;
+                bg.type = Image.Type.Sliced;
+                bg.color = Color.white;
+            }
+
+            Color rarityColor = def.rarity switch
+            {
+                PrizeRarity.Normal => new Color(0.20f, 0.82f, 1.0f),
+                PrizeRarity.Rare => new Color(0.92f, 0.36f, 0.98f),
+                PrizeRarity.Secret => new Color(1.0f, 0.85f, 0.18f),
                 _ => Color.gray
             };
 
-            if (bg != null)
+            // Prize Icon / Model Display sitting on shelf
+            Transform iconTr = card.transform.Find("PrizeIcon");
+            Image iconImg = null;
+            if (iconTr == null)
             {
-                bg.color = discovered ? new Color(0.18f, 0.20f, 0.28f) : new Color(0.12f, 0.13f, 0.16f);
+                GameObject iconGo = new GameObject("PrizeIcon", typeof(RectTransform), typeof(Image));
+                iconGo.transform.SetParent(card.transform, false);
+                RectTransform rt = iconGo.GetComponent<RectTransform>();
+                rt.anchorMin = new Vector2(0.5f, 0.5f);
+                rt.anchorMax = new Vector2(0.5f, 0.5f);
+                rt.anchoredPosition = new Vector2(0f, 32f);
+                rt.sizeDelta = new Vector2(170f, 170f);
+                iconImg = iconGo.GetComponent<Image>();
+                iconImg.preserveAspect = true;
+                iconImg.raycastTarget = false;
+            }
+            else
+            {
+                iconImg = iconTr.GetComponent<Image>();
+                RectTransform rt = iconTr.GetComponent<RectTransform>();
+                if (rt != null)
+                {
+                    rt.anchorMin = new Vector2(0.5f, 0.5f);
+                    rt.anchorMax = new Vector2(0.5f, 0.5f);
+                    rt.anchoredPosition = new Vector2(0f, 32f);
+                    rt.sizeDelta = new Vector2(170f, 170f);
+                }
+                if (iconImg != null) iconImg.preserveAspect = true;
             }
 
-            Transform nameChild = card.transform.Find("Name");
-            Transform rarityChild = card.transform.Find("Rarity");
-            Transform statusChild = card.transform.Find("Status");
+            if (iconImg != null)
+            {
+                Sprite sp = GetOrGeneratePrizeIcon(def);
+                if (sp != null)
+                {
+                    iconImg.enabled = discovered;
+                    iconImg.sprite = sp;
+                    iconImg.color = Color.white;
+                }
+                else
+                {
+                    iconImg.enabled = false;
+                }
+            }
 
-            Text nameText = nameChild != null ? nameChild.GetComponent<Text>() : (texts.Length > 0 ? texts[0] : null);
-            Text rarityText = rarityChild != null ? rarityChild.GetComponent<Text>() : (texts.Length > 1 ? texts[1] : null);
-            Text statusText = statusChild != null ? statusChild.GetComponent<Text>() : (texts.Length > 2 ? texts[2] : null);
+            // Hide or remove legacy texts if they exist directly under card
+            Transform legacyName = card.transform.Find("Name");
+            if (legacyName != null) legacyName.gameObject.SetActive(false);
+            Transform legacyRarity = card.transform.Find("Rarity");
+            if (legacyRarity != null) legacyRarity.gameObject.SetActive(false);
+            Transform legacyStatus = card.transform.Find("Status");
+            if (legacyStatus != null) legacyStatus.gameObject.SetActive(false);
 
-            if (nameText != null)
+            // Brass Placard Plate under the prize spot
+            Transform placardTr = card.transform.Find("PlacardPlate");
+            if (placardTr == null)
             {
-                string countSuffix = (discovered && count > 1) ? $" (x{count})" : "";
-                nameText.text = discovered ? $"{def.displayName}{countSuffix}" : "???";
-                nameText.color = discovered ? Color.white : new Color(0.55f, 0.55f, 0.60f);
+                GameObject placardGo = new GameObject("PlacardPlate", typeof(RectTransform), typeof(Image));
+                placardGo.transform.SetParent(card.transform, false);
+                RectTransform pRt = placardGo.GetComponent<RectTransform>();
+                pRt.anchorMin = new Vector2(0.5f, 0f);
+                pRt.anchorMax = new Vector2(0.5f, 0f);
+                pRt.anchoredPosition = new Vector2(0f, 38f);
+                pRt.sizeDelta = new Vector2(245f, 54f);
+
+                Image pImg = placardGo.GetComponent<Image>();
+                pImg.sprite = UIStyleHelper.BrassPlacardSprite;
+                pImg.type = Image.Type.Sliced;
+                pImg.color = Color.white;
+
+                Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
+
+                // Title Text on placard
+                GameObject pTitleGo = new GameObject("PlacardTitle", typeof(RectTransform), typeof(Text));
+                pTitleGo.transform.SetParent(placardGo.transform, false);
+                RectTransform ptRt = pTitleGo.GetComponent<RectTransform>();
+                ptRt.anchorMin = new Vector2(0f, 0.38f);
+                ptRt.anchorMax = new Vector2(1f, 1f);
+                ptRt.offsetMin = new Vector2(8f, 0f);
+                ptRt.offsetMax = new Vector2(-8f, -2f);
+                Text ptTxt = pTitleGo.GetComponent<Text>();
+                ptTxt.font = font;
+                ptTxt.fontSize = 19;
+                ptTxt.fontStyle = FontStyle.Bold;
+                ptTxt.alignment = TextAnchor.MiddleCenter;
+                ptTxt.color = new Color(0.18f, 0.12f, 0.05f, 1f);
+
+                // Subtitle / Rarity on placard
+                GameObject pSubGo = new GameObject("PlacardRarity", typeof(RectTransform), typeof(Text));
+                pSubGo.transform.SetParent(placardGo.transform, false);
+                RectTransform psRt = pSubGo.GetComponent<RectTransform>();
+                psRt.anchorMin = new Vector2(0f, 0f);
+                psRt.anchorMax = new Vector2(1f, 0.42f);
+                psRt.offsetMin = new Vector2(8f, 2f);
+                psRt.offsetMax = new Vector2(-8f, 0f);
+                Text psTxt = pSubGo.GetComponent<Text>();
+                psTxt.font = font;
+                psTxt.fontSize = 14;
+                psTxt.fontStyle = FontStyle.Bold;
+                psTxt.alignment = TextAnchor.MiddleCenter;
+
+                placardTr = placardGo.transform;
             }
-            if (rarityText != null)
+
+            if (placardTr != null)
             {
-                rarityText.text = def.rarity.ToString().ToUpper();
-                rarityText.color = rarityBorderColor;
+                Text pTitle = placardTr.Find("PlacardTitle")?.GetComponent<Text>();
+                Text pRarity = placardTr.Find("PlacardRarity")?.GetComponent<Text>();
+
+                if (pTitle != null)
+                {
+                    pTitle.text = discovered ? def.displayName.ToUpper() : "EMPTY ALCOVE";
+                    pTitle.color = discovered ? new Color(0.18f, 0.12f, 0.05f, 1f) : new Color(0.45f, 0.38f, 0.28f, 1f);
+                }
+                if (pRarity != null)
+                {
+                    pRarity.text = discovered ? $"✦ {def.rarity.ToString().ToUpper()} ✦" : "— LOCKED —";
+                    pRarity.color = discovered ? new Color(0.48f, 0.28f, 0.04f, 1f) : new Color(0.55f, 0.48f, 0.38f, 1f);
+                }
             }
-            if (statusText != null)
+
+            // Click to inspect 3D turntable for discovered trophies
+            Button cardBtn = card.GetComponent<Button>();
+            if (cardBtn == null) cardBtn = card.AddComponent<Button>();
+            cardBtn.onClick.RemoveAllListeners();
+            cardBtn.interactable = discovered;
+            if (discovered)
             {
-                statusText.text = discovered ? "✓ COLLECTED" : "LOCKED";
-                statusText.color = discovered ? new Color(0.35f, 0.90f, 0.45f) : new Color(0.5f, 0.5f, 0.5f);
+                PrizeDefinition capturedDef = def;
+                cardBtn.onClick.AddListener(() =>
+                {
+                    var winModal = PrizeWinModalUI.Instance ?? FindFirstObjectByType<PrizeWinModalUI>(FindObjectsInactive.Include);
+                    if (winModal != null)
+                    {
+                        winModal.ShowWinDefinition(capturedDef, capturedDef.displayName, capturedDef.rarity, isInspectOnly: true);
+                    }
+                });
             }
+        }
+
+        private Sprite GetOrGeneratePrizeIcon(PrizeDefinition def)
+        {
+            if (def == null) return null;
+            if (def.icon != null) return def.icon;
+            if (def.prefab == null) return null;
+
+            string key = !string.IsNullOrEmpty(def.id) ? def.id : def.prefab.name;
+            if (generatedIcons.TryGetValue(key, out Sprite cached) && cached != null)
+            {
+                return cached;
+            }
+
+            // Render a crisp 128x128 square thumbnail offscreen
+            const int size = 128;
+            RenderTexture rt = RenderTexture.GetTemporary(size, size, 16, RenderTextureFormat.ARGB32);
+            GameObject rig = new GameObject("TempIconRig");
+            rig.transform.position = new Vector3(0f, -400f, 0f);
+
+            GameObject camGo = new GameObject("IconCam");
+            camGo.transform.SetParent(rig.transform, false);
+            camGo.transform.localPosition = new Vector3(0f, 0.15f, -1.6f);
+            camGo.transform.localRotation = Quaternion.Euler(6f, 0f, 0f);
+            Camera cam = camGo.AddComponent<Camera>();
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = new Color(0f, 0f, 0f, 0f);
+            cam.fieldOfView = 30f;
+            cam.aspect = 1.0f;
+            cam.nearClipPlane = 0.1f;
+            cam.farClipPlane = 6f;
+            cam.targetTexture = rt;
+
+            GameObject lightGo = new GameObject("IconLight");
+            lightGo.transform.SetParent(rig.transform, false);
+            lightGo.transform.localPosition = new Vector3(0.8f, 1.2f, -1.2f);
+            Light l = lightGo.AddComponent<Light>();
+            l.type = LightType.Point;
+            l.range = 4f;
+            l.intensity = 2.6f;
+
+            GameObject model = Instantiate(def.prefab, rig.transform);
+
+            Renderer[] rends = model.GetComponentsInChildren<Renderer>(true);
+            if (rends.Length > 0)
+            {
+                Bounds b = rends[0].bounds;
+                for (int i = 1; i < rends.Length; i++) b.Encapsulate(rends[i].bounds);
+                Vector3 offset = model.transform.position - b.center;
+                float maxDim = Mathf.Max(b.size.x, Mathf.Max(b.size.y, b.size.z));
+                float scale = maxDim > 0.01f ? (0.58f / maxDim) : 1f;
+                model.transform.localScale = Vector3.one * scale;
+                model.transform.localPosition = offset * scale;
+                model.transform.localRotation = Quaternion.Euler(0f, -28f, 0f);
+            }
+
+            cam.Render();
+
+            RenderTexture prev = RenderTexture.active;
+            RenderTexture.active = rt;
+            Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            tex.ReadPixels(new Rect(0, 0, size, size), 0, 0);
+            tex.Apply();
+            RenderTexture.active = prev;
+
+            cam.targetTexture = null;
+            RenderTexture.ReleaseTemporary(rt);
+            rig.SetActive(false);
+            Destroy(rig);
+
+            Sprite sprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f);
+            generatedIcons[key] = sprite;
+            return sprite;
         }
     }
 }

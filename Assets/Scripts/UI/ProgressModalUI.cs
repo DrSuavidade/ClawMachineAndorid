@@ -65,9 +65,9 @@ namespace ClawMachine.UI
         [Header("Milestone Mystery Rewards")]
         [SerializeField] private Text milestoneHintBannerText;
         [SerializeField] private GameObject[] milestoneCardRoots; // 6 elements
-        [SerializeField] private Text[] milestoneIconTexts;       // 6 elements (shows ?, 🎁, ✓)
+        [SerializeField] private Text[] milestoneIconTexts;       // 6 elements (shows ?, GIFT, OK)
         [SerializeField] private Text[] milestoneTitleTexts;      // 6 elements (shows ??? or name)
-        [SerializeField] private Text[] milestoneRewardTexts;     // 6 elements (+100 🪙)
+        [SerializeField] private Text[] milestoneRewardTexts;     // 6 elements (+100 COINS)
         [SerializeField] private Button[] milestoneClaimBtns;     // 6 elements
         [SerializeField] private Text[] milestoneClaimBtnTexts;   // 6 elements
 
@@ -198,7 +198,13 @@ namespace ClawMachine.UI
         public void OpenModal()
         {
             SetupListeners();
-            if (modalPanel != null) modalPanel.SetActive(true);
+            if (modalPanel != null)
+            {
+                modalPanel.SetActive(true);
+                Transform card = modalPanel.transform.Find("DialogCard") ?? modalPanel.transform;
+                UIStyleHelper.AnimatePopIn(this, card);
+            }
+            ServiceLocator.Get<IAudioService>()?.PlayModalOpen();
             SwitchTab(activeTabIndex);
         }
 
@@ -281,8 +287,6 @@ namespace ClawMachine.UI
 
         private void Update()
         {
-            RefreshNotificationPips();
-
             if (modalPanel == null || !modalPanel.activeSelf) return;
 
             if (Time.time >= nextTimerUpdate)
@@ -322,7 +326,7 @@ namespace ClawMachine.UI
             if (coinsText == null) return;
             int coins = 0;
             if (ServiceLocator.TryGet<IEconomyService>(out var econ)) coins = econ.Coins;
-            coinsText.text = $"🪙 {coins:N0}";
+            coinsText.text = $"{coins:N0} COINS";
         }
 
         // ==================== UPGRADES TAB ====================
@@ -343,7 +347,7 @@ namespace ClawMachine.UI
             int spdCost = econ.GetUpgradeCost(UpgradeType.TrolleySpeed);
             bool spdMax = spdCost < 0;
             if (trolleyLevelText != null) trolleyLevelText.text = $"LVL {spdLvl}/5";
-            if (trolleyCostText != null) trolleyCostText.text = spdMax ? "MAX" : $"{spdCost} 🪙";
+            if (trolleyCostText != null) trolleyCostText.text = spdMax ? "MAX" : $"{spdCost} COINS";
             if (trolleyBuyBtn != null) trolleyBuyBtn.interactable = !spdMax && currentCoins >= spdCost;
 
             // Magnet (was Grip Power)
@@ -351,7 +355,7 @@ namespace ClawMachine.UI
             int grpCost = econ.GetUpgradeCost(UpgradeType.GripPower);
             bool grpMax = grpCost < 0;
             if (gripLevelText != null) gripLevelText.text = $"LVL {grpLvl}/10 (+{grpLvl}% Magnet)";
-            if (gripCostText != null) gripCostText.text = grpMax ? "MAX" : $"{grpCost} 🪙";
+            if (gripCostText != null) gripCostText.text = grpMax ? "MAX" : $"{grpCost} COINS";
             if (gripBuyBtn != null) gripBuyBtn.interactable = !grpMax && currentCoins >= grpCost;
 
             // Aim Grab Range (was Precision)
@@ -359,14 +363,14 @@ namespace ClawMachine.UI
             int prcCost = econ.GetUpgradeCost(UpgradeType.DropPrecision);
             bool prcMax = prcCost < 0;
             if (dropLevelText != null) dropLevelText.text = $"LVL {prcLvl}/5 (Aim Area)";
-            if (dropCostText != null) dropCostText.text = prcMax ? "MAX" : $"{prcCost} 🪙";
+            if (dropCostText != null) dropCostText.text = prcMax ? "MAX" : $"{prcCost} COINS";
             if (dropBuyBtn != null) dropBuyBtn.interactable = !prcMax && currentCoins >= prcCost;
 
             // Set Bonus
             if (setBonusText != null)
             {
                 bool owns = coll != null && mach != null && coll.IsMachineOwned(mach.machineId);
-                setBonusText.text = owns ? "★ SET BONUS ACTIVE: +50% SPEED/GRIP ★" : "SET BONUS: COMPLETE COLLECTION TO UNLOCK +50% BOOST";
+                setBonusText.text = owns ? "[SET BONUS ACTIVE] +50% SPEED/GRIP" : "SET BONUS: COMPLETE COLLECTION TO UNLOCK +50% BOOST";
                 setBonusText.color = owns ? new Color(1f, 0.85f, 0.2f) : new Color(0.6f, 0.6f, 0.65f);
             }
         }
@@ -383,6 +387,10 @@ namespace ClawMachine.UI
             {
                 if (ServiceLocator.TryGet<IAudioService>(out var audio)) audio.PlayGrabSuccess();
                 RefreshUI();
+            }
+            else
+            {
+                if (ServiceLocator.TryGet<IAudioService>(out var audio)) audio.PlayErrorBuzz();
             }
         }
 
@@ -412,8 +420,8 @@ namespace ClawMachine.UI
                     {
                         if (streakDayCards[i] != null && i < rewards.Length)
                         {
-                            string check = (i < streak) ? "✓ " : "";
-                            streakDayCards[i].text = $"{check}DAY {i + 1}\n{rewards[i]} 🪙";
+                            string check = (i < streak) ? "[OK] " : "";
+                            streakDayCards[i].text = $"{check}DAY {i + 1}\n{rewards[i]} COINS";
                         }
                     }
                 }
@@ -437,7 +445,7 @@ namespace ClawMachine.UI
             if (ret.CanClaimDailyReward)
             {
                 claimDailyBtn.interactable = true;
-                claimDailyBtnText.text = $"★ CLAIM DAY {ret.CurrentStreak + 1} REWARD (+{ret.NextDailyRewardCoins} 🪙) ★";
+                claimDailyBtnText.text = $"CLAIM DAY {ret.CurrentStreak + 1} REWARD (+{ret.NextDailyRewardCoins} COINS)";
             }
             else
             {
@@ -477,9 +485,9 @@ namespace ClawMachine.UI
 
                     if (questClaimBtnTexts != null && i < questClaimBtnTexts.Length && questClaimBtnTexts[i] != null)
                     {
-                        if (q.isClaimed) questClaimBtnTexts[i].text = "CLAIMED ✓";
-                        else if (canClaim) questClaimBtnTexts[i].text = $"CLAIM +{q.rewardCoins} 🪙";
-                        else questClaimBtnTexts[i].text = $"+{q.rewardCoins} 🪙";
+                        if (q.isClaimed) questClaimBtnTexts[i].text = "CLAIMED";
+                        else if (canClaim) questClaimBtnTexts[i].text = $"CLAIM +{q.rewardCoins} COINS";
+                        else questClaimBtnTexts[i].text = $"+{q.rewardCoins} COINS";
                     }
                 }
             }
@@ -503,7 +511,7 @@ namespace ClawMachine.UI
                 // Tooltip trigger
                 MilestoneCardTrigger trigger = root.GetComponent<MilestoneCardTrigger>();
                 if (trigger == null) trigger = root.AddComponent<MilestoneCardTrigger>();
-                trigger.hintMessage = $"★ {m.title.ToUpper()}: {m.hint} (+{m.rewardCoins} 🪙)";
+                trigger.hintMessage = $"{m.title.ToUpper()}: {m.hint} (+{m.rewardCoins} COINS)";
                 trigger.onHoverAction = (msg) =>
                 {
                     if (milestoneHintBannerText != null) milestoneHintBannerText.text = msg;
@@ -511,20 +519,20 @@ namespace ClawMachine.UI
                 trigger.onExitAction = () =>
                 {
                     if (milestoneHintBannerText != null)
-                        milestoneHintBannerText.text = "★ Hover or tap any [ ? ] to reveal unlock requirements";
+                        milestoneHintBannerText.text = "Hover or tap any [ ? ] to reveal unlock requirements";
                 };
 
-                // Icon text: "?" when locked, "🎁" when unlocked, "✓" when claimed
+                // Icon text: "?" when locked, "GIFT" when unlocked, "CLAIMED" when claimed
                 if (milestoneIconTexts != null && i < milestoneIconTexts.Length && milestoneIconTexts[i] != null)
                 {
                     if (m.isClaimed)
                     {
-                        milestoneIconTexts[i].text = "✓";
+                        milestoneIconTexts[i].text = "OK";
                         milestoneIconTexts[i].color = new Color(0.4f, 0.9f, 0.4f);
                     }
                     else if (m.isUnlocked)
                     {
-                        milestoneIconTexts[i].text = "🎁";
+                        milestoneIconTexts[i].text = "GIFT";
                         milestoneIconTexts[i].color = new Color(1f, 0.85f, 0.2f);
                     }
                     else
@@ -543,7 +551,7 @@ namespace ClawMachine.UI
 
                 if (milestoneRewardTexts != null && i < milestoneRewardTexts.Length && milestoneRewardTexts[i] != null)
                 {
-                    milestoneRewardTexts[i].text = $"+{m.rewardCoins} 🪙";
+                    milestoneRewardTexts[i].text = $"+{m.rewardCoins} COINS";
                 }
 
                 if (milestoneClaimBtns != null && i < milestoneClaimBtns.Length && milestoneClaimBtns[i] != null)
@@ -568,7 +576,7 @@ namespace ClawMachine.UI
             {
                 if (ret.ClaimDailyReward(out int coins))
                 {
-                    if (ServiceLocator.TryGet<IAudioService>(out var audio)) audio.PlayWin();
+                    if (ServiceLocator.TryGet<IAudioService>(out var audio)) audio.PlayCoinReward();
                     ClawJuiceEffects.Instance?.PlayWinCelebration(transform.position);
                     RefreshUI();
                 }
@@ -585,7 +593,7 @@ namespace ClawMachine.UI
                 {
                     if (ret.ClaimQuestReward(quests[questIndex].id, out int coins))
                     {
-                        if (ServiceLocator.TryGet<IAudioService>(out var audio)) audio.PlayWin();
+                        if (ServiceLocator.TryGet<IAudioService>(out var audio)) audio.PlayCoinReward();
                         RefreshUI();
                     }
                 }
@@ -602,7 +610,7 @@ namespace ClawMachine.UI
                 {
                     if (ret.ClaimMilestoneReward(milestones[milestoneIndex].id, out int coins))
                     {
-                        if (ServiceLocator.TryGet<IAudioService>(out var audio)) audio.PlayWin();
+                        if (ServiceLocator.TryGet<IAudioService>(out var audio)) audio.PlayCoinReward();
                         ClawJuiceEffects.Instance?.PlayWinCelebration(transform.position);
                         RefreshUI();
                     }

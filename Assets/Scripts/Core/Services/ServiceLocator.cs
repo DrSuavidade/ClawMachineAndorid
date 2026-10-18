@@ -14,24 +14,12 @@ namespace ClawMachine.Core.Services
 
         public static void Register<T>(T service) where T : class
         {
-            var type = typeof(T);
-            if (services.ContainsKey(type))
-            {
-                services[type] = service;
-            }
-            else
-            {
-                services.Add(type, service);
-            }
+            services[typeof(T)] = service;
         }
 
         public static void Unregister<T>() where T : class
         {
-            var type = typeof(T);
-            if (services.ContainsKey(type))
-            {
-                services.Remove(type);
-            }
+            services.Remove(typeof(T));
         }
 
         public static T Get<T>() where T : class

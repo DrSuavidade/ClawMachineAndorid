@@ -16,12 +16,13 @@ MonoBehaviour:
   displayName: Ocean Abyss
   description: Dive into abyssal reefs, sunken galleons, and mystical sea relics.
   unlockCost: 3000
-  entryCost: 85
+  entryCost: 35
   theme: {fileID: 11400000, guid: 8c1ce3122f6346df84ceb1b6d0bd67b0, type: 2}
   passiveIncomePerMinute: 25
   cabinetFrameColor: {r: 0.08, g: 0.74, b: 0.72, a: 1}
   cabinetBackdropColor: {r: 0.03, g: 0.07, b: 0.15, a: 1}
   environmentPrefab: {fileID: 894602937652009111, guid: de03ce032ea28614b8aa66dc61acfb89, type: 3}
+  bgmClip: {fileID: 8300000, guid: 143dd32042fe38528910d49d1dd1eaf5, type: 3}
   ambientLightColor: {r: 0.06, g: 0.18, b: 0.24, a: 1}
   directionalLightColor: {r: 0.3, g: 0.8, b: 0.9, a: 1}
   cameraFieldOfView: 45

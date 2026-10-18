@@ -23,6 +23,7 @@ MonoBehaviour:
   cabinetFrameColor: {r: 0.85, g: 0.25, b: 0.25, a: 1}
   cabinetBackdropColor: {r: 0.4, g: 0.48, b: 0.62, a: 1}
   environmentPrefab: {fileID: 5590734573746457672, guid: 2a032c3021bd5d54986a7f5b06c4195a, type: 3}
+  bgmClip: {fileID: 8300000, guid: 990209f834c5f5c26a42edaafe393fd7, type: 3}
   ambientLightColor: {r: 0.28, g: 0.26, b: 0.25, a: 1}
   directionalLightColor: {r: 1, g: 0.95, b: 0.88, a: 1}
   cameraFieldOfView: 45

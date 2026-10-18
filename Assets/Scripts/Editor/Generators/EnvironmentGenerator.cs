@@ -85,10 +85,20 @@ namespace ClawMachine.Editor
             Material mat = AssetDatabase.LoadAssetAtPath<Material>(path);
             if (mat == null)
             {
-                Shader s = Shader.Find("Particles/Standard Unlit") ?? Shader.Find("Sprites/Default");
+                Shader s = Shader.Find("Universal Render Pipeline/Particles/Unlit")
+                    ?? Shader.Find("Particles/Standard Unlit")
+                    ?? Shader.Find("Sprites/Default");
                 mat = new Material(s);
                 mat.color = Color.white;
                 AssetDatabase.CreateAsset(mat, path);
+            }
+            Texture2D puffTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Textures/Particles/Particle_SoftPuff.png")
+                ?? Resources.Load<Texture2D>("Particles/Particle_SoftPuff");
+            if (puffTex != null)
+            {
+                mat.mainTexture = puffTex;
+                if (mat.HasProperty("_BaseMap")) mat.SetTexture("_BaseMap", puffTex);
+                EditorUtility.SetDirty(mat);
             }
             return mat;
         }
