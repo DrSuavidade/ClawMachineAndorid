@@ -180,6 +180,7 @@ namespace ClawMachine.Gameplay
             }
         }
 
+        #if UNITY_EDITOR
         private void OnGUI()
         {
             if (!showDebugGui || HeldPrize == null) return;
@@ -189,5 +190,6 @@ namespace ClawMachine.Gameplay
             GUI.Label(new Rect(20, 52, 240, 22), $"Aim Quality: {CurrentGrip.quality:P0}");
             GUI.Label(new Rect(20, 72, 240, 22), $"Slip Risk: {slipAccumulator:P0}");
         }
+        #endif
     }
 }
