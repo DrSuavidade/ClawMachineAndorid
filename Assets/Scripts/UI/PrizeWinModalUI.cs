@@ -152,10 +152,6 @@ namespace ClawMachine.UI
                     audio.TriggerHapticSuccess();
                 }
             }
-            if (!isInspectOnly)
-            {
-                ClawJuiceEffects.Instance?.PlayWinCelebration(Vector3.up * 1.5f);
-            }
 
             // 2. Punch Scale Bounce Animation
             if (bounceRoutine != null) StopCoroutine(bounceRoutine);
