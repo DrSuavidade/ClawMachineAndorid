@@ -47,7 +47,7 @@ namespace ClawMachine.UI
             if (modalPanel == null) return;
 
             // Ensure standard modal shell with top-right close button
-            RectTransform contentTr = UIStyleHelper.EnsureModalShell(modalPanel, "SETTINGS", CloseModal, 600f, 660f);
+            RectTransform contentTr = UIStyleHelper.EnsureModalShell(modalPanel, "SETTINGS", CloseModal, 600f, 540f);
 
             // Hide old legacy Header and CloseButton from scene
             Transform oldHeader = modalPanel.transform.Find("Header");
@@ -96,7 +96,7 @@ namespace ClawMachine.UI
             vlg.spacing = 16f;
             vlg.padding = new RectOffset(16, 16, 12, 12);
 
-            Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
+            Font font = UIStyleHelper.MainFont ?? Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
 
             float curMaster = PlayerPrefs.GetFloat("Claw_Master_Volume", 1.0f);
             if (ServiceLocator.TryGet<IAudioService>(out var audio)) curMaster = audio.MasterVolume;
@@ -110,10 +110,10 @@ namespace ClawMachine.UI
             if (audio != null) curSfx = audio.SFXVolume;
             sfxSlider = CreateVolumeRow(listContainerTr, "Row_SFXVolume", "SOUND EFFECTS", font, curSfx, OnSFXVolumeChanged, out sfxValueText);
 
-            hapticsToggleButton = CreateActionRowButton(listContainerTr, "Row_Haptics", "VIBRATION: ON", font, new Color(0.20f, 0.24f, 0.35f, 1f), ToggleHaptics, out hapticsStatusText);
+            hapticsToggleButton = CreateActionRowButton(listContainerTr, "Row_Haptics", "VIBRATION: ON", font, new Color(0.18f, 0.22f, 0.32f, 1f), ToggleHaptics, out hapticsStatusText);
 
             Text dummy;
-            resetButton = CreateActionRowButton(listContainerTr, "Row_ResetProgress", "RESET PROGRESS", font, new Color(0.65f, 0.15f, 0.18f, 1f), OpenResetConfirmPopup, out dummy);
+            resetButton = CreateActionRowButton(listContainerTr, "Row_ResetProgress", "RESET PROGRESS", font, new Color(0.75f, 0.18f, 0.20f, 1f), OpenResetConfirmPopup, out dummy);
         }
 
         private Slider CreateVolumeRow(Transform parent, string rowName, string label, Font font, float initialVal, System.Action<float> onChange, out Text valueLabel)
@@ -199,10 +199,13 @@ namespace ClawMachine.UI
             txt.fontStyle = FontStyle.Bold;
             txt.color = Color.white;
             txt.alignment = TextAnchor.MiddleCenter;
+            UIStyleHelper.AddDropShadow(txt, new Color(0f, 0f, 0f, 0.75f), new Vector2(1f, -1.5f));
             statusText = txt;
 
             Button btn = btnObj.GetComponent<Button>();
             if (onClick != null) btn.onClick.AddListener(onClick);
+            UIStyleHelper.StyleButton(btn);
+            img.color = bgColor;
 
             return btn;
         }

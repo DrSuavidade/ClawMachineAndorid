@@ -264,6 +264,27 @@ namespace ClawMachine.UI
                 uvRt.anchorMax = Vector2.one;
                 uvRt.offsetMin = Vector2.zero;
                 uvRt.offsetMax = new Vector2(0f, -56f);
+
+                Transform rowsContainer = upgradesView.transform.Find("RowsContainer") ?? upgradesView.transform;
+                void FormatRow(Transform row, Sprite icon)
+                {
+                    if (row == null) return;
+                    UIStyleHelper.EnsureChildIcon(row, "Icon_Upgrade", icon, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(38f, 38f), new Vector2(30f, 0f));
+                    for (int i = 0; i < row.childCount; i++)
+                    {
+                        Transform child = row.GetChild(i);
+                        if (child.name == "Icon_Upgrade" || child.GetComponent<Button>() != null) continue;
+                        RectTransform crt = child.GetComponent<RectTransform>();
+                        if (crt != null)
+                        {
+                            crt.offsetMin = new Vector2(58f, crt.offsetMin.y);
+                        }
+                    }
+                }
+
+                FormatRow(rowsContainer.Find("Row_0"), UIStyleHelper.IconUpgradeSpeed);
+                FormatRow(rowsContainer.Find("Row_1"), UIStyleHelper.IconUpgradeMagnet);
+                FormatRow(rowsContainer.Find("Row_2"), UIStyleHelper.IconUpgradeTarget);
             }
 
             if (rewardsView != null)
@@ -272,7 +293,7 @@ namespace ClawMachine.UI
                 RectTransform rvRt = rewardsView.GetComponent<RectTransform>();
                 rvRt.anchorMin = Vector2.zero;
                 rvRt.anchorMax = Vector2.one;
-                rvRt.offsetMin = Vector2.zero;
+                rvRt.offsetMin = new Vector2(0f, 16f);
                 rvRt.offsetMax = new Vector2(0f, -56f);
             }
         }
@@ -321,6 +342,25 @@ namespace ClawMachine.UI
                 {
                     var tb = modalPanel.transform.Find("TabBar/Tab_Rewards");
                     if (tb != null) rewardsTabBg = tb.GetComponent<Image>();
+                }
+                if (rewardsTabNotificationPip == null)
+                {
+                    var pip = modalPanel.transform.Find("TabBar/Tab_Rewards/Pip_Rewards") ?? modalPanel.transform.Find("TabBar/Tab_Rewards/Pip");
+                    if (pip != null) rewardsTabNotificationPip = pip.gameObject;
+                }
+                if (rewardsTabNotificationPip != null)
+                {
+                    Image pImg = rewardsTabNotificationPip.GetComponent<Image>();
+                    if (pImg != null) UIStyleHelper.StyleNotificationPip(pImg);
+                    RectTransform pRt = rewardsTabNotificationPip.GetComponent<RectTransform>();
+                    if (pRt != null)
+                    {
+                        pRt.anchorMin = Vector2.one;
+                        pRt.anchorMax = Vector2.one;
+                        pRt.pivot = new Vector2(0.5f, 0.5f);
+                        pRt.anchoredPosition = new Vector2(-4f, -4f);
+                        pRt.sizeDelta = new Vector2(16f, 16f);
+                    }
                 }
             }
         }
@@ -484,8 +524,14 @@ namespace ClawMachine.UI
                     {
                         if (streakDayCards[i] != null && i < rewards.Length)
                         {
-                            string check = (i < streak) ? "[OK] " : "";
-                            streakDayCards[i].text = $"{check}DAY {i + 1}\n{rewards[i]} COINS";
+                            bool claimed = i < streak;
+                            streakDayCards[i].text = $"DAY {i + 1}\n{rewards[i]} COINS";
+                            Transform cardParent = streakDayCards[i].transform.parent;
+                            if (cardParent != null)
+                            {
+                                var checkImg = UIStyleHelper.EnsureChildIcon(cardParent, "Icon_Check", UIStyleHelper.IconCheckmark, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(20f, 20f), new Vector2(-12f, -12f));
+                                if (checkImg != null) checkImg.gameObject.SetActive(claimed);
+                            }
                         }
                     }
                 }
@@ -586,23 +632,28 @@ namespace ClawMachine.UI
                         milestoneHintBannerText.text = "Hover or tap any [ ? ] to reveal unlock requirements";
                 };
 
-                // Icon text: "?" when locked, "GIFT" when unlocked, "CLAIMED" when claimed
+                // Icon: "?" when locked, Trophy when unlocked, Checkmark when claimed
                 if (milestoneIconTexts != null && i < milestoneIconTexts.Length && milestoneIconTexts[i] != null)
                 {
+                    Transform iconTr = milestoneIconTexts[i].transform;
                     if (m.isClaimed)
                     {
-                        milestoneIconTexts[i].text = "OK";
-                        milestoneIconTexts[i].color = new Color(0.4f, 0.9f, 0.4f);
+                        milestoneIconTexts[i].text = "";
+                        var img = UIStyleHelper.EnsureChildIcon(iconTr, "Icon_Badge", UIStyleHelper.IconCheckmark, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(28f, 28f), Vector2.zero);
+                        if (img != null) img.gameObject.SetActive(true);
                     }
                     else if (m.isUnlocked)
                     {
-                        milestoneIconTexts[i].text = "GIFT";
-                        milestoneIconTexts[i].color = new Color(1f, 0.85f, 0.2f);
+                        milestoneIconTexts[i].text = "";
+                        var img = UIStyleHelper.EnsureChildIcon(iconTr, "Icon_Badge", UIStyleHelper.IconTrophy, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(28f, 28f), Vector2.zero);
+                        if (img != null) img.gameObject.SetActive(true);
                     }
                     else
                     {
                         milestoneIconTexts[i].text = "?";
                         milestoneIconTexts[i].color = new Color(0.7f, 0.75f, 0.85f);
+                        Transform existing = iconTr.Find("Icon_Badge");
+                        if (existing != null) existing.gameObject.SetActive(false);
                     }
                 }
 
@@ -625,7 +676,7 @@ namespace ClawMachine.UI
 
                     if (milestoneClaimBtnTexts != null && i < milestoneClaimBtnTexts.Length && milestoneClaimBtnTexts[i] != null)
                     {
-                        if (m.isClaimed) milestoneClaimBtnTexts[i].text = "CLAIMED ✓";
+                        if (m.isClaimed) milestoneClaimBtnTexts[i].text = "CLAIMED";
                         else if (canClaim) milestoneClaimBtnTexts[i].text = "CLAIM";
                         else milestoneClaimBtnTexts[i].text = "LOCKED";
                     }
@@ -642,7 +693,7 @@ namespace ClawMachine.UI
                 {
                     if (ServiceLocator.TryGet<IAudioService>(out var audio)) audio.PlayCoinReward();
                     ClawJuiceEffects.Instance?.PlayWinCelebration(transform.position);
-                    UIStyleHelper.SpawnFloatingCoinReward(this, coins, new Vector2(0f, 100f));
+                    UIStyleHelper.SpawnFloatingCoinReward(this, coins, null, claimDailyBtn != null ? claimDailyBtn.transform : null);
                     RefreshUI();
                 }
             }
@@ -660,7 +711,8 @@ namespace ClawMachine.UI
                     {
                         if (ServiceLocator.TryGet<IAudioService>(out var audio)) audio.PlayCoinReward();
                         ClawJuiceEffects.Instance?.PlayWinCelebration(transform.position);
-                        UIStyleHelper.SpawnFloatingCoinReward(this, coins, new Vector2(0f, 100f));
+                        Transform origin = (questClaimBtns != null && questIndex < questClaimBtns.Length && questClaimBtns[questIndex] != null) ? questClaimBtns[questIndex].transform : null;
+                        UIStyleHelper.SpawnFloatingCoinReward(this, coins, null, origin);
                         RefreshUI();
                     }
                 }
@@ -679,7 +731,8 @@ namespace ClawMachine.UI
                     {
                         if (ServiceLocator.TryGet<IAudioService>(out var audio)) audio.PlayCoinReward();
                         ClawJuiceEffects.Instance?.PlayWinCelebration(transform.position);
-                        UIStyleHelper.SpawnFloatingCoinReward(this, coins, new Vector2(0f, 100f));
+                        Transform origin = (milestoneClaimBtns != null && milestoneIndex < milestoneClaimBtns.Length && milestoneClaimBtns[milestoneIndex] != null) ? milestoneClaimBtns[milestoneIndex].transform : null;
+                        UIStyleHelper.SpawnFloatingCoinReward(this, coins, null, origin);
                         RefreshUI();
                     }
                 }

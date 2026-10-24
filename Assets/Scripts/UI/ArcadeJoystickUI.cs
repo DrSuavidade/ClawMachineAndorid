@@ -103,6 +103,12 @@ namespace ClawMachine.UI
                 shaftImage.raycastTarget = false;
             }
 
+            Transform spec = (knobTransform != null ? knobTransform.Find("SpecularDot") : null) ?? transform.Find("BallKnob/SpecularDot");
+            if (spec != null) spec.gameObject.SetActive(false);
+
+            Transform collar = transform.Find("CollarBase");
+            if (collar != null) collar.gameObject.SetActive(false);
+
             if (shadowTransform != null) shadowTransform.SetSiblingIndex(1);
             if (shaftTransform != null) shaftTransform.SetSiblingIndex(2);
             if (knobTransform != null) knobTransform.SetAsLastSibling();
@@ -297,7 +303,17 @@ namespace ClawMachine.UI
             if (!isDirectDragging) return;
             isDirectDragging = false;
             currentInputVector = Vector2.zero;
-            if (knobTransform != null) knobTransform.localScale = Vector3.one;
+            if (knobTransform != null)
+            {
+                if (currentPos.sqrMagnitude > 25f)
+                {
+                    UIStyleHelper.AnimateScalePunch(this, knobTransform, 0.88f, 0.20f);
+                }
+                else
+                {
+                    knobTransform.localScale = Vector3.one;
+                }
+            }
             ServiceLocator.Get<IAudioService>()?.TriggerHapticLight();
         }
 

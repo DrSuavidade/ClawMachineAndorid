@@ -123,7 +123,7 @@ namespace ClawMachine.UI
             if (coinBadgeText != null)
             {
                 int from = lastDisplayedCoins >= 0 ? lastDisplayedCoins : newCoins;
-                UIStyleHelper.AnimateNumberRoll(this, coinBadgeText, from, newCoins, 0.35f, "🪙 ", " COINS");
+                UIStyleHelper.AnimateNumberRoll(this, coinBadgeText, from, newCoins, 0.35f, "", " COINS");
                 if (coinBadgeTransform != null)
                 {
                     UIStyleHelper.AnimateScalePunch(this, coinBadgeTransform, 1.18f, 0.22f);
@@ -190,8 +190,8 @@ namespace ClawMachine.UI
                 canopyRt.anchorMin = new Vector2(0f, 1f);
                 canopyRt.anchorMax = new Vector2(1f, 1f);
                 canopyRt.pivot = new Vector2(0.5f, 1f);
-                canopyRt.anchoredPosition = new Vector2(0f, -4f);
-                canopyRt.sizeDelta = new Vector2(0f, 68f);
+                canopyRt.anchoredPosition = new Vector2(0f, -8f);
+                canopyRt.sizeDelta = new Vector2(-16f, 66f);
             }
 
             Image canopyImg = canopy.GetComponent<Image>();
@@ -207,20 +207,27 @@ namespace ClawMachine.UI
             if (collTr != null)
             {
                 RectTransform rt = collTr.GetComponent<RectTransform>();
-                rt.anchorMin = new Vector2(0.02f, 0.12f);
-                rt.anchorMax = new Vector2(0.25f, 0.88f);
+                rt.anchorMin = new Vector2(0.015f, 0.12f);
+                rt.anchorMax = new Vector2(0.245f, 0.88f);
                 rt.offsetMin = Vector2.zero;
                 rt.offsetMax = Vector2.zero;
 
                 Text t = collTr.GetComponentInChildren<Text>();
                 if (t != null)
                 {
-                    t.text = "🏆 TOYS";
-                    t.fontSize = 17;
+                    t.text = "TOYS";
+                    t.fontSize = 16;
                     t.fontStyle = FontStyle.Bold;
                     t.color = Color.white;
+                    t.alignment = TextAnchor.MiddleCenter;
+                    RectTransform trt = t.GetComponent<RectTransform>();
+                    trt.anchorMin = new Vector2(0.5f, 0.5f);
+                    trt.anchorMax = new Vector2(0.5f, 0.5f);
+                    trt.anchoredPosition = new Vector2(12f, 0f);
+                    trt.sizeDelta = new Vector2(64f, 32f);
                     UIStyleHelper.AddDropShadow(t, new Color(0f, 0f, 0f, 0.7f), new Vector2(1f, -1.5f));
                 }
+                UIStyleHelper.EnsureChildIcon(collTr, "Icon_Trophy", UIStyleHelper.IconTrophy, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(22f, 22f), new Vector2(-28f, 0f));
                 Button btn = collTr.GetComponent<Button>();
                 if (btn != null) UIStyleHelper.StyleButton(btn);
             }
@@ -236,8 +243,8 @@ namespace ClawMachine.UI
                 coinBadge.name = "CoinBankPlate";
                 coinBadge.SetParent(canopy, false);
                 RectTransform rt = coinBadge.GetComponent<RectTransform>();
-                rt.anchorMin = new Vector2(0.28f, 0.12f);
-                rt.anchorMax = new Vector2(0.60f, 0.88f);
+                rt.anchorMin = new Vector2(0.26f, 0.12f);
+                rt.anchorMax = new Vector2(0.62f, 0.88f);
                 rt.offsetMin = Vector2.zero;
                 rt.offsetMax = Vector2.zero;
 
@@ -253,12 +260,19 @@ namespace ClawMachine.UI
                 coinBadgeText = coinBadge.GetComponentInChildren<Text>();
                 if (coinBadgeText != null)
                 {
-                    coinBadgeText.fontSize = 18;
+                    coinBadgeText.fontSize = 17;
                     coinBadgeText.fontStyle = FontStyle.Bold;
                     coinBadgeText.color = new Color(1.0f, 0.85f, 0.22f, 1f);
                     coinBadgeText.alignment = TextAnchor.MiddleCenter;
+                    RectTransform ctrt = coinBadgeText.GetComponent<RectTransform>();
+                    ctrt.anchorMin = new Vector2(0.5f, 0.5f);
+                    ctrt.anchorMax = new Vector2(0.5f, 0.5f);
+                    ctrt.anchoredPosition = new Vector2(14f, 0f);
+                    ctrt.sizeDelta = new Vector2(130f, 32f);
                     UIStyleHelper.AddDropShadow(coinBadgeText, new Color(0f, 0f, 0f, 0.8f), new Vector2(1f, -1.5f));
                 }
+
+                UIStyleHelper.EnsureChildIcon(coinBadge, "Icon_Coin", UIStyleHelper.IconCoin, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(24f, 24f), new Vector2(-54f, 0f));
 
                 Button coinBtn = coinBadge.GetComponent<Button>();
                 if (coinBtn == null) coinBtn = coinBadge.gameObject.AddComponent<Button>();
@@ -272,7 +286,7 @@ namespace ClawMachine.UI
                 if (ServiceLocator.TryGet<IEconomyService>(out var econ))
                 {
                     lastDisplayedCoins = econ.Coins;
-                    if (coinBadgeText != null) coinBadgeText.text = $"🪙 {lastDisplayedCoins:N0} COINS";
+                    if (coinBadgeText != null) coinBadgeText.text = $"{lastDisplayedCoins:N0} COINS";
                 }
             }
 
@@ -281,20 +295,44 @@ namespace ClawMachine.UI
             if (upgTr != null)
             {
                 RectTransform rt = upgTr.GetComponent<RectTransform>();
-                rt.anchorMin = new Vector2(0.63f, 0.12f);
-                rt.anchorMax = new Vector2(0.85f, 0.88f);
+                rt.anchorMin = new Vector2(0.635f, 0.12f);
+                rt.anchorMax = new Vector2(0.865f, 0.88f);
                 rt.offsetMin = Vector2.zero;
                 rt.offsetMax = Vector2.zero;
 
                 Text t = upgTr.GetComponentInChildren<Text>();
                 if (t != null)
                 {
-                    t.text = "⚡ UPGRADES";
+                    t.text = "UPGRADE";
                     t.fontSize = 15;
                     t.fontStyle = FontStyle.Bold;
                     t.color = Color.white;
+                    t.alignment = TextAnchor.MiddleCenter;
+                    RectTransform trt = t.GetComponent<RectTransform>();
+                    trt.anchorMin = new Vector2(0.5f, 0.5f);
+                    trt.anchorMax = new Vector2(0.5f, 0.5f);
+                    trt.anchoredPosition = new Vector2(12f, 0f);
+                    trt.sizeDelta = new Vector2(76f, 32f);
                     UIStyleHelper.AddDropShadow(t, new Color(0f, 0f, 0f, 0.7f), new Vector2(1f, -1.5f));
                 }
+                UIStyleHelper.EnsureChildIcon(upgTr, "Icon_Bolt", UIStyleHelper.IconLightning, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(20f, 20f), new Vector2(-36f, 0f));
+
+                Transform pip = upgTr.Find("Pip_Progress");
+                if (pip != null)
+                {
+                    Image pImg = pip.GetComponent<Image>();
+                    if (pImg != null) UIStyleHelper.StyleNotificationPip(pImg);
+                    RectTransform prt = pip.GetComponent<RectTransform>();
+                    if (prt != null)
+                    {
+                        prt.anchorMin = Vector2.one;
+                        prt.anchorMax = Vector2.one;
+                        prt.pivot = new Vector2(0.5f, 0.5f);
+                        prt.anchoredPosition = new Vector2(-4f, -4f);
+                        prt.sizeDelta = new Vector2(16f, 16f);
+                    }
+                }
+
                 Button btn = upgTr.GetComponent<Button>();
                 if (btn != null) UIStyleHelper.StyleButton(btn);
             }
@@ -305,19 +343,13 @@ namespace ClawMachine.UI
             {
                 RectTransform rt = setTr.GetComponent<RectTransform>();
                 rt.anchorMin = new Vector2(0.88f, 0.12f);
-                rt.anchorMax = new Vector2(0.98f, 0.88f);
+                rt.anchorMax = new Vector2(0.985f, 0.88f);
                 rt.offsetMin = Vector2.zero;
                 rt.offsetMax = Vector2.zero;
 
                 Text t = setTr.GetComponentInChildren<Text>();
-                if (t != null)
-                {
-                    t.text = "⚙";
-                    t.fontSize = 24;
-                    t.fontStyle = FontStyle.Bold;
-                    t.color = Color.white;
-                    UIStyleHelper.AddDropShadow(t, new Color(0f, 0f, 0f, 0.7f), new Vector2(1f, -1.5f));
-                }
+                if (t != null) t.text = "";
+                UIStyleHelper.EnsureChildIcon(setTr, "Icon_Gear", UIStyleHelper.IconGear, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(24f, 24f), Vector2.zero);
                 Button btn = setTr.GetComponent<Button>();
                 if (btn != null) UIStyleHelper.StyleButton(btn);
             }
@@ -325,6 +357,19 @@ namespace ClawMachine.UI
 
         private void SetupConsoleCenterLayout()
         {
+            Transform deck = transform.Find("SafeAreaContainer/ConsoleDeck");
+            if (deck != null)
+            {
+                for (int i = 0; i < deck.childCount; i++)
+                {
+                    Transform c = deck.GetChild(i);
+                    if (c.name == "Rivet" || c.name == "ConsoleRim")
+                    {
+                        c.gameObject.SetActive(false);
+                    }
+                }
+            }
+
             Transform carouselStrip = machineNameText != null ? machineNameText.transform.parent : transform.Find("SafeAreaContainer/ConsoleDeck/CarouselStrip");
             if (carouselStrip == null) return;
 
@@ -344,18 +389,23 @@ namespace ClawMachine.UI
             if (prevMachineButton != null)
             {
                 RectTransform pRt = prevMachineButton.GetComponent<RectTransform>();
-                pRt.anchorMin = new Vector2(0f, 0f);
-                pRt.anchorMax = new Vector2(0.18f, 1f);
-                pRt.offsetMin = Vector2.zero;
-                pRt.offsetMax = Vector2.zero;
-                Text pt = prevMachineButton.GetComponentInChildren<Text>();
-                if (pt != null)
+                pRt.anchorMin = new Vector2(0f, 0.5f);
+                pRt.anchorMax = new Vector2(0f, 0.5f);
+                pRt.pivot = new Vector2(0f, 0.5f);
+                pRt.anchoredPosition = new Vector2(10f, 0f);
+                pRt.sizeDelta = new Vector2(52f, 52f);
+
+                Image pImg = prevMachineButton.GetComponent<Image>();
+                if (pImg != null)
                 {
-                    pt.text = "◄";
-                    pt.fontSize = 22;
-                    pt.fontStyle = FontStyle.Bold;
-                    pt.color = Color.white;
+                    pImg.sprite = UIStyleHelper.BadgePillSprite;
+                    pImg.type = Image.Type.Sliced;
+                    pImg.color = new Color(0.14f, 0.18f, 0.28f, 0.95f);
                 }
+
+                Text pt = prevMachineButton.GetComponentInChildren<Text>();
+                if (pt != null) pt.text = "";
+                UIStyleHelper.EnsureChildIcon(prevMachineButton.transform, "Icon_Arrow", UIStyleHelper.IconArrowLeft, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(26f, 26f), Vector2.zero);
                 UIStyleHelper.StyleButton(prevMachineButton);
             }
 
@@ -363,18 +413,23 @@ namespace ClawMachine.UI
             if (nextMachineButton != null)
             {
                 RectTransform nRt = nextMachineButton.GetComponent<RectTransform>();
-                nRt.anchorMin = new Vector2(0.82f, 0f);
-                nRt.anchorMax = new Vector2(1f, 1f);
-                nRt.offsetMin = Vector2.zero;
-                nRt.offsetMax = Vector2.zero;
-                Text nt = nextMachineButton.GetComponentInChildren<Text>();
-                if (nt != null)
+                nRt.anchorMin = new Vector2(1f, 0.5f);
+                nRt.anchorMax = new Vector2(1f, 0.5f);
+                nRt.pivot = new Vector2(1f, 0.5f);
+                nRt.anchoredPosition = new Vector2(-10f, 0f);
+                nRt.sizeDelta = new Vector2(52f, 52f);
+
+                Image nImg = nextMachineButton.GetComponent<Image>();
+                if (nImg != null)
                 {
-                    nt.text = "►";
-                    nt.fontSize = 22;
-                    nt.fontStyle = FontStyle.Bold;
-                    nt.color = Color.white;
+                    nImg.sprite = UIStyleHelper.BadgePillSprite;
+                    nImg.type = Image.Type.Sliced;
+                    nImg.color = new Color(0.14f, 0.18f, 0.28f, 0.95f);
                 }
+
+                Text nt = nextMachineButton.GetComponentInChildren<Text>();
+                if (nt != null) nt.text = "";
+                UIStyleHelper.EnsureChildIcon(nextMachineButton.transform, "Icon_Arrow", UIStyleHelper.IconArrowRight, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(26f, 26f), Vector2.zero);
                 UIStyleHelper.StyleButton(nextMachineButton);
             }
 
@@ -382,8 +437,8 @@ namespace ClawMachine.UI
             if (machineNameText != null)
             {
                 RectTransform mnRt = machineNameText.GetComponent<RectTransform>();
-                mnRt.anchorMin = new Vector2(0.18f, 0.46f);
-                mnRt.anchorMax = new Vector2(0.82f, 0.96f);
+                mnRt.anchorMin = new Vector2(0.16f, 0.46f);
+                mnRt.anchorMax = new Vector2(0.84f, 0.96f);
                 mnRt.offsetMin = Vector2.zero;
                 mnRt.offsetMax = Vector2.zero;
                 machineNameText.fontSize = 20;
@@ -396,8 +451,8 @@ namespace ClawMachine.UI
             if (machineStatusText != null)
             {
                 RectTransform msRt = machineStatusText.GetComponent<RectTransform>();
-                msRt.anchorMin = new Vector2(0.18f, 0.04f);
-                msRt.anchorMax = new Vector2(0.82f, 0.48f);
+                msRt.anchorMin = new Vector2(0.16f, 0.04f);
+                msRt.anchorMax = new Vector2(0.84f, 0.48f);
                 msRt.offsetMin = Vector2.zero;
                 msRt.offsetMax = Vector2.zero;
                 machineStatusText.fontSize = 16;

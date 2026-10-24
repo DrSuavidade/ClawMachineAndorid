@@ -125,9 +125,65 @@ namespace ClawMachine.UI
             bool active = !modalPanel.activeSelf;
             if (active)
             {
-                UIStyleHelper.EnsureModalShell(modalPanel, "TOY COLLECTION", CloseModal, 640f, 920f);
+                RectTransform contentTr = UIStyleHelper.EnsureModalShell(modalPanel, "TOY COLLECTION", CloseModal, 640f, 920f);
                 Transform oldClose = modalPanel.transform.Find("DialogCard/Btn_Close") ?? modalPanel.transform.Find("Btn_Close");
                 if (oldClose != null) oldClose.gameObject.SetActive(false);
+
+                Transform oldHeader = modalPanel.transform.Find("Header");
+                if (oldHeader != null) oldHeader.gameObject.SetActive(false);
+
+                Transform statsBanner = contentTr.Find("StatsBanner");
+                if (statsBanner == null)
+                {
+                    var sbGo = new GameObject("StatsBanner", typeof(RectTransform), typeof(Image));
+                    sbGo.transform.SetParent(contentTr, false);
+                    statsBanner = sbGo.transform;
+                    RectTransform sbRt = sbGo.GetComponent<RectTransform>();
+                    sbRt.anchorMin = new Vector2(0.04f, 0.91f);
+                    sbRt.anchorMax = new Vector2(0.96f, 0.98f);
+                    sbRt.offsetMin = Vector2.zero;
+                    sbRt.offsetMax = Vector2.zero;
+
+                    Image sbImg = sbGo.GetComponent<Image>();
+                    sbImg.sprite = UIStyleHelper.BadgePillSprite;
+                    sbImg.type = Image.Type.Sliced;
+                    sbImg.color = new Color(0.12f, 0.15f, 0.22f, 0.95f);
+
+                    var tGo = new GameObject("StatsText", typeof(RectTransform), typeof(Text));
+                    tGo.transform.SetParent(statsBanner, false);
+                    RectTransform tRt = tGo.GetComponent<RectTransform>();
+                    tRt.anchorMin = Vector2.zero;
+                    tRt.anchorMax = Vector2.one;
+                    tRt.offsetMin = Vector2.zero;
+                    tRt.offsetMax = Vector2.zero;
+
+                    Text stText = tGo.GetComponent<Text>();
+                    stText.font = UIStyleHelper.MainFont;
+                    stText.fontSize = 17;
+                    stText.fontStyle = FontStyle.Bold;
+                    stText.alignment = TextAnchor.MiddleCenter;
+                    stText.color = new Color(1.0f, 0.85f, 0.22f, 1f);
+                    UIStyleHelper.AddDropShadow(stText, new Color(0f, 0f, 0f, 0.7f), new Vector2(1f, -1.5f));
+                    progressText = stText;
+                }
+
+                if (gridContainer != null)
+                {
+                    gridContainer.SetParent(contentTr, false);
+                    RectTransform gRt = gridContainer.GetComponent<RectTransform>();
+                    gRt.anchorMin = new Vector2(0.02f, 0.02f);
+                    gRt.anchorMax = new Vector2(0.98f, 0.89f);
+                    gRt.offsetMin = Vector2.zero;
+                    gRt.offsetMax = Vector2.zero;
+
+                    var glg = gridContainer.GetComponent<GridLayoutGroup>();
+                    if (glg != null)
+                    {
+                        glg.cellSize = new Vector2(185f, 230f);
+                        glg.spacing = new Vector2(12f, 12f);
+                        glg.childAlignment = TextAnchor.MiddleCenter;
+                    }
+                }
 
                 modalPanel.SetActive(true);
                 Transform card = modalPanel.transform.Find("DialogCard") ?? modalPanel.transform;
@@ -291,8 +347,8 @@ namespace ClawMachine.UI
                 RectTransform rt = iconGo.GetComponent<RectTransform>();
                 rt.anchorMin = new Vector2(0.5f, 0.5f);
                 rt.anchorMax = new Vector2(0.5f, 0.5f);
-                rt.anchoredPosition = new Vector2(0f, 32f);
-                rt.sizeDelta = new Vector2(170f, 170f);
+                rt.anchoredPosition = new Vector2(0f, 24f);
+                rt.sizeDelta = new Vector2(120f, 120f);
                 iconImg = iconGo.GetComponent<Image>();
                 iconImg.preserveAspect = true;
                 iconImg.raycastTarget = false;
@@ -305,8 +361,8 @@ namespace ClawMachine.UI
                 {
                     rt.anchorMin = new Vector2(0.5f, 0.5f);
                     rt.anchorMax = new Vector2(0.5f, 0.5f);
-                    rt.anchoredPosition = new Vector2(0f, 32f);
-                    rt.sizeDelta = new Vector2(170f, 170f);
+                    rt.anchoredPosition = new Vector2(0f, 24f);
+                    rt.sizeDelta = new Vector2(120f, 120f);
                 }
                 if (iconImg != null) iconImg.preserveAspect = true;
             }
@@ -343,15 +399,15 @@ namespace ClawMachine.UI
                 RectTransform pRt = placardGo.GetComponent<RectTransform>();
                 pRt.anchorMin = new Vector2(0.5f, 0f);
                 pRt.anchorMax = new Vector2(0.5f, 0f);
-                pRt.anchoredPosition = new Vector2(0f, 38f);
-                pRt.sizeDelta = new Vector2(245f, 54f);
+                pRt.anchoredPosition = new Vector2(0f, 26f);
+                pRt.sizeDelta = new Vector2(165f, 44f);
 
                 Image pImg = placardGo.GetComponent<Image>();
                 pImg.sprite = UIStyleHelper.BrassPlacardSprite;
                 pImg.type = Image.Type.Sliced;
                 pImg.color = Color.white;
 
-                Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
+                Font font = UIStyleHelper.MainFont ?? Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
 
                 // Title Text on placard
                 GameObject pTitleGo = new GameObject("PlacardTitle", typeof(RectTransform), typeof(Text));
@@ -359,11 +415,11 @@ namespace ClawMachine.UI
                 RectTransform ptRt = pTitleGo.GetComponent<RectTransform>();
                 ptRt.anchorMin = new Vector2(0f, 0.38f);
                 ptRt.anchorMax = new Vector2(1f, 1f);
-                ptRt.offsetMin = new Vector2(8f, 0f);
-                ptRt.offsetMax = new Vector2(-8f, -2f);
+                ptRt.offsetMin = new Vector2(6f, 0f);
+                ptRt.offsetMax = new Vector2(-6f, -1f);
                 Text ptTxt = pTitleGo.GetComponent<Text>();
                 ptTxt.font = font;
-                ptTxt.fontSize = 19;
+                ptTxt.fontSize = 13;
                 ptTxt.fontStyle = FontStyle.Bold;
                 ptTxt.alignment = TextAnchor.MiddleCenter;
                 ptTxt.color = new Color(0.18f, 0.12f, 0.05f, 1f);
@@ -374,11 +430,11 @@ namespace ClawMachine.UI
                 RectTransform psRt = pSubGo.GetComponent<RectTransform>();
                 psRt.anchorMin = new Vector2(0f, 0f);
                 psRt.anchorMax = new Vector2(1f, 0.42f);
-                psRt.offsetMin = new Vector2(8f, 2f);
-                psRt.offsetMax = new Vector2(-8f, 0f);
+                psRt.offsetMin = new Vector2(6f, 1f);
+                psRt.offsetMax = new Vector2(-6f, 0f);
                 Text psTxt = pSubGo.GetComponent<Text>();
                 psTxt.font = font;
-                psTxt.fontSize = 14;
+                psTxt.fontSize = 11;
                 psTxt.fontStyle = FontStyle.Bold;
                 psTxt.alignment = TextAnchor.MiddleCenter;
 

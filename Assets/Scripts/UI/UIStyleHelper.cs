@@ -23,6 +23,31 @@ namespace ClawMachine.UI
         private static Sprite cachedDisplayScreenSprite;
         private static Sprite cachedShelfPedestalSprite;
         private static Sprite cachedBrassPlacardSprite;
+        private static Font cachedFont;
+
+        private static Sprite cachedIconTrophy;
+        private static Sprite cachedIconCoin;
+        private static Sprite cachedIconLightning;
+        private static Sprite cachedIconGear;
+        private static Sprite cachedIconArrowLeft;
+        private static Sprite cachedIconArrowRight;
+        private static Sprite cachedIconCloseX;
+        private static Sprite cachedIconCheckmark;
+        private static Sprite cachedIconSpeed;
+        private static Sprite cachedIconMagnet;
+        private static Sprite cachedIconTarget;
+
+        public static Font MainFont
+        {
+            get
+            {
+                if (cachedFont != null) return cachedFont;
+                cachedFont = Resources.Load<Font>("Fonts/LilitaOne");
+                if (cachedFont == null) cachedFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                if (cachedFont == null) cachedFont = Resources.GetBuiltinResource<Font>("Arial.ttf");
+                return cachedFont;
+            }
+        }
 
         public static Sprite RoundedCardSprite => cachedCardSprite ??= LoadOrGenerateCardSprite();
         public static Sprite PillButtonGlossSprite => cachedPillButtonSprite ??= LoadOrGeneratePillButtonSprite(false);
@@ -40,6 +65,60 @@ namespace ClawMachine.UI
         public static Sprite ArcadeDisplayScreenSprite => cachedDisplayScreenSprite ??= LoadOrGenerateDisplayScreenSprite();
         public static Sprite ShelfPedestalSprite => cachedShelfPedestalSprite ??= LoadOrGenerateShelfPedestalSprite();
         public static Sprite BrassPlacardSprite => cachedBrassPlacardSprite ??= LoadOrGenerateBrassPlacardSprite();
+
+        private static Sprite LoadIconSprite(string path)
+        {
+            var sp = Resources.Load<Sprite>(path);
+            if (sp != null) return sp;
+            var tex = Resources.Load<Texture2D>(path);
+            if (tex != null)
+            {
+                return Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+            }
+            return null;
+        }
+
+        public static Sprite IconTrophy => cachedIconTrophy ??= LoadIconSprite("UI/Icons/Icon_Trophy");
+        public static Sprite IconCoin => cachedIconCoin ??= LoadIconSprite("UI/Icons/Icon_Coin_3D") ?? CoinIconSprite;
+        public static Sprite IconLightning => cachedIconLightning ??= LoadIconSprite("UI/Icons/Icon_Lightning");
+        public static Sprite IconGear => cachedIconGear ??= LoadIconSprite("UI/Icons/Icon_Gear");
+        public static Sprite IconArrowLeft => cachedIconArrowLeft ??= LoadIconSprite("UI/Icons/Icon_Arrow_Left");
+        public static Sprite IconArrowRight => cachedIconArrowRight ??= LoadIconSprite("UI/Icons/Icon_Arrow_Right");
+        public static Sprite IconCloseX => cachedIconCloseX ??= LoadIconSprite("UI/Icons/Icon_Close_X");
+        public static Sprite IconCheckmark => cachedIconCheckmark ??= LoadIconSprite("UI/Icons/Icon_Checkmark");
+        public static Sprite IconUpgradeSpeed => cachedIconSpeed ??= LoadIconSprite("UI/Icons/Icon_Upgrade_Speed");
+        public static Sprite IconUpgradeMagnet => cachedIconMagnet ??= LoadIconSprite("UI/Icons/Icon_Upgrade_Magnet");
+        public static Sprite IconUpgradeTarget => cachedIconTarget ??= LoadIconSprite("UI/Icons/Icon_Upgrade_Target");
+
+        public static Image EnsureChildIcon(Transform parent, string name, Sprite sprite, Vector2 anchorMin, Vector2 anchorMax, Vector2 size, Vector2 pos)
+        {
+            if (parent == null || sprite == null) return null;
+            Transform existing = parent.Find(name);
+            GameObject go;
+            if (existing == null)
+            {
+                go = new GameObject(name, typeof(RectTransform), typeof(Image));
+                go.transform.SetParent(parent, false);
+            }
+            else
+            {
+                go = existing.gameObject;
+            }
+
+            RectTransform rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = anchorMin;
+            rt.anchorMax = anchorMax;
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = pos;
+            rt.sizeDelta = size;
+
+            Image img = go.GetComponent<Image>();
+            img.sprite = sprite;
+            img.color = Color.white;
+            img.preserveAspect = true;
+            img.raycastTarget = false;
+            return img;
+        }
 
         private void Awake()
         {
@@ -79,6 +158,10 @@ namespace ClawMachine.UI
                 {
                     StyleBadge(img);
                 }
+                else if (name.StartsWith("Pip_") || name == "RedDot" || name.EndsWith("Pip"))
+                {
+                    StyleNotificationPip(img);
+                }
                 else if (name == "ProgressBar_Bg" || name == "Track")
                 {
                     img.sprite = ProgressBarBgSprite;
@@ -91,16 +174,18 @@ namespace ClawMachine.UI
                 }
             }
 
-            // 3. Add drop shadow to titles and headers for readability
+            // 3. Set Lilita One font and drop shadow for clean readability
+            Font f = MainFont;
             Text[] texts = root.GetComponentsInChildren<Text>(true);
             for (int i = 0; i < texts.Length; i++)
             {
                 Text txt = texts[i];
                 if (txt == null) continue;
+                if (f != null) txt.font = f;
                 string n = txt.gameObject.name;
-                if (n.Contains("Title") || n.Contains("Header") || n == "PrizeName" || n.Contains("Count") || n.Contains("Balance"))
+                if (n.Contains("Title") || n.Contains("Header") || n == "PrizeName" || n.Contains("Count") || n.Contains("Balance") || n.Contains("Machine"))
                 {
-                    AddDropShadow(txt, new Color(0f, 0f, 0f, 0.65f), new Vector2(1.5f, -2f));
+                    AddDropShadow(txt, new Color(0f, 0f, 0f, 0.75f), new Vector2(1.5f, -2f));
                 }
             }
         }
@@ -145,7 +230,8 @@ namespace ClawMachine.UI
             Text btnText = button.GetComponentInChildren<Text>(true);
             if (btnText != null)
             {
-                AddDropShadow(btnText, new Color(0f, 0f, 0f, 0.55f), new Vector2(1f, -1.5f));
+                if (MainFont != null) btnText.font = MainFont;
+                AddDropShadow(btnText, new Color(0f, 0f, 0f, 0.70f), new Vector2(1f, -1.5f));
             }
         }
 
@@ -166,6 +252,19 @@ namespace ClawMachine.UI
             {
                 img.sprite = BadgePillSprite;
                 img.type = Image.Type.Sliced;
+            }
+        }
+
+        public static void StyleNotificationPip(Image img)
+        {
+            if (img == null) return;
+            img.sprite = BadgePillSprite;
+            img.type = Image.Type.Sliced;
+            img.color = new Color(0.92f, 0.16f, 0.16f, 1f);
+            RectTransform rt = img.rectTransform;
+            if (rt != null)
+            {
+                rt.sizeDelta = new Vector2(16f, 16f);
             }
         }
 
@@ -244,13 +343,6 @@ namespace ClawMachine.UI
                 headerGo.transform.SetParent(cardTr, false);
                 headerTr = headerGo.transform;
 
-                RectTransform hRt = headerGo.GetComponent<RectTransform>();
-                hRt.anchorMin = new Vector2(0f, 1f);
-                hRt.anchorMax = new Vector2(1f, 1f);
-                hRt.pivot = new Vector2(0.5f, 1f);
-                hRt.anchoredPosition = new Vector2(0f, -8f);
-                hRt.sizeDelta = new Vector2(cardWidth - 24f, 64f);
-
                 Image hImg = headerGo.GetComponent<Image>();
                 hImg.sprite = BadgePillSprite;
                 hImg.type = Image.Type.Sliced;
@@ -266,7 +358,7 @@ namespace ClawMachine.UI
                 tRt.offsetMax = new Vector2(-16f, 0f);
 
                 Text titleTxt = titleGo.GetComponent<Text>();
-                titleTxt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
+                titleTxt.font = MainFont ?? Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
                 titleTxt.text = title;
                 titleTxt.fontSize = 22;
                 titleTxt.fontStyle = FontStyle.Bold;
@@ -277,7 +369,21 @@ namespace ClawMachine.UI
             else
             {
                 Text t = headerTr.GetComponentInChildren<Text>();
-                if (t != null) t.text = title;
+                if (t != null)
+                {
+                    if (MainFont != null) t.font = MainFont;
+                    t.text = title;
+                }
+            }
+
+            RectTransform hRt = headerTr.GetComponent<RectTransform>();
+            if (hRt != null)
+            {
+                hRt.anchorMin = new Vector2(0f, 1f);
+                hRt.anchorMax = new Vector2(1f, 1f);
+                hRt.pivot = new Vector2(0.5f, 1f);
+                hRt.anchoredPosition = new Vector2(0f, -10f);
+                hRt.sizeDelta = new Vector2(-28f, 56f);
             }
 
             Transform closeTr = cardTr.Find("ModalCloseBtn");
@@ -287,37 +393,44 @@ namespace ClawMachine.UI
                 closeGo.transform.SetParent(cardTr, false);
                 closeTr = closeGo.transform;
 
-                RectTransform cRt = closeGo.GetComponent<RectTransform>();
-                cRt.anchorMin = new Vector2(1f, 1f);
-                cRt.anchorMax = new Vector2(1f, 1f);
-                cRt.pivot = new Vector2(0.5f, 0.5f);
-                cRt.anchoredPosition = new Vector2(-18f, -18f);
-                cRt.sizeDelta = new Vector2(44f, 44f);
-
                 Image cImg = closeGo.GetComponent<Image>();
                 cImg.sprite = BadgePillSprite;
                 cImg.type = Image.Type.Sliced;
                 cImg.color = new Color(0.24f, 0.28f, 0.40f, 1f);
 
-                GameObject xTxtGo = new GameObject("Text", typeof(RectTransform), typeof(Text));
-                xTxtGo.transform.SetParent(closeTr, false);
-                RectTransform xRt = xTxtGo.GetComponent<RectTransform>();
-                xRt.anchorMin = Vector2.zero;
-                xRt.anchorMax = Vector2.one;
-                xRt.offsetMin = Vector2.zero;
-                xRt.offsetMax = Vector2.zero;
+                Image xImg = EnsureChildIcon(closeTr, "Icon_X", IconCloseX, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(20f, 20f), Vector2.zero);
+                if (xImg == null)
+                {
+                    GameObject xTxtGo = new GameObject("Text", typeof(RectTransform), typeof(Text));
+                    xTxtGo.transform.SetParent(closeTr, false);
+                    RectTransform xRt = xTxtGo.GetComponent<RectTransform>();
+                    xRt.anchorMin = Vector2.zero;
+                    xRt.anchorMax = Vector2.one;
+                    xRt.offsetMin = Vector2.zero;
+                    xRt.offsetMax = Vector2.zero;
 
-                Text xTxt = xTxtGo.GetComponent<Text>();
-                xTxt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
-                xTxt.text = "✕";
-                xTxt.fontSize = 20;
-                xTxt.fontStyle = FontStyle.Bold;
-                xTxt.alignment = TextAnchor.MiddleCenter;
-                xTxt.color = Color.white;
+                    Text xTxt = xTxtGo.GetComponent<Text>();
+                    xTxt.font = MainFont ?? Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
+                    xTxt.text = "✕";
+                    xTxt.fontSize = 20;
+                    xTxt.fontStyle = FontStyle.Bold;
+                    xTxt.alignment = TextAnchor.MiddleCenter;
+                    xTxt.color = Color.white;
+                }
 
                 Button cBtn = closeGo.GetComponent<Button>();
                 if (onClose != null) cBtn.onClick.AddListener(() => onClose());
                 StyleButton(cBtn);
+            }
+
+            RectTransform cRt = closeTr.GetComponent<RectTransform>();
+            if (cRt != null)
+            {
+                cRt.anchorMin = new Vector2(1f, 1f);
+                cRt.anchorMax = new Vector2(1f, 1f);
+                cRt.pivot = new Vector2(0.5f, 0.5f);
+                cRt.anchoredPosition = new Vector2(-36f, -38f);
+                cRt.sizeDelta = new Vector2(40f, 40f);
             }
 
             Transform contentTr = cardTr.Find("ContentContainer");
@@ -336,8 +449,8 @@ namespace ClawMachine.UI
             RectTransform contentRt = contentGo.GetComponent<RectTransform>();
             contentRt.anchorMin = Vector2.zero;
             contentRt.anchorMax = Vector2.one;
-            contentRt.offsetMin = new Vector2(18f, 18f);
-            contentRt.offsetMax = new Vector2(-18f, -78f);
+            contentRt.offsetMin = new Vector2(16f, 16f);
+            contentRt.offsetMax = new Vector2(-16f, -74f);
 
             return contentRt;
         }
@@ -422,7 +535,7 @@ namespace ClawMachine.UI
             if (targetText != null) targetText.text = $"{prefix}{to:N0}{suffix}";
         }
 
-        public static void SpawnFloatingCoinReward(MonoBehaviour runner, int amount, Vector2? screenPosition = null)
+        public static void SpawnFloatingCoinReward(MonoBehaviour runner, int amount, Vector2? screenPosition = null, Transform originTransform = null)
         {
             if (amount <= 0) return;
             Canvas canvas = Object.FindFirstObjectByType<Canvas>();
@@ -434,7 +547,7 @@ namespace ClawMachine.UI
             go.transform.SetParent(parent, false);
 
             RectTransform rt = go.GetComponent<RectTransform>();
-            Vector2 startPos = screenPosition ?? new Vector2(0f, 60f);
+            Vector2 startPos = screenPosition ?? (originTransform != null ? (Vector2)parent.InverseTransformPoint(originTransform.position) : new Vector2(0f, 60f));
             rt.anchoredPosition = startPos;
             rt.sizeDelta = new Vector2(240f, 50f);
 
