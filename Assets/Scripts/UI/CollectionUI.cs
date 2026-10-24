@@ -123,13 +123,21 @@ namespace ClawMachine.UI
         {
             if (modalPanel == null) return;
             bool active = !modalPanel.activeSelf;
-            modalPanel.SetActive(active);
             if (active)
             {
+                UIStyleHelper.EnsureModalShell(modalPanel, "TOY COLLECTION", CloseModal, 640f, 920f);
+                Transform oldClose = modalPanel.transform.Find("DialogCard/Btn_Close") ?? modalPanel.transform.Find("Btn_Close");
+                if (oldClose != null) oldClose.gameObject.SetActive(false);
+
+                modalPanel.SetActive(true);
                 Transform card = modalPanel.transform.Find("DialogCard") ?? modalPanel.transform;
                 UIStyleHelper.AnimatePopIn(this, card);
                 ServiceLocator.Get<IAudioService>()?.PlayModalOpen();
                 RefreshCollectionGrid();
+            }
+            else
+            {
+                modalPanel.SetActive(false);
             }
         }
 

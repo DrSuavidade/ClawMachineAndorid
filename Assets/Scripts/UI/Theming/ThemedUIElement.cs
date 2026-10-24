@@ -111,7 +111,7 @@ namespace ClawMachine.UI.Theming
                         imageComponent.sprite = theme.frameBorder != null ? theme.frameBorder : UIStyleHelper.RoundedCardSprite;
                         imageComponent.type = Image.Type.Sliced;
                     }
-                    targetColor = theme.primaryColor;
+                    targetColor = Color.white;
                     break;
                 case ThemeTargetType.ButtonBackground:
                     if (imageComponent != null)
@@ -124,7 +124,7 @@ namespace ClawMachine.UI.Theming
                     {
                         UIStyleHelper.StyleButton(btn);
                     }
-                    targetColor = theme.accentColor;
+                    targetColor = Color.white;
                     break;
                 case ThemeTargetType.HeaderBanner:
                     if (imageComponent != null)
@@ -132,7 +132,7 @@ namespace ClawMachine.UI.Theming
                         imageComponent.sprite = theme.headerBanner != null ? theme.headerBanner : UIStyleHelper.RoundedCardSprite;
                         imageComponent.type = Image.Type.Sliced;
                     }
-                    targetColor = theme.primaryColor;
+                    targetColor = Color.white;
                     break;
                 case ThemeTargetType.RivetBulb:
                     if (imageComponent != null)
@@ -141,7 +141,7 @@ namespace ClawMachine.UI.Theming
                         imageComponent.type = Image.Type.Simple;
                         imageComponent.preserveAspect = true;
                     }
-                    targetColor = theme.accentColor;
+                    targetColor = Color.white;
                     break;
             }
 

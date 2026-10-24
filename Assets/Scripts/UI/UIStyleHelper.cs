@@ -179,6 +179,169 @@ namespace ClawMachine.UI
             s.useGraphicAlpha = true;
         }
 
+        public static RectTransform EnsureModalShell(GameObject modalRoot, string title, System.Action onClose, float cardWidth = 620f, float cardHeight = 880f)
+        {
+            if (modalRoot == null) return null;
+
+            RectTransform rootRt = modalRoot.GetComponent<RectTransform>();
+            if (rootRt != null)
+            {
+                rootRt.anchorMin = Vector2.zero;
+                rootRt.anchorMax = Vector2.one;
+                rootRt.offsetMin = Vector2.zero;
+                rootRt.offsetMax = Vector2.zero;
+            }
+
+            Image rootImg = modalRoot.GetComponent<Image>();
+            if (rootImg != null)
+            {
+                rootImg.sprite = null;
+                rootImg.color = new Color(0.04f, 0.05f, 0.08f, 0.85f);
+                rootImg.raycastTarget = true;
+            }
+
+            Button rootBtn = modalRoot.GetComponent<Button>();
+            if (rootBtn == null) rootBtn = modalRoot.AddComponent<Button>();
+            rootBtn.transition = Selectable.Transition.None;
+            rootBtn.onClick.RemoveAllListeners();
+            if (onClose != null) rootBtn.onClick.AddListener(() => onClose());
+
+            Transform cardTr = modalRoot.transform.Find("DialogCard");
+            GameObject cardObj;
+            if (cardTr == null)
+            {
+                cardObj = new GameObject("DialogCard", typeof(RectTransform), typeof(Image));
+                cardObj.transform.SetParent(modalRoot.transform, false);
+                cardTr = cardObj.transform;
+            }
+            else
+            {
+                cardObj = cardTr.gameObject;
+            }
+
+            cardTr.SetAsLastSibling();
+
+            RectTransform cardRt = cardObj.GetComponent<RectTransform>();
+            cardRt.anchorMin = new Vector2(0.5f, 0.5f);
+            cardRt.anchorMax = new Vector2(0.5f, 0.5f);
+            cardRt.pivot = new Vector2(0.5f, 0.5f);
+            cardRt.anchoredPosition = Vector2.zero;
+            cardRt.sizeDelta = new Vector2(cardWidth, cardHeight);
+
+            Image cardImg = cardObj.GetComponent<Image>();
+            if (cardImg != null)
+            {
+                cardImg.sprite = RoundedCardSprite;
+                cardImg.type = Image.Type.Sliced;
+                cardImg.color = Color.white;
+                cardImg.raycastTarget = true;
+            }
+
+            Transform headerTr = cardTr.Find("ModalHeader");
+            if (headerTr == null)
+            {
+                GameObject headerGo = new GameObject("ModalHeader", typeof(RectTransform), typeof(Image));
+                headerGo.transform.SetParent(cardTr, false);
+                headerTr = headerGo.transform;
+
+                RectTransform hRt = headerGo.GetComponent<RectTransform>();
+                hRt.anchorMin = new Vector2(0f, 1f);
+                hRt.anchorMax = new Vector2(1f, 1f);
+                hRt.pivot = new Vector2(0.5f, 1f);
+                hRt.anchoredPosition = new Vector2(0f, -8f);
+                hRt.sizeDelta = new Vector2(cardWidth - 24f, 64f);
+
+                Image hImg = headerGo.GetComponent<Image>();
+                hImg.sprite = BadgePillSprite;
+                hImg.type = Image.Type.Sliced;
+                hImg.color = new Color(0.10f, 0.12f, 0.18f, 0.95f);
+                hImg.raycastTarget = false;
+
+                GameObject titleGo = new GameObject("TitleText", typeof(RectTransform), typeof(Text));
+                titleGo.transform.SetParent(headerTr, false);
+                RectTransform tRt = titleGo.GetComponent<RectTransform>();
+                tRt.anchorMin = Vector2.zero;
+                tRt.anchorMax = Vector2.one;
+                tRt.offsetMin = new Vector2(16f, 0f);
+                tRt.offsetMax = new Vector2(-16f, 0f);
+
+                Text titleTxt = titleGo.GetComponent<Text>();
+                titleTxt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
+                titleTxt.text = title;
+                titleTxt.fontSize = 22;
+                titleTxt.fontStyle = FontStyle.Bold;
+                titleTxt.alignment = TextAnchor.MiddleCenter;
+                titleTxt.color = Color.white;
+                AddDropShadow(titleTxt, new Color(0f, 0f, 0f, 0.7f), new Vector2(1f, -1.5f));
+            }
+            else
+            {
+                Text t = headerTr.GetComponentInChildren<Text>();
+                if (t != null) t.text = title;
+            }
+
+            Transform closeTr = cardTr.Find("ModalCloseBtn");
+            if (closeTr == null)
+            {
+                GameObject closeGo = new GameObject("ModalCloseBtn", typeof(RectTransform), typeof(Image), typeof(Button));
+                closeGo.transform.SetParent(cardTr, false);
+                closeTr = closeGo.transform;
+
+                RectTransform cRt = closeGo.GetComponent<RectTransform>();
+                cRt.anchorMin = new Vector2(1f, 1f);
+                cRt.anchorMax = new Vector2(1f, 1f);
+                cRt.pivot = new Vector2(0.5f, 0.5f);
+                cRt.anchoredPosition = new Vector2(-18f, -18f);
+                cRt.sizeDelta = new Vector2(44f, 44f);
+
+                Image cImg = closeGo.GetComponent<Image>();
+                cImg.sprite = BadgePillSprite;
+                cImg.type = Image.Type.Sliced;
+                cImg.color = new Color(0.24f, 0.28f, 0.40f, 1f);
+
+                GameObject xTxtGo = new GameObject("Text", typeof(RectTransform), typeof(Text));
+                xTxtGo.transform.SetParent(closeTr, false);
+                RectTransform xRt = xTxtGo.GetComponent<RectTransform>();
+                xRt.anchorMin = Vector2.zero;
+                xRt.anchorMax = Vector2.one;
+                xRt.offsetMin = Vector2.zero;
+                xRt.offsetMax = Vector2.zero;
+
+                Text xTxt = xTxtGo.GetComponent<Text>();
+                xTxt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
+                xTxt.text = "✕";
+                xTxt.fontSize = 20;
+                xTxt.fontStyle = FontStyle.Bold;
+                xTxt.alignment = TextAnchor.MiddleCenter;
+                xTxt.color = Color.white;
+
+                Button cBtn = closeGo.GetComponent<Button>();
+                if (onClose != null) cBtn.onClick.AddListener(() => onClose());
+                StyleButton(cBtn);
+            }
+
+            Transform contentTr = cardTr.Find("ContentContainer");
+            GameObject contentGo;
+            if (contentTr == null)
+            {
+                contentGo = new GameObject("ContentContainer", typeof(RectTransform));
+                contentGo.transform.SetParent(cardTr, false);
+                contentTr = contentGo.transform;
+            }
+            else
+            {
+                contentGo = contentTr.gameObject;
+            }
+
+            RectTransform contentRt = contentGo.GetComponent<RectTransform>();
+            contentRt.anchorMin = Vector2.zero;
+            contentRt.anchorMax = Vector2.one;
+            contentRt.offsetMin = new Vector2(18f, 18f);
+            contentRt.offsetMax = new Vector2(-18f, -78f);
+
+            return contentRt;
+        }
+
         // =====================================================================
         // UI JUICE & TWEEN ANIMATIONS
         // =====================================================================

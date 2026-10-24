@@ -50,11 +50,15 @@ namespace ClawMachine.UI
                 initialPlungerPos = Vector2.zero;
             }
 
-            // Real arcade drop button is pure button without text labels
             if (labelText != null)
             {
-                labelText.text = "";
-                labelText.gameObject.SetActive(false);
+                labelText.text = "DROP";
+                labelText.fontSize = 24;
+                labelText.fontStyle = FontStyle.Bold;
+                labelText.color = Color.white;
+                labelText.alignment = TextAnchor.MiddleCenter;
+                labelText.gameObject.SetActive(true);
+                UIStyleHelper.AddDropShadow(labelText, new Color(0f, 0f, 0f, 0.8f), new Vector2(1.5f, -2f));
             }
         }
 

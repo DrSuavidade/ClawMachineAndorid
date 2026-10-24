@@ -93,6 +93,9 @@ namespace ClawMachine.UI
 
             if (modalPanel != null)
             {
+                UIStyleHelper.EnsureModalShell(modalPanel, "OFFLINE REWARDS", OnCollectClicked, 580f, 620f);
+                if (collectButton != null) UIStyleHelper.StyleButton(collectButton);
+
                 modalPanel.SetActive(true);
                 Transform card = modalPanel.transform.Find("DialogCard") ?? modalPanel.transform;
                 UIStyleHelper.AnimatePopIn(this, card);

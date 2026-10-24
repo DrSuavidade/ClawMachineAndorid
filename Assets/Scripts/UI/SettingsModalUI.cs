@@ -46,103 +46,43 @@ namespace ClawMachine.UI
         {
             if (modalPanel == null) return;
 
+            // Ensure standard modal shell with top-right close button
+            RectTransform contentTr = UIStyleHelper.EnsureModalShell(modalPanel, "SETTINGS", CloseModal, 600f, 660f);
+
+            // Hide old legacy Header and CloseButton from scene
+            Transform oldHeader = modalPanel.transform.Find("Header");
+            if (oldHeader != null) oldHeader.gameObject.SetActive(false);
+            if (closeButton != null) closeButton.gameObject.SetActive(false);
+
             Transform listContainerTr = modalPanel.transform.Find("ListContainer");
-            if (listContainerTr == null) return;
-
-            // Auto-detect existing scene children if not directly wired in inspector
-            if (masterSlider == null)
+            if (listContainerTr == null)
             {
-                Transform r = listContainerTr.Find("Row_MasterVolume");
-                if (r != null)
+                var lc = new GameObject("ListContainer", typeof(RectTransform));
+                lc.transform.SetParent(contentTr, false);
+                listContainerTr = lc.transform;
+            }
+            else
+            {
+                listContainerTr.SetParent(contentTr, false);
+            }
+
+            RectTransform lcRt = listContainerTr.GetComponent<RectTransform>();
+            lcRt.anchorMin = Vector2.zero;
+            lcRt.anchorMax = Vector2.one;
+            lcRt.offsetMin = Vector2.zero;
+            lcRt.offsetMax = Vector2.zero;
+
+            // Remove legacy unconfigured empty rows from old scene yaml
+            for (int i = listContainerTr.childCount - 1; i >= 0; i--)
+            {
+                Transform child = listContainerTr.GetChild(i);
+                if (child.name == "Row_0" || child.name == "Row_1" || child.name == "Row_2")
                 {
-                    masterSlider = r.GetComponentInChildren<Slider>();
-                    var txts = r.GetComponentsInChildren<Text>();
-                    for (int i = 0; i < txts.Length; i++)
-                    {
-                        if (txts[i].name == "ValueText") masterValueText = txts[i];
-                    }
+                    Destroy(child.gameObject);
                 }
             }
 
-            if (musicSlider == null)
-            {
-                Transform r = listContainerTr.Find("Row_MusicVolume");
-                if (r != null)
-                {
-                    musicSlider = r.GetComponentInChildren<Slider>();
-                    var txts = r.GetComponentsInChildren<Text>();
-                    for (int i = 0; i < txts.Length; i++)
-                    {
-                        if (txts[i].name == "ValueText") musicValueText = txts[i];
-                    }
-                }
-            }
-
-            if (sfxSlider == null)
-            {
-                Transform r = listContainerTr.Find("Row_SFXVolume");
-                if (r != null)
-                {
-                    sfxSlider = r.GetComponentInChildren<Slider>();
-                    var txts = r.GetComponentsInChildren<Text>();
-                    for (int i = 0; i < txts.Length; i++)
-                    {
-                        if (txts[i].name == "ValueText") sfxValueText = txts[i];
-                    }
-                }
-            }
-
-            if (hapticsToggleButton == null)
-            {
-                Transform r = listContainerTr.Find("Row_Haptics");
-                if (r != null)
-                {
-                    hapticsToggleButton = r.GetComponent<Button>();
-                    hapticsStatusText = r.GetComponentInChildren<Text>();
-                }
-            }
-
-            if (resetButton == null)
-            {
-                Transform r = listContainerTr.Find("Row_ResetProgress");
-                if (r != null)
-                {
-                    resetButton = r.GetComponent<Button>();
-                }
-            }
-
-            // If elements are present in the scene, wire listeners directly
-            if (masterSlider != null)
-            {
-                masterSlider.onValueChanged.RemoveAllListeners();
-                masterSlider.onValueChanged.AddListener(OnMasterVolumeChanged);
-            }
-            if (musicSlider != null)
-            {
-                musicSlider.onValueChanged.RemoveAllListeners();
-                musicSlider.onValueChanged.AddListener(OnMusicVolumeChanged);
-            }
-            if (sfxSlider != null)
-            {
-                sfxSlider.onValueChanged.RemoveAllListeners();
-                sfxSlider.onValueChanged.AddListener(OnSFXVolumeChanged);
-            }
-            if (hapticsToggleButton != null)
-            {
-                hapticsToggleButton.onClick.RemoveAllListeners();
-                hapticsToggleButton.onClick.AddListener(ToggleHaptics);
-            }
-            if (resetButton != null)
-            {
-                resetButton.onClick.RemoveAllListeners();
-                resetButton.onClick.AddListener(OpenResetConfirmPopup);
-            }
-
-            // Fallback generation only if scene has no rows at all
-            if (masterSlider == null && musicSlider == null && sfxSlider == null)
-            {
-                BuildFallbackLayout(listContainerTr);
-            }
+            BuildFallbackLayout(listContainerTr);
         }
 
         private void BuildFallbackLayout(Transform listContainerTr)

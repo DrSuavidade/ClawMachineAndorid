@@ -123,7 +123,7 @@ namespace ClawMachine.UI
             if (coinBadgeText != null)
             {
                 int from = lastDisplayedCoins >= 0 ? lastDisplayedCoins : newCoins;
-                UIStyleHelper.AnimateNumberRoll(this, coinBadgeText, from, newCoins, 0.35f, "", " COINS");
+                UIStyleHelper.AnimateNumberRoll(this, coinBadgeText, from, newCoins, 0.35f, "🪙 ", " COINS");
                 if (coinBadgeTransform != null)
                 {
                     UIStyleHelper.AnimateScalePunch(this, coinBadgeTransform, 1.18f, 0.22f);
@@ -163,9 +163,164 @@ namespace ClawMachine.UI
                 }
             }
 
+            SetupTopBarHUD();
             SetupConsoleCenterLayout();
             EnsureGameplayHintBanner();
             UpdateCarouselDisplay();
+        }
+
+        private void SetupTopBarHUD()
+        {
+            Transform canopy = transform.Find("SafeAreaContainer/MachineMarqueeCanopy");
+            if (canopy == null) return;
+
+            // Hide raw legacy rivets and frame lines in canopy
+            for (int i = canopy.childCount - 1; i >= 0; i--)
+            {
+                Transform c = canopy.GetChild(i);
+                if (c.name == "Rivet" || c.name == "MarqueeRim" || c.name == "NeonRunner")
+                {
+                    c.gameObject.SetActive(false);
+                }
+            }
+
+            RectTransform canopyRt = canopy.GetComponent<RectTransform>();
+            if (canopyRt != null)
+            {
+                canopyRt.anchorMin = new Vector2(0f, 1f);
+                canopyRt.anchorMax = new Vector2(1f, 1f);
+                canopyRt.pivot = new Vector2(0.5f, 1f);
+                canopyRt.anchoredPosition = new Vector2(0f, -4f);
+                canopyRt.sizeDelta = new Vector2(0f, 68f);
+            }
+
+            Image canopyImg = canopy.GetComponent<Image>();
+            if (canopyImg != null)
+            {
+                canopyImg.sprite = UIStyleHelper.BadgePillSprite;
+                canopyImg.type = Image.Type.Sliced;
+                canopyImg.color = new Color(0.06f, 0.08f, 0.12f, 0.90f);
+            }
+
+            // 1. Btn_Collection (Left)
+            Transform collTr = canopy.Find("Btn_Collection");
+            if (collTr != null)
+            {
+                RectTransform rt = collTr.GetComponent<RectTransform>();
+                rt.anchorMin = new Vector2(0.02f, 0.12f);
+                rt.anchorMax = new Vector2(0.25f, 0.88f);
+                rt.offsetMin = Vector2.zero;
+                rt.offsetMax = Vector2.zero;
+
+                Text t = collTr.GetComponentInChildren<Text>();
+                if (t != null)
+                {
+                    t.text = "🏆 TOYS";
+                    t.fontSize = 17;
+                    t.fontStyle = FontStyle.Bold;
+                    t.color = Color.white;
+                    UIStyleHelper.AddDropShadow(t, new Color(0f, 0f, 0f, 0.7f), new Vector2(1f, -1.5f));
+                }
+                Button btn = collTr.GetComponent<Button>();
+                if (btn != null) UIStyleHelper.StyleButton(btn);
+            }
+
+            // 2. CoinBankPlate (Move coin counter to top bar!)
+            Transform coinBadge = transform.Find("SafeAreaContainer/ConsoleDeck/CarouselStrip/CoinBankPlate")
+                               ?? transform.Find("SafeAreaContainer/ConsoleDeck/CarouselStrip/Badge_Coins")
+                               ?? canopy.Find("CoinBankPlate")
+                               ?? canopy.Find("Badge_Coins");
+
+            if (coinBadge != null)
+            {
+                coinBadge.name = "CoinBankPlate";
+                coinBadge.SetParent(canopy, false);
+                RectTransform rt = coinBadge.GetComponent<RectTransform>();
+                rt.anchorMin = new Vector2(0.28f, 0.12f);
+                rt.anchorMax = new Vector2(0.60f, 0.88f);
+                rt.offsetMin = Vector2.zero;
+                rt.offsetMax = Vector2.zero;
+
+                Image cbImg = coinBadge.GetComponent<Image>();
+                if (cbImg != null)
+                {
+                    cbImg.sprite = UIStyleHelper.BadgePillSprite;
+                    cbImg.type = Image.Type.Sliced;
+                    cbImg.color = new Color(0.10f, 0.12f, 0.18f, 0.98f);
+                }
+
+                coinBadgeTransform = coinBadge;
+                coinBadgeText = coinBadge.GetComponentInChildren<Text>();
+                if (coinBadgeText != null)
+                {
+                    coinBadgeText.fontSize = 18;
+                    coinBadgeText.fontStyle = FontStyle.Bold;
+                    coinBadgeText.color = new Color(1.0f, 0.85f, 0.22f, 1f);
+                    coinBadgeText.alignment = TextAnchor.MiddleCenter;
+                    UIStyleHelper.AddDropShadow(coinBadgeText, new Color(0f, 0f, 0f, 0.8f), new Vector2(1f, -1.5f));
+                }
+
+                Button coinBtn = coinBadge.GetComponent<Button>();
+                if (coinBtn == null) coinBtn = coinBadge.gameObject.AddComponent<Button>();
+                coinBtn.onClick.RemoveAllListeners();
+                coinBtn.onClick.AddListener(() =>
+                {
+                    var adSvc = AdService.Instance ?? FindFirstObjectByType<AdService>();
+                    if (adSvc != null) adSvc.ShowOutOfCoinsPrompt();
+                });
+
+                if (ServiceLocator.TryGet<IEconomyService>(out var econ))
+                {
+                    lastDisplayedCoins = econ.Coins;
+                    if (coinBadgeText != null) coinBadgeText.text = $"🪙 {lastDisplayedCoins:N0} COINS";
+                }
+            }
+
+            // 3. Btn_Upgrades (Right-Center)
+            Transform upgTr = canopy.Find("Btn_Upgrades");
+            if (upgTr != null)
+            {
+                RectTransform rt = upgTr.GetComponent<RectTransform>();
+                rt.anchorMin = new Vector2(0.63f, 0.12f);
+                rt.anchorMax = new Vector2(0.85f, 0.88f);
+                rt.offsetMin = Vector2.zero;
+                rt.offsetMax = Vector2.zero;
+
+                Text t = upgTr.GetComponentInChildren<Text>();
+                if (t != null)
+                {
+                    t.text = "⚡ UPGRADES";
+                    t.fontSize = 15;
+                    t.fontStyle = FontStyle.Bold;
+                    t.color = Color.white;
+                    UIStyleHelper.AddDropShadow(t, new Color(0f, 0f, 0f, 0.7f), new Vector2(1f, -1.5f));
+                }
+                Button btn = upgTr.GetComponent<Button>();
+                if (btn != null) UIStyleHelper.StyleButton(btn);
+            }
+
+            // 4. Btn_Settings (Far Right)
+            Transform setTr = canopy.Find("Btn_Settings");
+            if (setTr != null)
+            {
+                RectTransform rt = setTr.GetComponent<RectTransform>();
+                rt.anchorMin = new Vector2(0.88f, 0.12f);
+                rt.anchorMax = new Vector2(0.98f, 0.88f);
+                rt.offsetMin = Vector2.zero;
+                rt.offsetMax = Vector2.zero;
+
+                Text t = setTr.GetComponentInChildren<Text>();
+                if (t != null)
+                {
+                    t.text = "⚙";
+                    t.fontSize = 24;
+                    t.fontStyle = FontStyle.Bold;
+                    t.color = Color.white;
+                    UIStyleHelper.AddDropShadow(t, new Color(0f, 0f, 0f, 0.7f), new Vector2(1f, -1.5f));
+                }
+                Button btn = setTr.GetComponent<Button>();
+                if (btn != null) UIStyleHelper.StyleButton(btn);
+            }
         }
 
         private void SetupConsoleCenterLayout()
@@ -185,59 +340,70 @@ namespace ClawMachine.UI
                 stripImg.color = Color.white;
             }
 
+            // Prev Machine Button (Left Chevron)
+            if (prevMachineButton != null)
+            {
+                RectTransform pRt = prevMachineButton.GetComponent<RectTransform>();
+                pRt.anchorMin = new Vector2(0f, 0f);
+                pRt.anchorMax = new Vector2(0.18f, 1f);
+                pRt.offsetMin = Vector2.zero;
+                pRt.offsetMax = Vector2.zero;
+                Text pt = prevMachineButton.GetComponentInChildren<Text>();
+                if (pt != null)
+                {
+                    pt.text = "◄";
+                    pt.fontSize = 22;
+                    pt.fontStyle = FontStyle.Bold;
+                    pt.color = Color.white;
+                }
+                UIStyleHelper.StyleButton(prevMachineButton);
+            }
+
+            // Next Machine Button (Right Chevron)
+            if (nextMachineButton != null)
+            {
+                RectTransform nRt = nextMachineButton.GetComponent<RectTransform>();
+                nRt.anchorMin = new Vector2(0.82f, 0f);
+                nRt.anchorMax = new Vector2(1f, 1f);
+                nRt.offsetMin = Vector2.zero;
+                nRt.offsetMax = Vector2.zero;
+                Text nt = nextMachineButton.GetComponentInChildren<Text>();
+                if (nt != null)
+                {
+                    nt.text = "►";
+                    nt.fontSize = 22;
+                    nt.fontStyle = FontStyle.Bold;
+                    nt.color = Color.white;
+                }
+                UIStyleHelper.StyleButton(nextMachineButton);
+            }
+
+            // Machine Name & Status centered
             if (machineNameText != null)
             {
-                machineNameText.fontSize = 22;
+                RectTransform mnRt = machineNameText.GetComponent<RectTransform>();
+                mnRt.anchorMin = new Vector2(0.18f, 0.46f);
+                mnRt.anchorMax = new Vector2(0.82f, 0.96f);
+                mnRt.offsetMin = Vector2.zero;
+                mnRt.offsetMax = Vector2.zero;
+                machineNameText.fontSize = 20;
+                machineNameText.fontStyle = FontStyle.Bold;
+                machineNameText.color = Color.white;
                 machineNameText.alignment = TextAnchor.MiddleCenter;
+                UIStyleHelper.AddDropShadow(machineNameText, new Color(0f, 0f, 0f, 0.8f), new Vector2(1f, -1.5f));
             }
 
             if (machineStatusText != null)
             {
-                machineStatusText.fontSize = 18;
+                RectTransform msRt = machineStatusText.GetComponent<RectTransform>();
+                msRt.anchorMin = new Vector2(0.18f, 0.04f);
+                msRt.anchorMax = new Vector2(0.82f, 0.48f);
+                msRt.offsetMin = Vector2.zero;
+                msRt.offsetMax = Vector2.zero;
+                machineStatusText.fontSize = 16;
+                machineStatusText.fontStyle = FontStyle.Bold;
                 machineStatusText.alignment = TextAnchor.MiddleCenter;
-            }
-
-            Transform coinBadge = carouselStrip.Find("CoinBankPlate") 
-                               ?? carouselStrip.Find("Badge_Coins")
-                               ?? transform.Find("SafeAreaContainer/MachineMarqueeCanopy/Badge_Coins");
-
-            if (coinBadge != null)
-            {
-                coinBadge.name = "CoinBankPlate";
-                if (coinBadge.parent != carouselStrip) coinBadge.SetParent(carouselStrip, false);
-
-                Image cbImg = coinBadge.GetComponent<Image>();
-                if (cbImg != null)
-                {
-                    cbImg.sprite = UIStyleHelper.RoundedCardSprite;
-                    cbImg.type = Image.Type.Sliced;
-                    cbImg.color = new Color(0.08f, 0.10f, 0.16f, 0.98f);
-                }
-
-                coinBadgeTransform = coinBadge;
-                coinBadgeText = coinBadge.GetComponentInChildren<Text>();
-                if (coinBadgeText != null)
-                {
-                    coinBadgeText.fontSize = 20;
-                    coinBadgeText.fontStyle = FontStyle.Bold;
-                    coinBadgeText.color = new Color(1.0f, 0.85f, 0.22f, 1f);
-                    coinBadgeText.alignment = TextAnchor.MiddleCenter;
-                }
-
-                Button coinBtn = coinBadge.GetComponent<Button>();
-                if (coinBtn == null) coinBtn = coinBadge.gameObject.AddComponent<Button>();
-                coinBtn.onClick.RemoveAllListeners();
-                coinBtn.onClick.AddListener(() =>
-                {
-                    var adSvc = AdService.Instance ?? FindFirstObjectByType<AdService>();
-                    if (adSvc != null) adSvc.ShowOutOfCoinsPrompt();
-                });
-
-                if (ServiceLocator.TryGet<IEconomyService>(out var econ))
-                {
-                    lastDisplayedCoins = econ.Coins;
-                    if (coinBadgeText != null) coinBadgeText.text = $"{lastDisplayedCoins:N0} COINS";
-                }
+                UIStyleHelper.AddDropShadow(machineStatusText, new Color(0f, 0f, 0f, 0.8f), new Vector2(1f, -1.5f));
             }
         }
 
@@ -593,6 +759,10 @@ namespace ClawMachine.UI
             pendingUnlockMachine = machine;
             if (unlockModal == null) return;
 
+            UIStyleHelper.EnsureModalShell(unlockModal, "UNLOCK CABINET", CloseUnlockModal, 580f, 620f);
+            if (unlockConfirmButton != null) UIStyleHelper.StyleButton(unlockConfirmButton);
+            if (unlockCancelButton != null) unlockCancelButton.gameObject.SetActive(false);
+
             int currentCoins = 0;
             if (ServiceLocator.TryGet<IEconomyService>(out var econ))
             {
@@ -607,7 +777,7 @@ namespace ClawMachine.UI
             }
             if (unlockDescriptionText != null)
             {
-                unlockDescriptionText.text = $"Unlock access to the {machine.displayName} arcade cabinet with 9 exclusive retro collectibles!";
+                unlockDescriptionText.text = $"Unlock access to the {machine.displayName} arcade cabinet with exclusive retro collectibles!";
             }
             if (unlockCoinsBalanceText != null)
             {

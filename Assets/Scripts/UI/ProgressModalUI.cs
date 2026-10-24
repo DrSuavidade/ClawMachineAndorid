@@ -198,6 +198,8 @@ namespace ClawMachine.UI
         public void OpenModal()
         {
             SetupListeners();
+            AutoFindTabsIfNull();
+            EnsureProgressModalLayout();
             if (modalPanel != null)
             {
                 modalPanel.SetActive(true);
@@ -211,6 +213,68 @@ namespace ClawMachine.UI
         public void CloseModal()
         {
             if (modalPanel != null) modalPanel.SetActive(false);
+        }
+
+        private void EnsureProgressModalLayout()
+        {
+            if (modalPanel == null) return;
+
+            RectTransform contentTr = UIStyleHelper.EnsureModalShell(modalPanel, "ARCADE PROGRESSION", CloseModal, 640f, 920f);
+
+            Transform oldHeader = modalPanel.transform.Find("Header");
+            if (oldHeader != null) oldHeader.gameObject.SetActive(false);
+            if (closeButton != null) closeButton.gameObject.SetActive(false);
+
+            Transform tabBarTr = modalPanel.transform.Find("TabBar");
+            if (tabBarTr != null)
+            {
+                tabBarTr.SetParent(contentTr, false);
+                RectTransform tbRt = tabBarTr.GetComponent<RectTransform>();
+                tbRt.anchorMin = new Vector2(0f, 1f);
+                tbRt.anchorMax = new Vector2(1f, 1f);
+                tbRt.pivot = new Vector2(0.5f, 1f);
+                tbRt.anchoredPosition = Vector2.zero;
+                tbRt.sizeDelta = new Vector2(0f, 48f);
+
+                Transform tUp = tabBarTr.Find("Tab_Upgrades");
+                if (tUp != null)
+                {
+                    RectTransform uRt = tUp.GetComponent<RectTransform>();
+                    uRt.anchorMin = new Vector2(0f, 0f);
+                    uRt.anchorMax = new Vector2(0.485f, 1f);
+                    uRt.offsetMin = Vector2.zero;
+                    uRt.offsetMax = Vector2.zero;
+                }
+                Transform tRew = tabBarTr.Find("Tab_Rewards");
+                if (tRew != null)
+                {
+                    RectTransform rRt = tRew.GetComponent<RectTransform>();
+                    rRt.anchorMin = new Vector2(0.515f, 0f);
+                    rRt.anchorMax = new Vector2(1f, 1f);
+                    rRt.offsetMin = Vector2.zero;
+                    rRt.offsetMax = Vector2.zero;
+                }
+            }
+
+            if (upgradesView != null)
+            {
+                upgradesView.transform.SetParent(contentTr, false);
+                RectTransform uvRt = upgradesView.GetComponent<RectTransform>();
+                uvRt.anchorMin = Vector2.zero;
+                uvRt.anchorMax = Vector2.one;
+                uvRt.offsetMin = Vector2.zero;
+                uvRt.offsetMax = new Vector2(0f, -56f);
+            }
+
+            if (rewardsView != null)
+            {
+                rewardsView.transform.SetParent(contentTr, false);
+                RectTransform rvRt = rewardsView.GetComponent<RectTransform>();
+                rvRt.anchorMin = Vector2.zero;
+                rvRt.anchorMax = Vector2.one;
+                rvRt.offsetMin = Vector2.zero;
+                rvRt.offsetMax = new Vector2(0f, -56f);
+            }
         }
 
         private void AutoFindTabsIfNull()
