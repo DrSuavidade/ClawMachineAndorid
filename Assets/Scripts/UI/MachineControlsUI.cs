@@ -253,6 +253,8 @@ namespace ClawMachine.UI
                 }
                 ShowDuplicateToast(prizeName, reward);
             }
+
+            UIStyleHelper.SpawnFloatingCoinReward(this, reward, new Vector2(0f, 140f));
         }
 
         private void ShowDuplicateToast(string prizeName, int reward)

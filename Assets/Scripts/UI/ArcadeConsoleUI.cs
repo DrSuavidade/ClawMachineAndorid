@@ -62,7 +62,6 @@ namespace ClawMachine.UI
 
             SetupThemedUIElements();
             UIStyleHelper.ApplyAll(gameObject);
-            EnsureStatusTextBackingPill();
 
             if (prevMachineButton != null)
             {
@@ -164,47 +163,67 @@ namespace ClawMachine.UI
                 }
             }
 
-            // Centralize Coin Badge in bottom console CarouselStrip (coin door style)
-            var coinBadge = transform.Find("SafeAreaContainer/MachineMarqueeCanopy/Badge_Coins");
+            SetupConsoleCenterLayout();
+            EnsureGameplayHintBanner();
+            UpdateCarouselDisplay();
+        }
+
+        private void SetupConsoleCenterLayout()
+        {
             Transform carouselStrip = machineNameText != null ? machineNameText.transform.parent : transform.Find("SafeAreaContainer/ConsoleDeck/CarouselStrip");
-            if (carouselStrip != null)
+            if (carouselStrip == null) return;
+
+            // Remove any legacy overlapping backing pill
+            Transform oldPill = carouselStrip.Find("Pill_MachineStatus");
+            if (oldPill != null) Destroy(oldPill.gameObject);
+
+            Image stripImg = carouselStrip.GetComponent<Image>();
+            if (stripImg != null)
             {
-                Image stripImg = carouselStrip.GetComponent<Image>();
-                if (stripImg != null)
-                {
-                    stripImg.sprite = UIStyleHelper.RoundedCardSprite;
-                    stripImg.type = Image.Type.Sliced;
-                    stripImg.color = new Color(0.09f, 0.11f, 0.16f, 0.95f);
-                }
-
-                if (coinBadge != null)
-                {
-                    coinBadge.SetParent(carouselStrip, false);
-                    RectTransform cbrt = coinBadge.GetComponent<RectTransform>();
-                    cbrt.anchorMin = new Vector2(0.18f, 0.05f);
-                    cbrt.anchorMax = new Vector2(0.82f, 0.35f);
-                    cbrt.offsetMin = Vector2.zero;
-                    cbrt.offsetMax = Vector2.zero;
-                }
-
-                if (machineNameText != null)
-                {
-                    machineNameText.rectTransform.anchorMin = new Vector2(0.16f, 0.65f);
-                    machineNameText.rectTransform.anchorMax = new Vector2(0.84f, 0.96f);
-                }
-                if (machineStatusText != null)
-                {
-                    machineStatusText.rectTransform.anchorMin = new Vector2(0.16f, 0.36f);
-                    machineStatusText.rectTransform.anchorMax = new Vector2(0.84f, 0.64f);
-                }
+                stripImg.sprite = UIStyleHelper.ArcadeDisplayScreenSprite;
+                stripImg.type = Image.Type.Sliced;
+                stripImg.color = Color.white;
             }
 
-            if (coinBadge == null && carouselStrip != null) coinBadge = carouselStrip.Find("Badge_Coins");
+            if (machineNameText != null)
+            {
+                machineNameText.fontSize = 22;
+                machineNameText.alignment = TextAnchor.MiddleCenter;
+            }
+
+            if (machineStatusText != null)
+            {
+                machineStatusText.fontSize = 18;
+                machineStatusText.alignment = TextAnchor.MiddleCenter;
+            }
+
+            Transform coinBadge = carouselStrip.Find("CoinBankPlate") 
+                               ?? carouselStrip.Find("Badge_Coins")
+                               ?? transform.Find("SafeAreaContainer/MachineMarqueeCanopy/Badge_Coins");
 
             if (coinBadge != null)
             {
+                coinBadge.name = "CoinBankPlate";
+                if (coinBadge.parent != carouselStrip) coinBadge.SetParent(carouselStrip, false);
+
+                Image cbImg = coinBadge.GetComponent<Image>();
+                if (cbImg != null)
+                {
+                    cbImg.sprite = UIStyleHelper.RoundedCardSprite;
+                    cbImg.type = Image.Type.Sliced;
+                    cbImg.color = new Color(0.08f, 0.10f, 0.16f, 0.98f);
+                }
+
                 coinBadgeTransform = coinBadge;
                 coinBadgeText = coinBadge.GetComponentInChildren<Text>();
+                if (coinBadgeText != null)
+                {
+                    coinBadgeText.fontSize = 20;
+                    coinBadgeText.fontStyle = FontStyle.Bold;
+                    coinBadgeText.color = new Color(1.0f, 0.85f, 0.22f, 1f);
+                    coinBadgeText.alignment = TextAnchor.MiddleCenter;
+                }
+
                 Button coinBtn = coinBadge.GetComponent<Button>();
                 if (coinBtn == null) coinBtn = coinBadge.gameObject.AddComponent<Button>();
                 coinBtn.onClick.RemoveAllListeners();
@@ -220,35 +239,6 @@ namespace ClawMachine.UI
                     if (coinBadgeText != null) coinBadgeText.text = $"{lastDisplayedCoins:N0} COINS";
                 }
             }
-
-            EnsureStatusTextBackingPill();
-            EnsureGameplayHintBanner();
-            UpdateCarouselDisplay();
-        }
-
-        private void EnsureStatusTextBackingPill()
-        {
-            if (machineStatusText == null || machineStatusText.transform.parent == null) return;
-            Transform existing = machineStatusText.transform.parent.Find("Pill_MachineStatus");
-            if (existing == null)
-            {
-                var pillGo = new GameObject("Pill_MachineStatus", typeof(RectTransform), typeof(Image));
-                pillGo.transform.SetParent(machineStatusText.transform.parent, false);
-                pillGo.transform.SetSiblingIndex(machineStatusText.transform.GetSiblingIndex());
-
-                RectTransform rt = pillGo.GetComponent<RectTransform>();
-                RectTransform src = machineStatusText.rectTransform;
-                rt.anchorMin = src.anchorMin;
-                rt.anchorMax = src.anchorMax;
-                rt.anchoredPosition = src.anchoredPosition;
-                rt.sizeDelta = src.sizeDelta;
-
-                Image img = pillGo.GetComponent<Image>();
-                img.sprite = UIStyleHelper.BadgePillSprite;
-                img.type = Image.Type.Sliced;
-                img.color = new Color(0.05f, 0.07f, 0.12f, 0.85f);
-                img.raycastTarget = false;
-            }
         }
 
         private GameObject hintBannerObj;
@@ -262,6 +252,14 @@ namespace ClawMachine.UI
         {
             if (hintBannerObj != null) return;
             Transform parent = transform.Find("SafeAreaContainer") ?? transform;
+            Transform existing = parent.Find("GameplayHintBanner");
+            if (existing != null)
+            {
+                hintBannerObj = existing.gameObject;
+                hintBannerText = hintBannerObj.GetComponentInChildren<Text>();
+                return;
+            }
+
             hintBannerObj = new GameObject("GameplayHintBanner", typeof(RectTransform), typeof(Image));
             hintBannerObj.transform.SetParent(parent, false);
             RectTransform rt = hintBannerObj.GetComponent<RectTransform>();
@@ -456,6 +454,7 @@ namespace ClawMachine.UI
 
         public void OnPrevClicked()
         {
+            if (IsAnyModalOpen()) return;
             if (machineController != null && !machineController.CanSwitchMachine) return;
             if (availableMachines == null || availableMachines.Length <= 1) return;
             int target = currentMachineIndex - 1;
@@ -465,6 +464,7 @@ namespace ClawMachine.UI
 
         public void OnNextClicked()
         {
+            if (IsAnyModalOpen()) return;
             if (machineController != null && !machineController.CanSwitchMachine) return;
             if (availableMachines == null || availableMachines.Length <= 1) return;
             int target = (currentMachineIndex + 1) % availableMachines.Length;
@@ -566,18 +566,18 @@ namespace ClawMachine.UI
             {
                 if (collService != null && collService.IsMachineOwned(cur.machineId))
                 {
-                    machineStatusText.text = "[OWNED] FREE PLAYS";
-                    machineStatusText.color = new Color(0.3f, 0.95f, 0.45f);
+                    machineStatusText.text = "★ FREE PLAY ★";
+                    machineStatusText.color = new Color(0.28f, 1.0f, 0.52f, 1f);
                 }
                 else if (collService != null && !collService.IsMachineUnlocked(cur.machineId))
                 {
-                    machineStatusText.text = $"[LOCKED] UNLOCK: {cur.unlockCost} COINS";
-                    machineStatusText.color = new Color(1f, 0.45f, 0.45f);
+                    machineStatusText.text = $"LOCKED • {cur.unlockCost} COINS";
+                    machineStatusText.color = new Color(1.0f, 0.45f, 0.45f, 1f);
                 }
                 else
                 {
-                    machineStatusText.text = cur.entryCost > 0 ? $"ENTRY: {cur.entryCost} COINS" : "FREE ENTRY";
-                    machineStatusText.color = new Color(0.85f, 0.88f, 0.95f);
+                    machineStatusText.text = cur.entryCost > 0 ? $"INSERT COIN: {cur.entryCost}" : "★ FREE PLAY ★";
+                    machineStatusText.color = new Color(0.25f, 0.90f, 1.0f, 1f);
                 }
             }
 

@@ -68,8 +68,11 @@ namespace ClawMachine.Gameplay
         private Material railMat;
         private Renderer[] chuteRimRenderers;
         private Material chuteRimMat;
+        private float strainTimer;
+        private float chuteFlashTimer;
 
         public bool IsOverChute { get; private set; }
+        public void TriggerChuteCelebrationFlash(float duration = 1.6f) => chuteFlashTimer = duration;
 
         public void Setup(ClawConfiguration cfg, Transform trolleyTr, Transform hoistTr, ClawArm[] clawArms, Transform chutePoint, Transform marker, Transform socket, ClawGripAnchor anchor, ClawPendulumSway sway = null)
         {
@@ -153,7 +156,13 @@ namespace ClawMachine.Gameplay
 
         private void HandlePrizeSlipped()
         {
-            ServiceLocator.Get<IAudioService>()?.PlayPrizeSlip();
+            var audio = ServiceLocator.Get<IAudioService>();
+            audio?.PlayPrizeSlip();
+            audio?.TriggerCameraShake(0.18f, 0.04f);
+            if (hoist != null)
+            {
+                ClawJuiceEffects.Instance?.PlayPrizeNudgeFX(hoist.position);
+            }
             if (CurrentState == ClawState.Carrying)
             {
                 SetState(ClawState.Aiming);
@@ -547,6 +556,21 @@ namespace ClawMachine.Gameplay
             Vector3 pos = hoist.position;
             pos.y += config.liftSpeed * Time.deltaTime;
 
+            if (gripAnchor != null && gripAnchor.HasPrize)
+            {
+                strainTimer += Time.deltaTime;
+                if (strainTimer >= 0.28f)
+                {
+                    strainTimer = 0f;
+                    Vector3 sparkPos = hoist.position + Vector3.up * 0.15f + UnityEngine.Random.insideUnitSphere * 0.06f;
+                    ClawJuiceEffects.Instance?.PlayStrainSparks(sparkPos);
+                }
+            }
+            else
+            {
+                strainTimer = 0f;
+            }
+
             if (pos.y >= config.homeY)
             {
                 pos.y = config.homeY;
@@ -844,7 +868,13 @@ namespace ClawMachine.Gameplay
 
             if (chuteRimMat != null)
             {
-                if (CurrentState == ClawState.Carrying && HasPrize)
+                if (chuteFlashTimer > 0f)
+                {
+                    chuteFlashTimer -= Time.deltaTime;
+                    bool flash = (Mathf.FloorToInt(Time.time * 16f) % 2) == 0;
+                    chuteRimMat.color = flash ? new Color(1.0f, 0.90f, 0.20f, 1f) : new Color(0.20f, 1.0f, 0.45f, 1f);
+                }
+                else if (CurrentState == ClawState.Carrying && HasPrize)
                 {
                     float pulse = 0.65f + Mathf.Sin(Time.time * 8f) * 0.35f;
                     Color rimCol = IsOverChute
@@ -989,6 +1019,8 @@ namespace ClawMachine.Gameplay
                 awayDir.y = 0.35f; // Slight upward pop + outward tumble
                 rb.AddForce(awayDir * UnityEngine.Random.Range(1.4f, 2.6f), ForceMode.Impulse);
                 rb.AddTorque(UnityEngine.Random.insideUnitSphere * 1.5f, ForceMode.Impulse);
+                ClawJuiceEffects.Instance?.PlayPrizeNudgeFX(prize.transform.position);
+                ServiceLocator.Get<IAudioService>()?.TriggerCameraShake(0.12f, 0.025f);
                 Debug.Log($"[ClawController] 🎲 NEAR-MISS NUDGE applied to {prize.name}!");
             }
         }

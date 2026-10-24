@@ -18,6 +18,9 @@ namespace ClawMachine.UI
         private static Sprite cachedButtonCapSprite;
         private static Sprite cachedJoystickBaseSprite;
         private static Sprite cachedJoystickBallSprite;
+        private static Sprite cachedJoystickShaftSprite;
+        private static Sprite cachedKnobShadowSprite;
+        private static Sprite cachedDisplayScreenSprite;
         private static Sprite cachedShelfPedestalSprite;
         private static Sprite cachedBrassPlacardSprite;
 
@@ -32,6 +35,9 @@ namespace ClawMachine.UI
         public static Sprite ArcadeButtonCapSprite => cachedButtonCapSprite ??= LoadOrGenerateButtonCapSprite();
         public static Sprite ArcadeJoystickBaseSprite => cachedJoystickBaseSprite ??= LoadOrGenerateJoystickBaseSprite();
         public static Sprite ArcadeJoystickBallSprite => cachedJoystickBallSprite ??= LoadOrGenerateJoystickBallSprite();
+        public static Sprite ArcadeJoystickShaftSprite => cachedJoystickShaftSprite ??= LoadOrGenerateJoystickShaftSprite();
+        public static Sprite ArcadeKnobShadowSprite => cachedKnobShadowSprite ??= LoadOrGenerateKnobShadowSprite();
+        public static Sprite ArcadeDisplayScreenSprite => cachedDisplayScreenSprite ??= LoadOrGenerateDisplayScreenSprite();
         public static Sprite ShelfPedestalSprite => cachedShelfPedestalSprite ??= LoadOrGenerateShelfPedestalSprite();
         public static Sprite BrassPlacardSprite => cachedBrassPlacardSprite ??= LoadOrGenerateBrassPlacardSprite();
 
@@ -251,6 +257,114 @@ namespace ClawMachine.UI
                 yield return null;
             }
             if (targetText != null) targetText.text = $"{prefix}{to:N0}{suffix}";
+        }
+
+        public static void SpawnFloatingCoinReward(MonoBehaviour runner, int amount, Vector2? screenPosition = null)
+        {
+            if (amount <= 0) return;
+            Canvas canvas = Object.FindFirstObjectByType<Canvas>();
+            if (canvas == null) return;
+
+            Transform parent = canvas.transform.Find("SafeAreaContainer") ?? canvas.transform;
+
+            GameObject go = new GameObject("FloatingCoinReward", typeof(RectTransform), typeof(CanvasGroup));
+            go.transform.SetParent(parent, false);
+
+            RectTransform rt = go.GetComponent<RectTransform>();
+            Vector2 startPos = screenPosition ?? new Vector2(0f, 60f);
+            rt.anchoredPosition = startPos;
+            rt.sizeDelta = new Vector2(240f, 50f);
+
+            GameObject iconObj = new GameObject("Icon", typeof(RectTransform), typeof(Image));
+            iconObj.transform.SetParent(go.transform, false);
+            RectTransform iconRt = iconObj.GetComponent<RectTransform>();
+            iconRt.anchorMin = new Vector2(0f, 0.5f);
+            iconRt.anchorMax = new Vector2(0f, 0.5f);
+            iconRt.anchoredPosition = new Vector2(25f, 0f);
+            iconRt.sizeDelta = new Vector2(36f, 36f);
+            Image iconImg = iconObj.GetComponent<Image>();
+            iconImg.sprite = CoinIconSprite;
+            iconImg.raycastTarget = false;
+
+            GameObject txtObj = new GameObject("Text", typeof(RectTransform), typeof(Text));
+            txtObj.transform.SetParent(go.transform, false);
+            RectTransform txtRt = txtObj.GetComponent<RectTransform>();
+            txtRt.anchorMin = new Vector2(0f, 0f);
+            txtRt.anchorMax = new Vector2(1f, 1f);
+            txtRt.offsetMin = new Vector2(50f, 0f);
+            txtRt.offsetMax = Vector2.zero;
+            Text txt = txtObj.GetComponent<Text>();
+            txt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
+            txt.fontSize = 28;
+            txt.fontStyle = FontStyle.Bold;
+            txt.color = new Color(1.0f, 0.88f, 0.20f, 1f);
+            txt.alignment = TextAnchor.MiddleLeft;
+            txt.text = $"+{amount:N0}";
+            txt.raycastTarget = false;
+
+            Shadow shadow = txtObj.AddComponent<Shadow>();
+            shadow.effectColor = new Color(0.04f, 0.05f, 0.08f, 0.9f);
+            shadow.effectDistance = new Vector2(2f, -2f);
+
+            CanvasGroup cg = go.GetComponent<CanvasGroup>();
+            cg.blocksRaycasts = false;
+            cg.interactable = false;
+
+            if (runner != null)
+            {
+                runner.StartCoroutine(CoFloatingReward(go, rt, cg, startPos));
+            }
+            else
+            {
+                var helper = Object.FindFirstObjectByType<UIStyleHelper>();
+                if (helper != null) helper.StartCoroutine(CoFloatingReward(go, rt, cg, startPos));
+                else Object.Destroy(go, 1.2f);
+            }
+        }
+
+        private static System.Collections.IEnumerator CoFloatingReward(GameObject go, RectTransform rt, CanvasGroup cg, Vector2 startPos)
+        {
+            float duration = 1.1f;
+            float elapsed = 0f;
+            Vector3 startScale = Vector3.one * 0.6f;
+            Vector3 peakScale = Vector3.one * 1.15f;
+
+            while (elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+
+                if (go == null) yield break;
+
+                if (t < 0.25f)
+                {
+                    rt.localScale = Vector3.Lerp(startScale, peakScale, t / 0.25f);
+                }
+                else if (t < 0.45f)
+                {
+                    rt.localScale = Vector3.Lerp(peakScale, Vector3.one, (t - 0.25f) / 0.20f);
+                }
+                else
+                {
+                    rt.localScale = Vector3.one;
+                }
+
+                float floatDist = Mathf.SmoothStep(0f, 95f, t);
+                rt.anchoredPosition = startPos + new Vector2(0f, floatDist);
+
+                if (t > 0.65f)
+                {
+                    cg.alpha = 1f - (t - 0.65f) / 0.35f;
+                }
+                else
+                {
+                    cg.alpha = 1f;
+                }
+
+                yield return null;
+            }
+
+            if (go != null) Object.Destroy(go);
         }
 
         // =====================================================================
@@ -781,6 +895,111 @@ namespace ClawMachine.UI
             }
 
             return slider;
+        }
+
+        private static Sprite LoadOrGenerateJoystickShaftSprite()
+        {
+            Sprite s = Resources.Load<Sprite>("UI/UI_Arcade_Joystick_Shaft");
+            if (s != null) return s;
+
+            int w = 32;
+            int h = 128;
+            Texture2D tex = new Texture2D(w, h, TextureFormat.RGBA32, false);
+            tex.wrapMode = TextureWrapMode.Clamp;
+            tex.filterMode = FilterMode.Bilinear;
+
+            for (int y = 0; y < h; y++)
+            {
+                for (int x = 0; x < w; x++)
+                {
+                    float nx = (float)x / (w - 1);
+                    // Chrome cylinder gradient
+                    float spec = Mathf.Exp(-Mathf.Pow((nx - 0.32f) * 7.5f, 2f));
+                    float baseMetallic = Mathf.Lerp(0.35f, 0.78f, Mathf.Sin(nx * Mathf.PI));
+                    float v = Mathf.Clamp01(baseMetallic + spec * 0.45f);
+                    if (nx < 0.08f || nx > 0.92f) v *= 0.45f; // rim shadow
+                    tex.SetPixel(x, y, new Color(v, v * 1.02f, v * 1.05f, 1f));
+                }
+            }
+            tex.Apply();
+            return Sprite.Create(tex, new Rect(0, 0, w, h), new Vector2(0.5f, 0f), 100f);
+        }
+
+        private static Sprite LoadOrGenerateKnobShadowSprite()
+        {
+            Sprite s = Resources.Load<Sprite>("UI/UI_Arcade_Knob_Shadow");
+            if (s != null) return s;
+
+            int size = 96;
+            Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            tex.wrapMode = TextureWrapMode.Clamp;
+            tex.filterMode = FilterMode.Bilinear;
+            float center = (size - 1) * 0.5f;
+
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = (x - center) / (size * 0.46f);
+                    float dy = (y - center) / (size * 0.32f); // slight oval
+                    float d = Mathf.Sqrt(dx * dx + dy * dy);
+                    if (d > 1f)
+                    {
+                        tex.SetPixel(x, y, Color.clear);
+                    }
+                    else
+                    {
+                        float alpha = Mathf.Pow(1f - d, 1.8f) * 0.55f;
+                        tex.SetPixel(x, y, new Color(0.02f, 0.02f, 0.04f, alpha));
+                    }
+                }
+            }
+            tex.Apply();
+            return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f);
+        }
+
+        private static Sprite LoadOrGenerateDisplayScreenSprite()
+        {
+            Sprite s = Resources.Load<Sprite>("UI/UI_Arcade_Display_Screen");
+            if (s != null) return s;
+
+            int size = 128;
+            Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            tex.wrapMode = TextureWrapMode.Clamp;
+            tex.filterMode = FilterMode.Bilinear;
+            float r = 16f;
+
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float d = DistanceToBox(x, y, size, size, r);
+                    if (d > 0f)
+                    {
+                        tex.SetPixel(x, y, Color.clear);
+                    }
+                    else if (d > -3.5f)
+                    {
+                        // Outer bezel border
+                        float b = Mathf.Lerp(0.18f, 0.38f, (float)y / size);
+                        tex.SetPixel(x, y, new Color(b, b * 1.05f, b * 1.15f, 1f));
+                    }
+                    else if (d > -5.5f)
+                    {
+                        // Inner bezel bevel line
+                        tex.SetPixel(x, y, new Color(0.03f, 0.04f, 0.07f, 1f));
+                    }
+                    else
+                    {
+                        // Recessed dark blue arcade LCD screen
+                        float ny = (float)y / size;
+                        Color screenCol = Color.Lerp(new Color(0.03f, 0.06f, 0.12f, 0.98f), new Color(0.05f, 0.09f, 0.16f, 0.98f), ny);
+                        tex.SetPixel(x, y, screenCol);
+                    }
+                }
+            }
+            tex.Apply();
+            return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect, new Vector4(18, 18, 18, 18));
         }
     }
 }

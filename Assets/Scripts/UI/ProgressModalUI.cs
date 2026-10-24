@@ -578,6 +578,7 @@ namespace ClawMachine.UI
                 {
                     if (ServiceLocator.TryGet<IAudioService>(out var audio)) audio.PlayCoinReward();
                     ClawJuiceEffects.Instance?.PlayWinCelebration(transform.position);
+                    UIStyleHelper.SpawnFloatingCoinReward(this, coins, new Vector2(0f, 100f));
                     RefreshUI();
                 }
             }
@@ -594,6 +595,8 @@ namespace ClawMachine.UI
                     if (ret.ClaimQuestReward(quests[questIndex].id, out int coins))
                     {
                         if (ServiceLocator.TryGet<IAudioService>(out var audio)) audio.PlayCoinReward();
+                        ClawJuiceEffects.Instance?.PlayWinCelebration(transform.position);
+                        UIStyleHelper.SpawnFloatingCoinReward(this, coins, new Vector2(0f, 100f));
                         RefreshUI();
                     }
                 }
@@ -612,6 +615,7 @@ namespace ClawMachine.UI
                     {
                         if (ServiceLocator.TryGet<IAudioService>(out var audio)) audio.PlayCoinReward();
                         ClawJuiceEffects.Instance?.PlayWinCelebration(transform.position);
+                        UIStyleHelper.SpawnFloatingCoinReward(this, coins, new Vector2(0f, 100f));
                         RefreshUI();
                     }
                 }

@@ -3,6 +3,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using ClawMachine.Core.Services;
+using ClawMachine.UI;
 
 namespace ClawMachine.Gameplay
 {
@@ -128,6 +129,7 @@ namespace ClawMachine.Gameplay
                 audio.PlayCoinReward();
             }
             ClawJuiceEffects.Instance?.PlayWinCelebration(Vector3.up * 1.5f);
+            UIStyleHelper.SpawnFloatingCoinReward(this, reward, new Vector2(0f, 100f));
 
             Debug.Log($"[AdService] Rewarded ad completed! Awarded +{reward} coins.");
             onRewarded?.Invoke(reward);

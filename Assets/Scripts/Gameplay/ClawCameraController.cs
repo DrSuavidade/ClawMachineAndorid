@@ -15,11 +15,10 @@ namespace ClawMachine.Gameplay
 
         [Header("Close-Up Grab Framing")]
         [SerializeField] private float grabFov = 34f;
-        [SerializeField] private float grabHeight = 4.1f;
+        [SerializeField] private float grabHeight = 5.0f;
         [SerializeField] private float grabZDistance = -5.5f;
 
         [Header("Chute Drop Framing")]
-        [SerializeField] private float chuteFov = 38f;
         [SerializeField] private Vector3 chuteCameraOffset = new Vector3(-0.45f, 4.3f, -5.8f);
 
         [Header("Smoothing")]
@@ -166,7 +165,7 @@ namespace ClawMachine.Gameplay
             float clawY = clawTarget != null ? clawTarget.position.y : 2.0f;
 
             // Follow claw downward and horizontally to frame the prize being grabbed
-            float dynamicY = Mathf.Clamp(clawY + 2.2f, 3.2f, defaultPosition.y);
+            float dynamicY = Mathf.Clamp(clawY + 2.2f, 3.2f, grabHeight);
             targetPos = new Vector3(clawX * 0.45f, dynamicY, grabZDistance + clawZ * 0.25f);
             targetRot = Quaternion.Euler(27f, clawX * 3.5f, 0f);
         }

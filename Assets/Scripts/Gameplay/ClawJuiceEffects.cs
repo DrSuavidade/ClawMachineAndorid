@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using ClawMachine.Data;
 
 namespace ClawMachine.Gameplay
 {
@@ -41,15 +42,34 @@ namespace ClawMachine.Gameplay
 
         public void PlayWinCelebration(Vector3 position)
         {
+            Vector3 worldPos = position;
+            // Screen-space UI coordinates detection (Canvas ScreenSpaceOverlay uses coordinates in the hundreds)
+            if (Mathf.Abs(position.x) > 40f || Mathf.Abs(position.y) > 40f)
+            {
+                Camera cam = Camera.main ?? FindFirstObjectByType<Camera>();
+                if (cam != null)
+                {
+                    Vector3 vp = cam.ScreenToViewportPoint(position);
+                    vp.x = Mathf.Clamp(vp.x, 0.15f, 0.85f);
+                    vp.y = Mathf.Clamp(vp.y, 0.20f, 0.80f);
+                    vp.z = 2.4f; // in front of camera
+                    worldPos = cam.ViewportToWorldPoint(vp);
+                }
+                else
+                {
+                    worldPos = new Vector3(0f, 1.8f, -4.5f);
+                }
+            }
+
             if (confettiPS != null)
             {
-                confettiPS.transform.position = position + Vector3.up * 0.5f;
+                confettiPS.transform.position = worldPos + Vector3.up * 0.5f;
                 confettiPS.Emit(60);
             }
 
             if (coinShowerPS != null)
             {
-                coinShowerPS.transform.position = position + new Vector3(0f, -0.2f, 0f);
+                coinShowerPS.transform.position = worldPos + new Vector3(0f, -0.2f, 0f);
                 coinShowerPS.Emit(25);
             }
         }
@@ -63,6 +83,20 @@ namespace ClawMachine.Gameplay
             }
         }
 
+        public void PlayPrizeNudgeFX(Vector3 position)
+        {
+            if (dustPuffPS != null)
+            {
+                dustPuffPS.transform.position = position;
+                dustPuffPS.Emit(8);
+            }
+            if (strainSparksPS != null)
+            {
+                strainSparksPS.transform.position = position + Vector3.up * 0.1f;
+                strainSparksPS.Emit(6);
+            }
+        }
+
         public void PlayStrainSparks(Vector3 position)
         {
             if (strainSparksPS != null)
@@ -70,6 +104,50 @@ namespace ClawMachine.Gameplay
                 strainSparksPS.transform.position = position;
                 strainSparksPS.Emit(8);
             }
+        }
+
+        public void AttachRarityShimmer(GameObject target, PrizeRarity rarity)
+        {
+            if (target == null || rarity == PrizeRarity.Normal) return;
+            if (target.transform.Find("RarityShimmer") != null) return;
+
+            GameObject go = new GameObject("RarityShimmer");
+            go.transform.SetParent(target.transform, false);
+            go.transform.localPosition = Vector3.zero;
+
+            ParticleSystem ps = go.AddComponent<ParticleSystem>();
+            var main = ps.main;
+            main.playOnAwake = true;
+            main.loop = true;
+            main.duration = 1.0f;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.6f, 1.2f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0.05f, 0.25f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.08f, 0.16f);
+            main.gravityModifier = -0.05f;
+
+            Color col = rarity == PrizeRarity.Secret 
+                ? new Color(1.0f, 0.88f, 0.25f, 0.85f) 
+                : new Color(0.92f, 0.40f, 1.0f, 0.85f);
+            main.startColor = col;
+
+            var shape = ps.shape;
+            shape.shapeType = ParticleSystemShapeType.Sphere;
+            shape.radius = 0.22f;
+
+            var emission = ps.emission;
+            emission.rateOverTime = 3.5f;
+
+            var sol = ps.sizeOverLifetime;
+            sol.enabled = true;
+            AnimationCurve curve = new AnimationCurve();
+            curve.AddKey(0f, 0f);
+            curve.AddKey(0.4f, 1f);
+            curve.AddKey(1f, 0f);
+            sol.size = new ParticleSystem.MinMaxCurve(1f, curve);
+
+            var renderer = go.GetComponent<ParticleSystemRenderer>();
+            renderer.renderMode = ParticleSystemRenderMode.Billboard;
+            renderer.sharedMaterial = CreateParticleMaterial(col, GetOrCreateSparkleTexture());
         }
 
         private void BuildConfettiParticleSystem()

@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using ClawMachine.Gameplay;
+using ClawMachine.Core.Services;
 
 namespace ClawMachine.UI
 {
@@ -16,10 +17,10 @@ namespace ClawMachine.UI
         [SerializeField] private Text labelText;
 
         [Header("Colors & Animation")]
-        [SerializeField] private Color normalColor = new Color(0.92f, 0.22f, 0.22f);
-        [SerializeField] private Color pressedColor = new Color(0.68f, 0.12f, 0.12f);
-        [SerializeField] private Color disabledColor = new Color(0.35f, 0.35f, 0.38f);
-        [SerializeField] private float plungeOffset = 7f;
+        [SerializeField] private Color normalColor = new Color(0.95f, 0.24f, 0.24f);
+        [SerializeField] private Color pressedColor = new Color(0.65f, 0.10f, 0.12f);
+        [SerializeField] private Color disabledColor = new Color(0.32f, 0.32f, 0.36f);
+        [SerializeField] private float plungeOffset = 10f;
 
         private Vector2 initialPlungerPos;
         private bool isInteractable = true;
@@ -48,6 +49,13 @@ namespace ClawMachine.UI
                 plungerTransform.anchoredPosition = Vector2.zero;
                 initialPlungerPos = Vector2.zero;
             }
+
+            // Real arcade drop button is pure button without text labels
+            if (labelText != null)
+            {
+                labelText.text = "";
+                labelText.gameObject.SetActive(false);
+            }
         }
 
         private void OnEnable()
@@ -55,15 +63,11 @@ namespace ClawMachine.UI
             if (machineController != null)
             {
                 machineController.OnStateChanged += HandleStateChanged;
-                if (machineController.Claw != null)
-                {
-                    machineController.Claw.OnCarryTimerUpdated += HandleCarryTimerUpdated;
-                }
             }
-            ClawMachine.UI.Theming.UIThemeManager.OnThemeChanged += HandleThemeChanged;
-            if (ClawMachine.UI.Theming.UIThemeManager.Instance != null && ClawMachine.UI.Theming.UIThemeManager.Instance.CurrentTheme != null)
+            Theming.UIThemeManager.OnThemeChanged += HandleThemeChanged;
+            if (Theming.UIThemeManager.Instance != null && Theming.UIThemeManager.Instance.CurrentTheme != null)
             {
-                HandleThemeChanged(ClawMachine.UI.Theming.UIThemeManager.Instance.CurrentTheme);
+                HandleThemeChanged(Theming.UIThemeManager.Instance.CurrentTheme);
             }
         }
 
@@ -72,27 +76,25 @@ namespace ClawMachine.UI
             if (machineController != null)
             {
                 machineController.OnStateChanged -= HandleStateChanged;
-                if (machineController.Claw != null)
-                {
-                    machineController.Claw.OnCarryTimerUpdated -= HandleCarryTimerUpdated;
-                }
             }
-            ClawMachine.UI.Theming.UIThemeManager.OnThemeChanged -= HandleThemeChanged;
+            Theming.UIThemeManager.OnThemeChanged -= HandleThemeChanged;
         }
 
-        private void HandleCarryTimerUpdated(float remainingSeconds)
+        private void Update()
         {
-            if (labelText != null && machineController != null && machineController.Claw != null && machineController.Claw.CurrentState == ClawState.Carrying)
+            // Subtle arcade internal illumination glow when ready to drop/grab
+            if (isInteractable && plungerImage != null && !ArcadeConsoleUI.IsAnyModalOpen())
             {
-                labelText.text = $"DROP ({Mathf.CeilToInt(remainingSeconds)}s)";
+                float pulse = 0.94f + Mathf.Sin(Time.time * 3.5f) * 0.08f;
+                plungerImage.color = new Color(normalColor.r * pulse, normalColor.g * pulse, normalColor.b * pulse, 1f);
             }
         }
 
-        private void HandleThemeChanged(ClawMachine.Data.CabinetTheme theme)
+        private void HandleThemeChanged(Data.CabinetTheme theme)
         {
             if (theme == null) return;
             normalColor = theme.accentColor;
-            pressedColor = theme.accentColor * 0.75f;
+            pressedColor = theme.accentColor * 0.72f;
             pressedColor.a = 1f;
             if (isInteractable && plungerImage != null)
             {
@@ -103,15 +105,19 @@ namespace ClawMachine.UI
         public void OnPointerDown(PointerEventData eventData)
         {
             if (!isInteractable || ArcadeConsoleUI.IsAnyModalOpen()) return;
+
             if (plungerTransform != null)
             {
                 plungerTransform.anchoredPosition = initialPlungerPos + new Vector2(0f, -plungeOffset);
-                plungerTransform.localScale = Vector3.one * 0.95f;
+                plungerTransform.localScale = new Vector3(0.95f, 0.95f, 1f);
             }
             if (plungerImage != null)
             {
                 plungerImage.color = pressedColor;
             }
+
+            ServiceLocator.Get<IAudioService>()?.PlayUIClick();
+            ServiceLocator.Get<IAudioService>()?.TriggerHapticLight();
         }
 
         public void OnPointerUp(PointerEventData eventData)
@@ -127,7 +133,24 @@ namespace ClawMachine.UI
             }
         }
 
-        private Coroutine punchRoutine;
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (!isInteractable || ArcadeConsoleUI.IsAnyModalOpen()) return;
+
+            if (machineController != null)
+            {
+                machineController.TriggerDrop();
+            }
+        }
+
+        private void HandleStateChanged(ClawState state)
+        {
+            isInteractable = (state == ClawState.Aiming || state == ClawState.Carrying);
+            if (plungerImage != null)
+            {
+                plungerImage.color = isInteractable ? normalColor : disabledColor;
+            }
+        }
 
         public void SetThemeColor(Color themeColor)
         {
@@ -136,80 +159,6 @@ namespace ClawMachine.UI
             if (plungerImage != null && isInteractable)
             {
                 plungerImage.color = normalColor;
-            }
-        }
-
-        private void Update()
-        {
-            if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return))
-            {
-                TriggerPress();
-            }
-        }
-
-        public void OnPointerClick(PointerEventData eventData)
-        {
-            TriggerPress();
-        }
-
-        private void TriggerPress()
-        {
-            if (!isInteractable || ArcadeConsoleUI.IsAnyModalOpen()) return;
-
-            Core.Services.ServiceLocator.Get<Core.Services.IAudioService>()?.PlayUIClick();
-
-            if (punchRoutine != null) StopCoroutine(punchRoutine);
-            punchRoutine = StartCoroutine(PunchRoutine());
-
-            if (machineController != null)
-            {
-                machineController.TriggerDrop();
-            }
-        }
-
-        private System.Collections.IEnumerator PunchRoutine()
-        {
-            if (plungerTransform == null) yield break;
-            float elapsed = 0f;
-            float duration = 0.22f;
-            Vector3 startScale = Vector3.one * 0.92f;
-            Vector3 peakScale = Vector3.one * 1.08f;
-            while (elapsed < duration)
-            {
-                elapsed += Time.deltaTime;
-                float t = Mathf.Clamp01(elapsed / duration);
-                plungerTransform.localScale = (t < 0.45f)
-                    ? Vector3.Lerp(startScale, peakScale, t / 0.45f)
-                    : Vector3.Lerp(peakScale, Vector3.one, (t - 0.45f) / 0.55f);
-                yield return null;
-            }
-            plungerTransform.localScale = Vector3.one;
-            punchRoutine = null;
-        }
-
-        private void HandleStateChanged(ClawState state)
-        {
-            isInteractable = (state == ClawState.Aiming || state == ClawState.Carrying);
-
-            if (plungerImage != null)
-            {
-                plungerImage.color = isInteractable ? normalColor : disabledColor;
-            }
-
-            if (labelText != null)
-            {
-                if (state == ClawState.Carrying)
-                {
-                    labelText.text = "DROP PRIZE";
-                }
-                else if (state == ClawState.Aiming)
-                {
-                    labelText.text = "DROP";
-                }
-                else
-                {
-                    labelText.text = "...";
-                }
             }
         }
     }

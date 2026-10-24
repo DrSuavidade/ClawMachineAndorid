@@ -121,9 +121,10 @@ namespace ClawMachine.UI
 
         public void OnCollectClicked()
         {
-            Debug.Log("[OfflineEarningsModalUI] OnCollectClicked triggered!");
+            int coins = 0;
             if (ServiceLocator.TryGet<ICollectionService>(out var collService) && collService is CollectionManager cm)
             {
+                coins = cm.PendingOfflineCoins;
                 cm.ClaimOfflineEarnings();
             }
 
@@ -133,6 +134,10 @@ namespace ClawMachine.UI
             }
 
             ClawJuiceEffects.Instance?.PlayWinCelebration(transform.position);
+            if (coins > 0)
+            {
+                UIStyleHelper.SpawnFloatingCoinReward(this, coins, new Vector2(0f, 100f));
+            }
 
             if (modalPanel != null)
             {

@@ -13,52 +13,140 @@ namespace ClawMachine.UI
         [SerializeField] private Button closeButton;
 
         [Header("Audio Sliders")]
-        private Slider masterSlider;
-        private Text masterValueText;
-        private Slider musicSlider;
-        private Text musicValueText;
-        private Slider sfxSlider;
-        private Text sfxValueText;
+        [SerializeField] private Slider masterSlider;
+        [SerializeField] private Text masterValueText;
+        [SerializeField] private Slider musicSlider;
+        [SerializeField] private Text musicValueText;
+        [SerializeField] private Slider sfxSlider;
+        [SerializeField] private Text sfxValueText;
 
         [Header("Toggles & Buttons")]
-        private Button hapticsToggleButton;
-        private Text hapticsStatusText;
-        private Button resetButton;
+        [SerializeField] private Button hapticsToggleButton;
+        [SerializeField] private Text hapticsStatusText;
+        [SerializeField] private Button resetButton;
         [SerializeField] private GameObject resetConfirmPopup;
+
+        // Legacy scene yaml compatibility
+        [SerializeField, HideInInspector] private Button sfxToggleButton;
+        [SerializeField, HideInInspector] private Text sfxStatusText;
+        [SerializeField, HideInInspector] private Text resetText;
 
         private void Awake()
         {
             if (toggleButton != null) toggleButton.onClick.AddListener(OpenModal);
             if (closeButton != null) closeButton.onClick.AddListener(CloseModal);
 
-            BuildSettingsLayout();
+            WireOrBuildSettings();
 
             if (modalPanel != null) modalPanel.SetActive(false);
             if (resetConfirmPopup != null) resetConfirmPopup.SetActive(false);
         }
 
-        private void BuildSettingsLayout()
+        private void WireOrBuildSettings()
         {
             if (modalPanel == null) return;
 
             Transform listContainerTr = modalPanel.transform.Find("ListContainer");
             if (listContainerTr == null) return;
 
-            RectTransform listRt = listContainerTr.GetComponent<RectTransform>();
-            if (listRt != null)
+            // Auto-detect existing scene children if not directly wired in inspector
+            if (masterSlider == null)
             {
-                listRt.anchorMin = new Vector2(0.06f, 0.08f);
-                listRt.anchorMax = new Vector2(0.94f, 0.82f);
-                listRt.offsetMin = Vector2.zero;
-                listRt.offsetMax = Vector2.zero;
+                Transform r = listContainerTr.Find("Row_MasterVolume");
+                if (r != null)
+                {
+                    masterSlider = r.GetComponentInChildren<Slider>();
+                    var txts = r.GetComponentsInChildren<Text>();
+                    for (int i = 0; i < txts.Length; i++)
+                    {
+                        if (txts[i].name == "ValueText") masterValueText = txts[i];
+                    }
+                }
             }
 
-            // Remove or deactivate any old rows
-            for (int i = listContainerTr.childCount - 1; i >= 0; i--)
+            if (musicSlider == null)
             {
-                Destroy(listContainerTr.GetChild(i).gameObject);
+                Transform r = listContainerTr.Find("Row_MusicVolume");
+                if (r != null)
+                {
+                    musicSlider = r.GetComponentInChildren<Slider>();
+                    var txts = r.GetComponentsInChildren<Text>();
+                    for (int i = 0; i < txts.Length; i++)
+                    {
+                        if (txts[i].name == "ValueText") musicValueText = txts[i];
+                    }
+                }
             }
 
+            if (sfxSlider == null)
+            {
+                Transform r = listContainerTr.Find("Row_SFXVolume");
+                if (r != null)
+                {
+                    sfxSlider = r.GetComponentInChildren<Slider>();
+                    var txts = r.GetComponentsInChildren<Text>();
+                    for (int i = 0; i < txts.Length; i++)
+                    {
+                        if (txts[i].name == "ValueText") sfxValueText = txts[i];
+                    }
+                }
+            }
+
+            if (hapticsToggleButton == null)
+            {
+                Transform r = listContainerTr.Find("Row_Haptics");
+                if (r != null)
+                {
+                    hapticsToggleButton = r.GetComponent<Button>();
+                    hapticsStatusText = r.GetComponentInChildren<Text>();
+                }
+            }
+
+            if (resetButton == null)
+            {
+                Transform r = listContainerTr.Find("Row_ResetProgress");
+                if (r != null)
+                {
+                    resetButton = r.GetComponent<Button>();
+                }
+            }
+
+            // If elements are present in the scene, wire listeners directly
+            if (masterSlider != null)
+            {
+                masterSlider.onValueChanged.RemoveAllListeners();
+                masterSlider.onValueChanged.AddListener(OnMasterVolumeChanged);
+            }
+            if (musicSlider != null)
+            {
+                musicSlider.onValueChanged.RemoveAllListeners();
+                musicSlider.onValueChanged.AddListener(OnMusicVolumeChanged);
+            }
+            if (sfxSlider != null)
+            {
+                sfxSlider.onValueChanged.RemoveAllListeners();
+                sfxSlider.onValueChanged.AddListener(OnSFXVolumeChanged);
+            }
+            if (hapticsToggleButton != null)
+            {
+                hapticsToggleButton.onClick.RemoveAllListeners();
+                hapticsToggleButton.onClick.AddListener(ToggleHaptics);
+            }
+            if (resetButton != null)
+            {
+                resetButton.onClick.RemoveAllListeners();
+                resetButton.onClick.AddListener(OpenResetConfirmPopup);
+            }
+
+            // Fallback generation only if scene has no rows at all
+            if (masterSlider == null && musicSlider == null && sfxSlider == null)
+            {
+                BuildFallbackLayout(listContainerTr);
+            }
+        }
+
+        private void BuildFallbackLayout(Transform listContainerTr)
+        {
             VerticalLayoutGroup vlg = listContainerTr.GetComponent<VerticalLayoutGroup>();
             if (vlg == null) vlg = listContainerTr.gameObject.AddComponent<VerticalLayoutGroup>();
             vlg.childControlWidth = true;
@@ -70,25 +158,20 @@ namespace ClawMachine.UI
 
             Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
 
-            // 1. Master Volume Row
             float curMaster = PlayerPrefs.GetFloat("Claw_Master_Volume", 1.0f);
             if (ServiceLocator.TryGet<IAudioService>(out var audio)) curMaster = audio.MasterVolume;
             masterSlider = CreateVolumeRow(listContainerTr, "Row_MasterVolume", "MASTER VOLUME", font, curMaster, OnMasterVolumeChanged, out masterValueText);
 
-            // 2. Music Volume Row
             float curMusic = PlayerPrefs.GetFloat("Claw_Music_Volume", 0.75f);
             if (audio != null) curMusic = audio.MusicVolume;
             musicSlider = CreateVolumeRow(listContainerTr, "Row_MusicVolume", "GLOBAL MUSIC", font, curMusic, OnMusicVolumeChanged, out musicValueText);
 
-            // 3. SFX Volume Row
             float curSfx = PlayerPrefs.GetFloat("Claw_SFX_Volume", 1.0f);
             if (audio != null) curSfx = audio.SFXVolume;
             sfxSlider = CreateVolumeRow(listContainerTr, "Row_SFXVolume", "SOUND EFFECTS", font, curSfx, OnSFXVolumeChanged, out sfxValueText);
 
-            // 4. Haptics / Vibration Toggle Row
             hapticsToggleButton = CreateActionRowButton(listContainerTr, "Row_Haptics", "VIBRATION: ON", font, new Color(0.20f, 0.24f, 0.35f, 1f), ToggleHaptics, out hapticsStatusText);
 
-            // 5. Reset Progress Row
             Text dummy;
             resetButton = CreateActionRowButton(listContainerTr, "Row_ResetProgress", "RESET PROGRESS", font, new Color(0.65f, 0.15f, 0.18f, 1f), OpenResetConfirmPopup, out dummy);
         }
@@ -106,7 +189,6 @@ namespace ClawMachine.UI
             rowBg.type = Image.Type.Sliced;
             rowBg.color = new Color(0.12f, 0.14f, 0.20f, 0.95f);
 
-            // Title label
             GameObject titleObj = new GameObject("Title", typeof(RectTransform), typeof(Text));
             titleObj.transform.SetParent(row.transform, false);
             RectTransform titleRt = titleObj.GetComponent<RectTransform>();
@@ -123,7 +205,6 @@ namespace ClawMachine.UI
             titleTxt.color = new Color(0.92f, 0.94f, 0.98f, 1f);
             titleTxt.alignment = TextAnchor.MiddleLeft;
 
-            // Value text (percentage)
             GameObject valObj = new GameObject("ValueText", typeof(RectTransform), typeof(Text));
             valObj.transform.SetParent(row.transform, false);
             RectTransform valRt = valObj.GetComponent<RectTransform>();
@@ -141,7 +222,6 @@ namespace ClawMachine.UI
             valTxt.alignment = TextAnchor.MiddleRight;
             valueLabel = valTxt;
 
-            // Slider
             Slider slider = UIStyleHelper.CreateStyledSlider(row.transform, "Slider", 0f, 1f, initialVal, onChange);
             RectTransform sRt = slider.GetComponent<RectTransform>();
             sRt.anchorMin = new Vector2(0.46f, 0.5f);
@@ -291,9 +371,15 @@ namespace ClawMachine.UI
         {
             if (resetConfirmPopup != null || modalPanel == null) return;
 
+            Transform existing = modalPanel.transform.Find("ResetConfirmPopup");
+            if (existing != null)
+            {
+                resetConfirmPopup = existing.gameObject;
+                return;
+            }
+
             Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
 
-            // Full-modal dim overlay
             resetConfirmPopup = new GameObject("ResetConfirmPopup", typeof(RectTransform), typeof(Image));
             resetConfirmPopup.transform.SetParent(modalPanel.transform, false);
             RectTransform overlayRt = resetConfirmPopup.GetComponent<RectTransform>();
@@ -303,7 +389,6 @@ namespace ClawMachine.UI
             overlayRt.offsetMax = Vector2.zero;
             resetConfirmPopup.GetComponent<Image>().color = new Color(0.02f, 0.03f, 0.06f, 0.88f);
 
-            // Dialog card
             GameObject card = new GameObject("DialogCard", typeof(RectTransform), typeof(Image));
             card.transform.SetParent(resetConfirmPopup.transform, false);
             RectTransform cardRt = card.GetComponent<RectTransform>();
@@ -312,20 +397,16 @@ namespace ClawMachine.UI
             cardRt.sizeDelta = new Vector2(680f, 380f);
             card.GetComponent<Image>().color = new Color(0.14f, 0.16f, 0.22f, 1f);
 
-            // Title
             CreateLabel(card.transform, "Title", "RESET ALL PROGRESS?", font, 34, FontStyle.Bold,
                 new Color(1f, 0.35f, 0.35f), new Vector2(0f, 110f), new Vector2(620f, 60f));
 
-            // Warning body
             CreateLabel(card.transform, "Body", "This will permanently delete all coins, unlocked machines, upgrades, and collected prizes.\n\nThis action cannot be undone!",
                 font, 24, FontStyle.Normal, new Color(0.88f, 0.90f, 0.95f), new Vector2(0f, 10f), new Vector2(600f, 130f));
 
-            // Cancel button
             Button cancelBtn = CreatePopupButton(card.transform, "Btn_Cancel", "CANCEL", font,
                 new Color(0.28f, 0.32f, 0.42f), new Vector2(-150f, -115f), new Vector2(260f, 76f));
             cancelBtn.onClick.AddListener(() => resetConfirmPopup.SetActive(false));
 
-            // Confirm Reset button
             Button confirmBtn = CreatePopupButton(card.transform, "Btn_ConfirmReset", "YES, RESET", font,
                 new Color(0.88f, 0.18f, 0.18f), new Vector2(150f, -115f), new Vector2(260f, 76f));
             confirmBtn.onClick.AddListener(ConfirmResetProgress);

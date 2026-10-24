@@ -1,11 +1,13 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using ClawMachine.Gameplay;
+using ClawMachine.Core.Services;
 
 namespace ClawMachine.UI
 {
-    public class ArcadeJoystickUI : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
+    public class ArcadeJoystickUI : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler, IPointerClickHandler
     {
         [Header("Target Controller")]
         [SerializeField] private MachineController machineController;
@@ -14,18 +16,26 @@ namespace ClawMachine.UI
         [SerializeField] private RectTransform knobTransform;
         [SerializeField] private Image outlineRing;
         [SerializeField] private Image ballKnobImage;
+        [SerializeField] private RectTransform shaftTransform;
+        [SerializeField] private Image shaftImage;
+        [SerializeField] private RectTransform shadowTransform;
+        [SerializeField] private Image shadowImage;
 
         [Header("Tuning")]
-        [SerializeField] private float maxDeflectionRadius = 38f;
-        [SerializeField] private float dragSensitivity = 0.022f;
-        [SerializeField] private float returnSpeed = 16f;
+        [SerializeField] private float maxDeflectionRadius = 52f;
+        [SerializeField] private float dragSensitivity = 0.024f;
+
+        private const float SpringK = 380f;
+        private const float Damping = 24f;
 
         private bool isArmed = false;
         private bool isScreenDragging = false;
         private bool isDirectDragging = false;
         private Vector2 screenAnchorPos;
-        private Vector2 currentInputVector;
-        private readonly System.Collections.Generic.List<RaycastResult> raycastResults = new System.Collections.Generic.List<RaycastResult>();
+
+        private Vector2 currentPos = Vector2.zero;
+        private Vector2 springVelocity = Vector2.zero;
+        private Vector2 currentInputVector = Vector2.zero;
 
         public bool IsArmed => isArmed;
 
@@ -49,40 +59,85 @@ namespace ClawMachine.UI
                 ballKnobImage.color = Color.white;
             }
 
+            EnsureMechanicalParts();
+
             if (outlineRing != null)
             {
                 outlineRing.gameObject.SetActive(false);
             }
 
-            if (knobTransform != null)
+            ResetToCenter();
+        }
+
+        private void EnsureMechanicalParts()
+        {
+            if (shadowTransform == null)
             {
-                knobTransform.anchoredPosition = Vector2.zero;
+                Transform existing = transform.Find("KnobShadow");
+                if (existing != null)
+                {
+                    shadowTransform = existing.GetComponent<RectTransform>();
+                    shadowImage = existing.GetComponent<Image>();
+                }
             }
+            if (shadowImage != null)
+            {
+                shadowImage.sprite = UIStyleHelper.ArcadeKnobShadowSprite;
+                shadowImage.color = Color.white;
+                shadowImage.raycastTarget = false;
+            }
+
+            if (shaftTransform == null)
+            {
+                Transform existing = transform.Find("JoystickShaft");
+                if (existing != null)
+                {
+                    shaftTransform = existing.GetComponent<RectTransform>();
+                    shaftImage = existing.GetComponent<Image>();
+                }
+            }
+            if (shaftImage != null)
+            {
+                shaftImage.sprite = UIStyleHelper.ArcadeJoystickShaftSprite;
+                shaftImage.color = Color.white;
+                shaftImage.raycastTarget = false;
+            }
+
+            if (shadowTransform != null) shadowTransform.SetSiblingIndex(1);
+            if (shaftTransform != null) shaftTransform.SetSiblingIndex(2);
+            if (knobTransform != null) knobTransform.SetAsLastSibling();
         }
 
         private void OnEnable()
         {
-            if (knobTransform != null)
-            {
-                knobTransform.anchoredPosition = Vector2.zero;
-            }
+            ResetToCenter();
+        }
+
+        private void ResetToCenter()
+        {
+            currentPos = Vector2.zero;
+            springVelocity = Vector2.zero;
+            currentInputVector = Vector2.zero;
+            isDirectDragging = false;
+            isScreenDragging = false;
+            if (knobTransform != null) knobTransform.anchoredPosition = Vector2.zero;
+            UpdateMechanicalVisuals(Vector2.zero);
         }
 
         private void Update()
         {
             if (ArcadeConsoleUI.IsAnyModalOpen())
             {
-                isDirectDragging = false;
-                isScreenDragging = false;
-                currentInputVector = Vector2.zero;
-                if (knobTransform != null)
+                if (isDirectDragging || isScreenDragging)
                 {
-                    knobTransform.anchoredPosition = Vector2.Lerp(knobTransform.anchoredPosition, Vector2.zero, Time.deltaTime * returnSpeed);
+                    isDirectDragging = false;
+                    isScreenDragging = false;
                 }
+                ResetToCenter();
                 return;
             }
 
-            // Keyboard input - use direct key checks to avoid phantom controller/joystick axis drift
+            // Keyboard input (WASD / Arrows)
             float h = 0f;
             if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) h -= 1f;
             if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) h += 1f;
@@ -94,10 +149,12 @@ namespace ClawMachine.UI
             if (keyVec.sqrMagnitude > 0.01f && !isDirectDragging && !isScreenDragging)
             {
                 currentInputVector = keyVec.normalized;
-                if (knobTransform != null)
-                {
-                    knobTransform.anchoredPosition = Vector2.Lerp(knobTransform.anchoredPosition, currentInputVector * maxDeflectionRadius, Time.deltaTime * returnSpeed);
-                }
+                currentPos = Vector2.Lerp(currentPos, currentInputVector * maxDeflectionRadius, Time.deltaTime * 18f);
+                springVelocity = Vector2.zero;
+
+                if (knobTransform != null) knobTransform.anchoredPosition = currentPos;
+                UpdateMechanicalVisuals(currentPos);
+
                 if (machineController != null)
                 {
                     machineController.SetDragInput(currentInputVector * (dragSensitivity * 45f));
@@ -105,102 +162,157 @@ namespace ClawMachine.UI
                 return;
             }
 
-            // Floating screen drag mode when armed
+            // Floating screen touch drag mode when armed
             if (isArmed && !isDirectDragging)
             {
                 HandleScreenTouchMode();
             }
 
-            // Continuous input feed when direct dragging
-            if (isDirectDragging && currentInputVector.sqrMagnitude > 0.001f && machineController != null)
-            {
-                machineController.SetDragInput(currentInputVector * (dragSensitivity * 45f));
-            }
-
-            // Return to center when not actively dragging
-            if (!isDirectDragging && !isScreenDragging && knobTransform != null)
-            {
-                knobTransform.anchoredPosition = Vector2.Lerp(knobTransform.anchoredPosition, Vector2.zero, Time.deltaTime * returnSpeed);
-            }
-
             // Outline pulse animation when armed
-            if (isArmed && outlineRing != null)
+            if (outlineRing != null)
             {
-                float pulse = 0.75f + 0.25f * Mathf.Sin(Time.time * 6f);
-                outlineRing.color = new Color(0.2f, 0.95f, 1f, pulse);
+                if (isArmed)
+                {
+                    if (!outlineRing.gameObject.activeSelf) outlineRing.gameObject.SetActive(true);
+                    float pulse = 0.75f + 0.25f * Mathf.Sin(Time.time * 6f);
+                    outlineRing.color = new Color(0.2f, 0.95f, 1f, pulse);
+                }
+                else if (outlineRing.gameObject.activeSelf)
+                {
+                    outlineRing.gameObject.SetActive(false);
+                }
+            }
+
+            // Direct dragging continuous input
+            if (isDirectDragging)
+            {
+                if (currentInputVector.sqrMagnitude > 0.001f && machineController != null)
+                {
+                    machineController.SetDragInput(currentInputVector * (dragSensitivity * 45f));
+                }
+                return;
+            }
+
+            // If screen dragging, visual is driven by HandleScreenTouchMode
+            if (isScreenDragging) return;
+
+            // Mechanical Spring Harmonic Snap-Back
+            if (currentPos.sqrMagnitude > 0.01f)
+            {
+                float dt = Mathf.Min(Time.deltaTime, 0.033f);
+                Vector2 springForce = -currentPos * SpringK;
+                Vector2 dampingForce = -springVelocity * Damping;
+                springVelocity += (springForce + dampingForce) * dt;
+                currentPos += springVelocity * dt;
+
+                if (currentPos.magnitude < 0.6f && springVelocity.magnitude < 1.5f)
+                {
+                    currentPos = Vector2.zero;
+                    springVelocity = Vector2.zero;
+                    currentInputVector = Vector2.zero;
+                }
+
+                if (knobTransform != null) knobTransform.anchoredPosition = currentPos;
+                UpdateMechanicalVisuals(currentPos);
+            }
+        }
+
+        private void UpdateMechanicalVisuals(Vector2 deflection)
+        {
+            float len = deflection.magnitude;
+
+            if (shaftTransform != null)
+            {
+                if (len > 3f)
+                {
+                    if (!shaftTransform.gameObject.activeSelf) shaftTransform.gameObject.SetActive(true);
+                    shaftTransform.anchoredPosition = Vector2.zero;
+                    shaftTransform.sizeDelta = new Vector2(22f, len);
+                    float angle = Mathf.Atan2(deflection.y, deflection.x) * Mathf.Rad2Deg - 90f;
+                    shaftTransform.localRotation = Quaternion.Euler(0f, 0f, angle);
+                }
+                else
+                {
+                    if (shaftTransform.gameObject.activeSelf) shaftTransform.gameObject.SetActive(false);
+                }
+            }
+
+            if (shadowTransform != null)
+            {
+                shadowTransform.anchoredPosition = deflection * 0.42f + new Vector2(4f, -7f);
             }
         }
 
         public void OnPointerClick(PointerEventData eventData)
         {
-            if (eventData.dragging || ArcadeConsoleUI.IsAnyModalOpen()) return;
-            // Toggle armed state
-            isArmed = !isArmed;
-            if (outlineRing != null)
-            {
-                outlineRing.gameObject.SetActive(isArmed);
-            }
+            // Toggle armed state when clicking joystick
+            if (eventData.dragging) return;
 
+            isArmed = !isArmed;
             isScreenDragging = false;
             currentInputVector = Vector2.zero;
-            if (knobTransform != null)
+
+            var audioSvc = ServiceLocator.Get<IAudioService>();
+            if (audioSvc != null)
             {
-                knobTransform.anchoredPosition = Vector2.zero;
+                audioSvc.PlayUIClick();
+                audioSvc.TriggerHapticLight();
             }
 
-            Core.Services.ServiceLocator.Get<Core.Services.IAudioService>()?.PlayUIClick();
             Debug.Log($"[ArcadeJoystickUI] Joystick Armed: {isArmed}");
         }
 
-        public void SetThemeColor(Color themeColor)
-        {
-            if (ballKnobImage != null)
-            {
-                ballKnobImage.color = themeColor;
-            }
-        }
-
-        // Direct drag on joystick
-        public void OnBeginDrag(PointerEventData eventData)
+        public void OnPointerDown(PointerEventData eventData)
         {
             if (ArcadeConsoleUI.IsAnyModalOpen()) return;
             isDirectDragging = true;
-            Core.Services.ServiceLocator.Get<Core.Services.IAudioService>()?.PlayUIClick();
-            if (knobTransform != null) knobTransform.localScale = Vector3.one * 1.08f;
+            springVelocity = Vector2.zero;
+
+            ServiceLocator.Get<IAudioService>()?.TriggerHapticLight();
+            UpdatePointerDeflection(eventData);
+            if (knobTransform != null) knobTransform.localScale = Vector3.one * 1.06f;
         }
 
         public void OnDrag(PointerEventData eventData)
         {
-            if (ArcadeConsoleUI.IsAnyModalOpen()) return;
+            if (!isDirectDragging || ArcadeConsoleUI.IsAnyModalOpen()) return;
+            UpdatePointerDeflection(eventData);
+        }
+
+        private void UpdatePointerDeflection(PointerEventData eventData)
+        {
             if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
                 transform as RectTransform, eventData.position, eventData.pressEventCamera, out Vector2 localPos))
             {
-                Vector2 clamped = Vector2.ClampMagnitude(localPos, maxDeflectionRadius);
-                if (knobTransform != null) knobTransform.anchoredPosition = clamped;
+                currentPos = Vector2.ClampMagnitude(localPos, maxDeflectionRadius);
+                if (knobTransform != null) knobTransform.anchoredPosition = currentPos;
 
-                currentInputVector = clamped / maxDeflectionRadius;
+                currentInputVector = currentPos / maxDeflectionRadius;
+                UpdateMechanicalVisuals(currentPos);
             }
         }
 
-        public void OnEndDrag(PointerEventData eventData)
+        public void OnPointerUp(PointerEventData eventData)
         {
+            if (!isDirectDragging) return;
             isDirectDragging = false;
             currentInputVector = Vector2.zero;
             if (knobTransform != null) knobTransform.localScale = Vector3.one;
+            ServiceLocator.Get<IAudioService>()?.TriggerHapticLight();
         }
 
-        // Floating screen center mode: click anywhere on screen to establish center
         private void HandleScreenTouchMode()
         {
             if (Input.GetMouseButtonDown(0))
             {
-                // Check if pointer is over another interactive UI element (like Drop or Carousel or Joystick itself)
                 if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
                 {
-                    var hit = eventDataRaycast();
-                    if (hit != null && (hit.name.Contains("Btn_") || hit.name.Contains("DropButton") || hit.name.Contains("ArcadePushButton") || hit.name.Contains("BallKnob") || hit.name.Contains("ArcadeJoystick")))
+                    var hit = RaycastUIUnderPointer();
+                    if (hit != null && (hit.name.Contains("Btn_") || hit.name.Contains("DropButton") || 
+                                       hit.name.Contains("ArcadePushButton") || hit.name.Contains("BallKnob") || 
+                                       hit.name.Contains("ArcadeJoystick") || hit.name.Contains("Modal")))
                     {
-                        return; // Allow button and joystick clicks without triggering screen drag
+                        return;
                     }
                 }
 
@@ -209,20 +321,17 @@ namespace ClawMachine.UI
             }
             else if (Input.GetMouseButton(0) && isScreenDragging)
             {
-                Vector2 currentPos = Input.mousePosition;
-                Vector2 screenDelta = currentPos - screenAnchorPos;
+                Vector2 currentScreen = Input.mousePosition;
+                Vector2 screenDelta = currentScreen - screenAnchorPos;
 
                 float maxScreenRadius = 120f;
                 Vector2 clampedScreen = Vector2.ClampMagnitude(screenDelta, maxScreenRadius);
                 Vector2 norm = clampedScreen / maxScreenRadius;
 
-                // Deflect stick visual
-                if (knobTransform != null)
-                {
-                    knobTransform.anchoredPosition = norm * maxDeflectionRadius;
-                }
+                currentPos = norm * maxDeflectionRadius;
+                if (knobTransform != null) knobTransform.anchoredPosition = currentPos;
+                UpdateMechanicalVisuals(currentPos);
 
-                // Send motion delta
                 if (machineController != null && norm.sqrMagnitude > 0.001f)
                 {
                     machineController.SetDragInput(norm * (dragSensitivity * 55f));
@@ -235,12 +344,20 @@ namespace ClawMachine.UI
             }
         }
 
-        private GameObject eventDataRaycast()
+        private GameObject RaycastUIUnderPointer()
         {
             PointerEventData ped = new PointerEventData(EventSystem.current) { position = Input.mousePosition };
-            raycastResults.Clear();
-            EventSystem.current.RaycastAll(ped, raycastResults);
-            return raycastResults.Count > 0 ? raycastResults[0].gameObject : null;
+            var results = new List<RaycastResult>();
+            EventSystem.current.RaycastAll(ped, results);
+            return results.Count > 0 ? results[0].gameObject : null;
+        }
+
+        public void SetThemeColor(Color themeColor)
+        {
+            if (ballKnobImage != null)
+            {
+                ballKnobImage.color = themeColor;
+            }
         }
     }
 }

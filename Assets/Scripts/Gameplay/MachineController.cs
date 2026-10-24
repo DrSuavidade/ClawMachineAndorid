@@ -471,6 +471,7 @@ namespace ClawMachine.Gameplay
 
             Vector3 winPos = chuteDetector != null ? chuteDetector.transform.position : (prize != null ? prize.transform.position : Vector3.zero);
             ClawJuiceEffects.Instance?.PlayWinCelebration(winPos);
+            claw?.TriggerChuteCelebrationFlash(1.8f);
 
             bool isFirstDiscovery = false;
             if (ServiceLocator.TryGet<ICollectionService>(out var colService))

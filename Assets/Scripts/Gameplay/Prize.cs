@@ -27,6 +27,10 @@ namespace ClawMachine.Gameplay
             if (definition != null)
             {
                 ApplyDefinitionPhysics();
+                if (Rarity != PrizeRarity.Normal && ClawJuiceEffects.Instance != null)
+                {
+                    ClawJuiceEffects.Instance.AttachRarityShimmer(gameObject, Rarity);
+                }
             }
         }
 
@@ -34,6 +38,10 @@ namespace ClawMachine.Gameplay
         {
             definition = def;
             ApplyDefinitionPhysics();
+            if (Rarity != PrizeRarity.Normal && ClawJuiceEffects.Instance != null)
+            {
+                ClawJuiceEffects.Instance.AttachRarityShimmer(gameObject, Rarity);
+            }
         }
 
         private void ApplyDefinitionPhysics()

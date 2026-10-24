@@ -415,49 +415,14 @@ namespace ClawMachine.Gameplay
 
         public int GetTotalDuplicateValue()
         {
-            if (data.inventory == null) return 0;
-            int total = 0;
-            foreach (var item in data.inventory)
-            {
-                if (item.count > 1)
-                {
-                    PrizeDefinition def = FindPrizeDefinition(item.prizeId);
-                    int sellPrice = GetDuplicateSellPrice(def);
-                    total += sellPrice * (item.count - 1);
-                }
-            }
-            return total;
+            // Duplicates are auto-sold immediately upon collection
+            return 0;
         }
 
         public int SellAllDuplicates()
         {
-            if (data.inventory == null) return 0;
-
-            int totalEarned = 0;
-            int itemsSold = 0;
-
-            foreach (var item in data.inventory)
-            {
-                if (item.count > 1)
-                {
-                    int extras = item.count - 1;
-                    PrizeDefinition def = FindPrizeDefinition(item.prizeId);
-                    int sellPrice = GetDuplicateSellPrice(def);
-                    totalEarned += sellPrice * extras;
-                    itemsSold += extras;
-                    item.count = 1;
-                }
-            }
-
-            if (totalEarned > 0)
-            {
-                AddCoins(totalEarned, save: false);
-                OnDuplicatesSold?.Invoke(totalEarned);
-                Debug.Log($"[CollectionManager] Sold {itemsSold} duplicates for +{totalEarned} coins!");
-                SaveData();
-            }
-
-            return totalEarned;
+            // Duplicates are auto-sold immediately upon collection in RegisterCollectedPrize
+            return 0;
         }
 
         public bool TrySellPrize(string prizeId, int count = 1)
