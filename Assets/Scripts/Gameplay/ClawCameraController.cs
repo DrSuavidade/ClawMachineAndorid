@@ -138,20 +138,45 @@ namespace ClawMachine.Gameplay
         {
             return state == ClawState.Descending
                 || state == ClawState.Closing
-                || state == ClawState.EvaluatingGrip;
+                || state == ClawState.EvaluatingGrip
+                || state == ClawState.Lifting;
+        }
+
+        private Coroutine hitStopRoutine;
+
+        public void TriggerHitStop(float duration = 0.06f)
+        {
+            if (hitStopRoutine != null) StopCoroutine(hitStopRoutine);
+            hitStopRoutine = StartCoroutine(CoHitStop(duration));
+        }
+
+        private System.Collections.IEnumerator CoHitStop(float duration)
+        {
+            float prevTimeScale = Time.timeScale;
+            Time.timeScale = 0.05f;
+            yield return new WaitForSecondsRealtime(duration);
+            Time.timeScale = prevTimeScale;
+            hitStopRoutine = null;
         }
 
         private void HandleClawStateChanged(ClawState state)
         {
+            if (state == ClawState.Closing)
+            {
+                TriggerHitStop(0.06f);
+            }
+
             if (IsGrabZoomState(state))
             {
                 UpdateGrabFollowTarget();
                 targetFovVal = grabFov;
             }
+            else if (state == ClawState.Carrying)
+            {
+                UpdateCarryFollowTarget();
+            }
             else
             {
-                // As soon as item is grabbed and claw lifts (Lifting, Carrying, Releasing, Returning, Resolving, Aiming),
-                // return smoothly to original starting camera position
                 targetPos = defaultPosition;
                 targetRot = Quaternion.Euler(defaultRotationEuler);
                 targetFovVal = defaultFov;
@@ -170,6 +195,15 @@ namespace ClawMachine.Gameplay
             targetRot = Quaternion.Euler(27f, clawX * 3.5f, 0f);
         }
 
+        private void UpdateCarryFollowTarget()
+        {
+            float clawX = clawTarget != null ? clawTarget.position.x : 0f;
+            float clawZ = clawTarget != null ? clawTarget.position.z : 0f;
+            targetPos = new Vector3(clawX * 0.35f, 4.6f, -6.0f + clawZ * 0.20f);
+            targetRot = Quaternion.Euler(26f, clawX * 2.8f, 0f);
+            targetFovVal = 38f;
+        }
+
         private void LateUpdate()
         {
             if (targetCamera == null) return;
@@ -180,6 +214,10 @@ namespace ClawMachine.Gameplay
                 {
                     UpdateGrabFollowTarget();
                     targetFovVal = grabFov;
+                }
+                else if (clawController.CurrentState == ClawState.Carrying)
+                {
+                    UpdateCarryFollowTarget();
                 }
                 else
                 {

@@ -540,6 +540,9 @@ namespace ClawMachine.Gameplay
                 hoist.position = pos;
                 SetAudioMotor(false);
                 ClawJuiceEffects.Instance?.PlayDustPuff(hoist.position);
+                ClawJuiceEffects.Instance?.PlayPrizeNudgeFX(hoist.position);
+                ServiceLocator.Get<IAudioService>()?.PlayClamp();
+                ServiceLocator.Get<IAudioService>()?.TriggerHapticLight();
                 SetState(ClawState.Closing);
             }
             else

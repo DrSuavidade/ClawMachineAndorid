@@ -453,6 +453,74 @@ namespace ClawMachine.Gameplay
             }
         }
 
+        private float nextNudgeTime = 0f;
+        private Coroutine nudgeRoutine;
+
+        public void TriggerMachineNudge(Vector2 screenTapPos)
+        {
+            if (Time.time < nextNudgeTime || IsSwiping) return;
+            nextNudgeTime = Time.time + 0.85f;
+
+            // 1. Audio & Haptics
+            var audio = ServiceLocator.Get<IAudioService>();
+            audio?.PlayDropFloor();
+            audio?.TriggerHapticLight();
+
+            // 2. Camera Shake (Subtle, smooth)
+            if (cameraController != null)
+            {
+                cameraController.TriggerShake(0.18f, 0.025f);
+            }
+
+            // 3. Gentle Physics Jerk to Prizes
+            Prize[] prizes = FindObjectsByType<Prize>(FindObjectsSortMode.None);
+            for (int i = 0; i < prizes.Length; i++)
+            {
+                if (prizes[i] != null && prizes[i].Rigidbody != null && !prizes[i].Rigidbody.isKinematic)
+                {
+                    Vector3 force = new Vector3(
+                        UnityEngine.Random.Range(-0.65f, 0.65f),
+                        UnityEngine.Random.Range(0.35f, 0.60f),
+                        UnityEngine.Random.Range(-0.65f, 0.65f)
+                    );
+                    prizes[i].Rigidbody.AddForce(force, ForceMode.Impulse);
+                }
+            }
+
+            // 4. Subtle Claw Cable Sway Impulse
+            if (claw != null)
+            {
+                claw.SetInputDelta(new Vector2(UnityEngine.Random.Range(-0.06f, 0.06f), UnityEngine.Random.Range(-0.06f, 0.06f)));
+            }
+
+            // 5. Visual Cabinet Bump Tilt
+            Transform targetCab = (slotCurr != null) ? slotCurr.transform : transform;
+            if (nudgeRoutine != null) StopCoroutine(nudgeRoutine);
+            nudgeRoutine = StartCoroutine(CabinetNudgeRoutine(targetCab));
+        }
+
+        private System.Collections.IEnumerator CabinetNudgeRoutine(Transform cab)
+        {
+            if (cab == null) yield break;
+            Quaternion baseRot = Quaternion.identity;
+            float tiltDir = UnityEngine.Random.value > 0.5f ? 1.4f : -1.4f;
+
+            float duration = 0.22f;
+            float elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                float spring = Mathf.Sin(t * Mathf.PI * 2f) * (1f - t);
+                cab.localRotation = Quaternion.Euler(0.4f * spring, 0f, tiltDir * spring);
+                yield return null;
+            }
+
+            cab.localRotation = baseRot;
+            nudgeRoutine = null;
+        }
+
         private void HandleClawStateChanged(ClawState state)
         {
             OnStateChanged?.Invoke(state);

@@ -173,6 +173,10 @@ namespace ClawMachine.UI
             {
                 HandleScreenTouchMode();
             }
+            else if (!isArmed && !isDirectDragging)
+            {
+                HandleUnarmedDoubleTapNudge();
+            }
 
             // Outline pulse animation when armed
             if (outlineRing != null)
@@ -357,6 +361,43 @@ namespace ClawMachine.UI
             {
                 isScreenDragging = false;
                 currentInputVector = Vector2.zero;
+            }
+        }
+
+        private float lastTapTime = -1f;
+        private Vector2 lastTapPos;
+
+        private void HandleUnarmedDoubleTapNudge()
+        {
+            if (Input.GetMouseButtonDown(0))
+            {
+                if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+                {
+                    var hit = RaycastUIUnderPointer();
+                    if (hit != null && (hit.name.Contains("Btn_") || hit.name.Contains("DropButton") || 
+                                       hit.name.Contains("ArcadePushButton") || hit.name.Contains("BallKnob") || 
+                                       hit.name.Contains("ArcadeJoystick") || hit.name.Contains("Modal") ||
+                                       hit.name.Contains("Card_")))
+                    {
+                        return;
+                    }
+                }
+
+                float now = Time.unscaledTime;
+                Vector2 currentTapPos = Input.mousePosition;
+                if (now - lastTapTime < 0.32f && Vector2.Distance(currentTapPos, lastTapPos) < 70f)
+                {
+                    if (machineController != null)
+                    {
+                        machineController.TriggerMachineNudge(currentTapPos);
+                    }
+                    lastTapTime = -1f;
+                }
+                else
+                {
+                    lastTapTime = now;
+                    lastTapPos = currentTapPos;
+                }
             }
         }
 

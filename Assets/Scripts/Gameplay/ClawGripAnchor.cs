@@ -129,12 +129,16 @@ namespace ClawMachine.Gameplay
             }
             else
             {
-                // Sway in direction opposite to carriage movement
+                // Sway in direction opposite to carriage movement + grip quality wobble
                 Vector3 localVel = gripSocket.InverseTransformDirection(carriageVelocity);
                 float pitch = Mathf.Clamp(-localVel.z * 5f, -maxSwayAngle, maxSwayAngle);
                 float roll = Mathf.Clamp(localVel.x * 5f, -maxSwayAngle, maxSwayAngle);
 
-                targetSwayRotation = Quaternion.Euler(pitch, 0f, roll);
+                float wobbleAmp = (1f - CurrentGrip.quality) * 6.5f;
+                float wobblePitch = Mathf.Sin(Time.time * 8.5f) * wobbleAmp;
+                float wobbleRoll = Mathf.Cos(Time.time * 7.5f) * wobbleAmp;
+
+                targetSwayRotation = Quaternion.Euler(pitch + wobblePitch, 0f, roll + wobbleRoll);
                 HeldPrize.transform.localPosition = targetSocketOffset;
                 HeldPrize.transform.localRotation = Quaternion.Slerp(HeldPrize.transform.localRotation, targetSwayRotation, deltaTime * swaySmoothSpeed);
             }
