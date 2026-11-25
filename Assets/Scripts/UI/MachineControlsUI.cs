@@ -263,14 +263,14 @@ namespace ClawMachine.UI
             {
                 Canvas rootCanvas = GetComponentInParent<Canvas>();
                 Transform parentTf = rootCanvas != null ? rootCanvas.transform : transform;
-                Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
+                Font font = UIStyleHelper.MainFont;
 
                 GameObject toastGo = new GameObject("DuplicateCoinToast", typeof(RectTransform), typeof(CanvasGroup), typeof(Image));
                 toastGo.transform.SetParent(parentTf, false);
                 toastBannerRt = toastGo.GetComponent<RectTransform>();
                 toastBannerRt.anchorMin = new Vector2(0.5f, 0.5f);
                 toastBannerRt.anchorMax = new Vector2(0.5f, 0.5f);
-                toastBannerRt.sizeDelta = new Vector2(680f, 84f);
+                toastBannerRt.sizeDelta = new Vector2(600f, 64f);
                 toastCanvasGroup = toastGo.GetComponent<CanvasGroup>();
                 toastCanvasGroup.blocksRaycasts = false;
 
@@ -290,7 +290,7 @@ namespace ClawMachine.UI
 
                 toastBannerText = txtGo.GetComponent<Text>();
                 toastBannerText.font = font;
-                toastBannerText.fontSize = 30;
+                toastBannerText.fontSize = 22;
                 toastBannerText.fontStyle = FontStyle.Bold;
                 toastBannerText.alignment = TextAnchor.MiddleCenter;
                 toastBannerText.color = new Color(1f, 0.88f, 0.22f, 1f);

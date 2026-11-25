@@ -358,8 +358,8 @@ namespace ClawMachine.UI
                         pRt.anchorMin = Vector2.one;
                         pRt.anchorMax = Vector2.one;
                         pRt.pivot = new Vector2(0.5f, 0.5f);
-                        pRt.anchoredPosition = new Vector2(-4f, -4f);
-                        pRt.sizeDelta = new Vector2(16f, 16f);
+                        pRt.anchoredPosition = new Vector2(-10f, -10f);
+                        pRt.sizeDelta = new Vector2(22f, 22f);
                     }
                 }
             }
@@ -610,6 +610,8 @@ namespace ClawMachine.UI
             var milestones = ret.GetMilestones();
 
             if (milestoneCardRoots == null) return;
+            if (milestoneHintBannerText != null)
+                milestoneHintBannerText.text = "★ Tap any [ ? ] to reveal unlock requirements";
 
             for (int i = 0; i < milestoneCardRoots.Length; i++)
             {
@@ -629,7 +631,7 @@ namespace ClawMachine.UI
                 trigger.onExitAction = () =>
                 {
                     if (milestoneHintBannerText != null)
-                        milestoneHintBannerText.text = "Hover or tap any [ ? ] to reveal unlock requirements";
+                        milestoneHintBannerText.text = "Tap any [ ? ] to reveal unlock requirements";
                 };
 
                 // Icon: "?" when locked, Trophy when unlocked, Checkmark when claimed

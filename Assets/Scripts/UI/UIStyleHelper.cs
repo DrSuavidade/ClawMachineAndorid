@@ -182,10 +182,16 @@ namespace ClawMachine.UI
                 Text txt = texts[i];
                 if (txt == null) continue;
                 if (f != null) txt.font = f;
+                // Legacy Text renders NOTHING when lines don't fit vertically; never hide labels.
+                txt.verticalOverflow = VerticalWrapMode.Overflow;
                 string n = txt.gameObject.name;
                 if (n.Contains("Title") || n.Contains("Header") || n == "PrizeName" || n.Contains("Count") || n.Contains("Balance") || n.Contains("Machine"))
                 {
                     AddDropShadow(txt, new Color(0f, 0f, 0f, 0.75f), new Vector2(1.5f, -2f));
+                }
+                else
+                {
+                    AddDropShadow(txt, new Color(0f, 0f, 0f, 0.6f), new Vector2(1f, -1.5f));
                 }
             }
         }
@@ -264,21 +270,33 @@ namespace ClawMachine.UI
             RectTransform rt = img.rectTransform;
             if (rt != null)
             {
-                rt.sizeDelta = new Vector2(16f, 16f);
+                rt.sizeDelta = new Vector2(22f, 22f);
             }
         }
 
         public static void AddDropShadow(Text text, Color shadowColor, Vector2 distance)
         {
             if (text == null) return;
-            Shadow s = text.GetComponent<Shadow>();
+            // Outline derives from Shadow, so skip it when looking for the plain drop shadow.
+            Shadow s = null;
+            foreach (Shadow c in text.GetComponents<Shadow>())
+            {
+                if (!(c is Outline)) { s = c; break; }
+            }
             if (s == null) s = text.gameObject.AddComponent<Shadow>();
             s.effectColor = shadowColor;
             s.effectDistance = distance;
             s.useGraphicAlpha = true;
+
+            // Chunky dark outline (mobile-arcade look).
+            Outline o = text.GetComponent<Outline>();
+            if (o == null) o = text.gameObject.AddComponent<Outline>();
+            o.effectColor = new Color(0.04f, 0.06f, 0.11f, 0.9f);
+            o.effectDistance = new Vector2(2f, 2f);
+            o.useGraphicAlpha = true;
         }
 
-        public static RectTransform EnsureModalShell(GameObject modalRoot, string title, System.Action onClose, float cardWidth = 620f, float cardHeight = 880f)
+        public static RectTransform EnsureModalShell(GameObject modalRoot, string title, System.Action onClose, float cardWidth = 660f, float cardHeight = 880f)
         {
             if (modalRoot == null) return null;
 
@@ -570,7 +588,7 @@ namespace ClawMachine.UI
             txtRt.offsetMin = new Vector2(50f, 0f);
             txtRt.offsetMax = Vector2.zero;
             Text txt = txtObj.GetComponent<Text>();
-            txt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
+            txt.font = MainFont;
             txt.fontSize = 28;
             txt.fontStyle = FontStyle.Bold;
             txt.color = new Color(1.0f, 0.88f, 0.20f, 1f);
@@ -965,6 +983,7 @@ namespace ClawMachine.UI
                         float norm = dist / rOuter;
                         float rings = Mathf.Sin(norm * 30f) * 0.03f;
                         float v = Mathf.Lerp(0.12f, 0.06f, norm) + rings;
+                        if (norm > 0.88f) v = (y > center ? 0.42f : 0.26f); // bright metal rim so base reads on dark deck
                         tex.SetPixel(x, y, new Color(v, v, v + 0.01f, 0.94f));
                     }
                 }

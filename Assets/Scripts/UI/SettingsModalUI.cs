@@ -338,6 +338,7 @@ namespace ClawMachine.UI
             cardRt.anchorMin = new Vector2(0.5f, 0.5f);
             cardRt.anchorMax = new Vector2(0.5f, 0.5f);
             cardRt.sizeDelta = new Vector2(680f, 380f);
+            cardRt.localScale = Vector3.one * 0.67f; // ponytail: popup authored in 1080-space; canvas ref is now 720x1280
             card.GetComponent<Image>().color = new Color(0.14f, 0.16f, 0.22f, 1f);
 
             CreateLabel(card.transform, "Title", "RESET ALL PROGRESS?", font, 34, FontStyle.Bold,

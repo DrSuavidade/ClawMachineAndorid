@@ -33,6 +33,11 @@ namespace ClawMachine.UI
             }
 
             Image baseImg = GetComponent<Image>();
+            if (baseImg == null)
+            {
+                Transform bezel = transform.Find("Bezel");
+                if (bezel != null) baseImg = bezel.GetComponent<Image>();
+            }
             if (baseImg != null)
             {
                 baseImg.sprite = UIStyleHelper.ArcadeButtonBezelSprite;

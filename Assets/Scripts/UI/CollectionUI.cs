@@ -372,9 +372,10 @@ namespace ClawMachine.UI
                 Sprite sp = GetOrGeneratePrizeIcon(def);
                 if (sp != null)
                 {
-                    iconImg.enabled = discovered;
+                    // Undiscovered = black silhouette (curiosity hook) instead of an empty shelf.
+                    iconImg.enabled = true;
                     iconImg.sprite = sp;
-                    iconImg.color = Color.white;
+                    iconImg.color = discovered ? Color.white : new Color(0f, 0f, 0f, 0.85f);
                 }
                 else
                 {
@@ -419,7 +420,7 @@ namespace ClawMachine.UI
                 ptRt.offsetMax = new Vector2(-6f, -1f);
                 Text ptTxt = pTitleGo.GetComponent<Text>();
                 ptTxt.font = font;
-                ptTxt.fontSize = 13;
+                ptTxt.fontSize = 16;
                 ptTxt.fontStyle = FontStyle.Bold;
                 ptTxt.alignment = TextAnchor.MiddleCenter;
                 ptTxt.color = new Color(0.18f, 0.12f, 0.05f, 1f);
@@ -434,7 +435,7 @@ namespace ClawMachine.UI
                 psRt.offsetMax = new Vector2(-6f, 0f);
                 Text psTxt = pSubGo.GetComponent<Text>();
                 psTxt.font = font;
-                psTxt.fontSize = 11;
+                psTxt.fontSize = 14;
                 psTxt.fontStyle = FontStyle.Bold;
                 psTxt.alignment = TextAnchor.MiddleCenter;
 
@@ -454,7 +455,8 @@ namespace ClawMachine.UI
                 if (pRarity != null)
                 {
                     pRarity.text = discovered ? $"✦ {def.rarity.ToString().ToUpper()} ✦" : "— LOCKED —";
-                    pRarity.color = discovered ? new Color(0.48f, 0.28f, 0.04f, 1f) : new Color(0.55f, 0.48f, 0.38f, 1f);
+                    pRarity.color = discovered ? rarityColor : new Color(0.55f, 0.48f, 0.38f, 1f);
+                    if (discovered) UIStyleHelper.AddDropShadow(pRarity, new Color(0f, 0f, 0f, 0.6f), new Vector2(1f, -1f));
                 }
             }
 

@@ -42,8 +42,8 @@ Material:
     - _SpecIntensity: 0.15
     - _SpecThreshold: 0.93
     m_Colors:
-    - _BaseColor: {r: 0.04, g: 0.04999984, b: 0.119999744, a: 1}
-    - _Color: {r: 0.04, g: 0.04999984, b: 0.119999744, a: 1}
+    - _BaseColor: {r: 0.04, g: 0.049999803, b: 0.11999967, a: 1}
+    - _Color: {r: 0.04, g: 0.049999803, b: 0.11999967, a: 1}
     - _EmissionColor: {r: 0.058000002, g: 0.07249995, b: 0.17399989, a: 1.45}
     - _OutlineColor: {r: 0.1, g: 0.09, b: 0.14, a: 1}
     - _RimColor: {r: 1, g: 1, b: 1, a: 1}

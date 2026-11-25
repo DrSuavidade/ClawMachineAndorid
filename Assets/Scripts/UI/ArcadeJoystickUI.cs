@@ -47,6 +47,11 @@ namespace ClawMachine.UI
             }
 
             Image baseImg = GetComponent<Image>();
+            if (baseImg == null)
+            {
+                Transform collar = transform.Find("CollarBase");
+                if (collar != null) baseImg = collar.GetComponent<Image>();
+            }
             if (baseImg != null)
             {
                 baseImg.sprite = UIStyleHelper.ArcadeJoystickBaseSprite;
@@ -107,7 +112,7 @@ namespace ClawMachine.UI
             if (spec != null) spec.gameObject.SetActive(false);
 
             Transform collar = transform.Find("CollarBase");
-            if (collar != null) collar.gameObject.SetActive(false);
+            if (collar != null) collar.SetAsFirstSibling();
 
             if (shadowTransform != null) shadowTransform.SetSiblingIndex(1);
             if (shaftTransform != null) shaftTransform.SetSiblingIndex(2);

@@ -328,8 +328,8 @@ namespace ClawMachine.UI
                         prt.anchorMin = Vector2.one;
                         prt.anchorMax = Vector2.one;
                         prt.pivot = new Vector2(0.5f, 0.5f);
-                        prt.anchoredPosition = new Vector2(-4f, -4f);
-                        prt.sizeDelta = new Vector2(16f, 16f);
+                        prt.anchoredPosition = new Vector2(-10f, -10f);
+                        prt.sizeDelta = new Vector2(22f, 22f);
                     }
                 }
 
@@ -487,7 +487,7 @@ namespace ClawMachine.UI
             rt.anchorMin = new Vector2(0.5f, 0.27f);
             rt.anchorMax = new Vector2(0.5f, 0.27f);
             rt.anchoredPosition = Vector2.zero;
-            rt.sizeDelta = new Vector2(780f, 54f);
+            rt.sizeDelta = new Vector2(640f, 54f);
 
             Image bg = hintBannerObj.GetComponent<Image>();
             bg.sprite = UIStyleHelper.BadgePillSprite;
@@ -504,8 +504,8 @@ namespace ClawMachine.UI
             txtRt.offsetMax = new Vector2(-16f, 0f);
 
             hintBannerText = txtGo.GetComponent<Text>();
-            hintBannerText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
-            hintBannerText.fontSize = 23;
+            hintBannerText.font = UIStyleHelper.MainFont;
+            hintBannerText.fontSize = 20;
             hintBannerText.fontStyle = FontStyle.Bold;
             hintBannerText.alignment = TextAnchor.MiddleCenter;
             hintBannerText.raycastTarget = false;
